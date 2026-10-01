@@ -7,17 +7,33 @@ import AppButton from '@/components/ui/AppButton.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
 import DetailList from '@/components/ui/DetailList.vue'
 import LakeMap from '@/components/maps/LakeMap.vue'
+import LakeEditor from '@/components/lakes/LakeEditor.vue'
 import { useSession } from '@/composables/useSession'
 import { getLake, lakeCoordinates } from '@/api/lakes'
-import { legacyUrl } from '@/api/legacy'
 
 const route = useRoute()
-const { user, signOut } = useSession()
+const { user, token, signOut } = useSession()
+const editor = ref(null)
+const notice = ref('')
+const sessionError = ref('')
+watch(token, () => {
+  editor.value = null
+})
+function expired() {
+  editor.value = null
+  sessionError.value = 'Your session has expired. Sign in from the dashboard to save lakes.'
+  signOut()
+}
 const lake = ref(null)
 const loading = ref(true)
 const error = ref('')
 const missing = ref(false)
 const attempt = ref(0)
+function saved(updated) {
+  lake.value = updated
+  editor.value = null
+  notice.value = `${updated.name} updated.`
+}
 const coordinates = computed(() => lakeCoordinates(lake.value))
 const location = computed(
   () =>
@@ -47,6 +63,8 @@ watch(
   async ([id], _, onCleanup) => {
     const controller = new AbortController()
     onCleanup(() => controller.abort())
+    editor.value = null
+    notice.value = ''
     lake.value = null
     loading.value = true
     error.value = ''
@@ -70,6 +88,10 @@ watch(
   <a class="skip-link" href="#main-content">Skip to content</a>
   <AppNavbar :user="user" @sign-out="signOut" />
   <main id="main-content" class="lake-page" :aria-busy="loading">
+    <p v-if="notice" class="save-notice" role="status">{{ notice }}</p>
+    <p v-if="sessionError" class="error-message" role="alert">
+      {{ sessionError }} <RouterLink to="/dashboard">Go to dashboard</RouterLink>
+    </p>
     <RouterLink to="/lakes/all" class="back-link"
       ><ArrowLeft :size="16" aria-hidden="true" />All lakes</RouterLink
     >
@@ -96,10 +118,7 @@ watch(
           <h1>{{ lake.name || 'Unnamed lake' }}</h1>
           <p class="location"><MapPin :size="16" aria-hidden="true" />{{ location }}</p>
         </div>
-        <AppButton
-          v-if="user?.is_admin"
-          :href="legacyUrl(`/lakes/${lake.id}/edit`)"
-          variant="secondary"
+        <AppButton v-if="user?.is_admin" @click="editor = { lake }" variant="secondary"
           ><Pencil :size="15" aria-hidden="true" />Edit lake</AppButton
         >
       </header>
@@ -120,10 +139,26 @@ watch(
         </ContentPanel>
       </div>
     </template>
+    <LakeEditor
+      v-if="editor && user?.is_admin"
+      :lake="editor.lake"
+      :token="token"
+      @close="editor = null"
+      @saved="saved"
+      @expired="expired"
+    />
   </main>
 </template>
 
 <style scoped>
+.save-notice {
+  color: #28543f;
+  background: #e3f1e8;
+  border: 1px solid #a8cbb6;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 13px;
+}
 .lake-page {
   max-width: 1320px;
   margin: 0 auto;

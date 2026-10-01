@@ -10,7 +10,6 @@ import DataTable from '@/components/ui/DataTable.vue'
 import LureEditor from '@/components/lures/LureEditor.vue'
 import TackleButton from '@/components/lures/TackleButton.vue'
 import { useLurePage } from '@/composables/useLurePage'
-import { legacyUrl } from '@/api/legacy'
 const {
   user,
   token,
@@ -72,18 +71,21 @@ function clearFilters() {
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a
   ><AppNavbar :user="user" @sign-out="handleSignOut" />
-  <main v-if="user" id="main-content" class="lure-page" :aria-busy="loading">
+  <main v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
     <header class="page-header">
       <div>
-        <p class="eyebrow">Find your next favorite</p>
-        <h1>Lure database</h1>
-        <p class="muted">Explore lures, build your tackle box, and create your own variations.</p>
+        <h1>
+          Lure database
+          <span v-if="!loading && !error" class="directory-count">{{
+            lures.length.toLocaleString()
+          }}</span>
+        </h1>
       </div>
       <div class="actions">
         <AppButton variant="secondary" :disabled="loading || pending.size > 0" @click="attempt++"
           ><RefreshCw :size="15" aria-hidden="true" />Refresh</AppButton
         ><AppButton
-          :href="legacyUrl(`/${encodeURIComponent(user.username)}/tackle-box`)"
+          :to="{ name: 'tackle-box', params: { username: user.username } }"
           variant="secondary"
           >My tackle box</AppButton
         ><AppButton @click="editor = { lure: null, editing: false }"
@@ -108,11 +110,7 @@ function clearFilters() {
         title="No lures yet"
         description="Add a lure to start building the collection."
       />
-      <ContentPanel
-        v-else
-        title="All lures"
-        :description="`${lures.length.toLocaleString()} lures in the collection. Create a similar lure to save a different color or size.`"
-      >
+      <ContentPanel v-else title="All lures" hide-header>
         <div class="filters">
           <label class="search"
             >Search lures<input
@@ -185,14 +183,6 @@ function clearFilters() {
   </main>
 </template>
 <style scoped>
-.lure-page {
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 36px clamp(20px, 4vw, 48px) 48px;
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-}
 .actions {
   display: flex;
   gap: 8px;

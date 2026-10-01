@@ -44,3 +44,98 @@ test('validates coordinates without turning missing values into zero', () => {
   assert.equal(lakeCoordinates({ latitude: 0, longitude: -181 }), null)
   assert.equal(lakeCoordinates(null), null)
 })
+
+test('creates and updates lakes with exact selected coordinates', async (t) => {
+  const { saveLake } = await import('../src/api/lakes.js')
+  const signal = new AbortController().signal
+  const fields = {
+    name: ' Test Lake ',
+    nearest_town: ' Duluth ',
+    state: 'MN',
+    county: ' St. Louis ',
+    latitude: '0',
+    longitude: '-92.1',
+  }
+  const mock = t.mock.method(globalThis, 'fetch', async (url, options) => {
+    assert.equal(options.headers.Authorization, 'Bearer admin')
+    assert.equal(options.signal, signal)
+    const body = JSON.parse(options.body)
+    assert.equal(body.name, 'Test Lake')
+    assert.equal(body.nearest_town, 'Duluth')
+    assert.equal(body.county, 'St. Louis')
+    if (options.method === 'POST') {
+      assert.equal(url, '/api/lakes')
+      assert.equal(body.latitude, 0)
+      assert.equal(body.longitude, -92.1)
+    } else {
+      assert.equal(options.method, 'PUT')
+      assert.equal(url, '/api/lakes/7')
+      assert.equal(body.latitude, 0)
+      assert.equal(body.longitude, -92.1)
+    }
+    return Response.json({ id: 7, ...body })
+  })
+  assert.equal((await saveLake(fields, 'admin', undefined, signal)).id, 7)
+  assert.equal((await saveLake(fields, 'admin', 7, signal)).id, 7)
+  assert.equal(mock.mock.callCount(), 2)
+})
+
+test('rejects invalid lake edits before sending a request and preserves API failures', async (t) => {
+  const { saveLake } = await import('../src/api/lakes.js')
+  const fields = {
+    name: 'Lake',
+    nearest_town: 'Duluth',
+    state: 'MN',
+    county: 'St. Louis',
+    latitude: 46,
+    longitude: -92,
+  }
+  const mock = t.mock.method(globalThis, 'fetch', async () => Response.json({ id: 7 }))
+  for (const field of ['name', 'nearest_town', 'state', 'county'])
+    await assert.rejects(
+      saveLake({ ...fields, [field]: ' ' }, 'admin'),
+      (error) => error.status === 400,
+    )
+  for (const latitude of ['', null, 'invalid', 91])
+    await assert.rejects(
+      saveLake({ ...fields, latitude }, 'admin', 7),
+      (error) => error.status === 400,
+    )
+  assert.equal(mock.mock.callCount(), 0)
+  for (const status of [400, 401, 403, 404, 500]) {
+    mock.mock.mockImplementation(async () => Response.json({ error: 'Save failed' }, { status }))
+    await assert.rejects(saveLake(fields, 'admin', 7), (error) => error.status === status)
+  }
+  mock.mock.mockImplementation(async () => Response.json({ id: 8 }))
+  await assert.rejects(saveLake(fields, 'admin', 7), /unexpected lake/)
+})
+
+test('new lakes use town fallback only when both coordinate fields are blank', async (t) => {
+  const { saveLake } = await import('../src/api/lakes.js')
+  const fields = {
+    name: 'Lake',
+    nearest_town: 'Town',
+    state: 'MN',
+    county: 'County',
+    latitude: '',
+    longitude: '',
+  }
+  const mock = t.mock.method(globalThis, 'fetch', async (_, options) => {
+    const body = JSON.parse(options.body)
+    assert.equal('latitude' in body, false)
+    assert.equal('longitude' in body, false)
+    return Response.json({ id: 7 })
+  })
+  await saveLake(fields, 'admin')
+  for (const patch of [
+    { latitude: 45 },
+    { longitude: -93 },
+    { latitude: 91, longitude: 0 },
+    { latitude: 0, longitude: -181 },
+  ])
+    await assert.rejects(
+      saveLake({ ...fields, ...patch }, 'admin'),
+      (error) => error.status === 400,
+    )
+  assert.equal(mock.mock.callCount(), 1)
+})

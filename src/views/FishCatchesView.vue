@@ -1,15 +1,15 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { Plus, RefreshCw, Trophy, Fish } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
 import DataTable from '@/components/ui/DataTable.vue'
+import FishCatchModal from '@/components/catches/FishCatchModal.vue'
 import { useSession } from '@/composables/useSession'
 import { getFishCatches } from '@/api/fishCatch'
-import { legacyUrl } from '@/api/legacy'
 
 const { token, user, signingIn, signIn, signOut } = useSession()
 const catches = ref([])
@@ -17,6 +17,39 @@ const loading = ref(false)
 const error = ref('')
 const loginError = ref('')
 const attempt = ref(0)
+const route = useRoute()
+const router = useRouter()
+const catchModal = ref(false)
+watch(
+  [() => route.query.add, user],
+  ([add, currentUser]) => {
+    if (add === 'catch' && currentUser) {
+      catchModal.value = true
+      const query = { ...route.query }
+      delete query.add
+      router.replace({ path: route.path, query })
+    }
+  },
+  { immediate: true },
+)
+const catchNotice = ref('')
+watch(
+  token,
+  () => {
+    catchModal.value = false
+    catchNotice.value = ''
+  },
+  { flush: 'sync' },
+)
+function catchSaved(item) {
+  catchModal.value = false
+  catchNotice.value = item.weather_warning ? `Catch saved. ${item.weather_warning}` : 'Catch saved.'
+  attempt.value++
+}
+function catchExpired() {
+  loginError.value = 'Your session has expired. Please sign in again.'
+  signOut()
+}
 const search = ref('')
 const eligibleOnly = ref(false)
 const columns = [
@@ -51,9 +84,6 @@ const rows = computed(() => {
 const eligibleCount = computed(() => catches.value.filter((fish) => fish.master_angler).length)
 const lakeCount = computed(
   () => new Set(catches.value.map((fish) => fish.lake_id || fish.lake?.name).filter(Boolean)).size,
-)
-const addCatchUrl = computed(() =>
-  legacyUrl(`/${encodeURIComponent(user.value?.username || '')}/fishcatch/new`),
 )
 function formatDate(value) {
   if (!value) return 'Not recorded'
@@ -115,18 +145,19 @@ function handleSignOut() {
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
   <AppNavbar :user="user" @sign-out="handleSignOut" />
-  <main v-if="user" id="main-content" class="catches-page" :aria-busy="loading">
+  <main v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
+    <p v-if="catchNotice" role="status" class="catch-notice">{{ catchNotice }}</p>
     <header class="page-header">
       <div>
-        <p class="eyebrow">Your fishing journal</p>
         <h1>All fish catches</h1>
-        <p class="muted">Every catch, from your first fish to your personal best.</p>
       </div>
       <div class="page-actions">
         <AppButton variant="secondary" :disabled="loading" @click="attempt++"
           ><RefreshCw :size="15" aria-hidden="true" />Refresh</AppButton
         >
-        <AppButton :href="addCatchUrl"><Plus :size="16" aria-hidden="true" />Log a catch</AppButton>
+        <AppButton @click="catchModal = true"
+          ><Plus :size="16" aria-hidden="true" />Log a catch</AppButton
+        >
       </div>
     </header>
     <div v-if="loading" class="loading-state" role="status">
@@ -159,15 +190,12 @@ function handleSignOut() {
         v-if="!catches.length"
         title="Your catch log starts here"
         description="Log your first catch to start tracking your trips, favorite lakes, and personal bests."
-        ><Fish class="empty-fish" :size="40" aria-hidden="true" /><AppButton :href="addCatchUrl"
+        ><Fish class="empty-fish" :size="40" aria-hidden="true" /><AppButton
+          @click="catchModal = true"
           ><Plus :size="16" aria-hidden="true" />Log your first catch</AppButton
         ></ContentPanel
       >
-      <ContentPanel
-        v-else
-        title="Catch log"
-        description="Browse your catches or narrow down your journal."
-      >
+      <ContentPanel v-else title="Catch log" hide-header>
         <div class="toolbar">
           <label class="search"
             >Search catches<input
@@ -185,7 +213,6 @@ function handleSignOut() {
             >Clear filters</AppButton
           >
         </div>
-        <p class="legend"><Trophy :size="14" aria-hidden="true" />Master Angler eligible</p>
         <DataTable
           v-if="rows.length"
           :rows="rows"
@@ -222,6 +249,14 @@ function handleSignOut() {
         </div>
       </ContentPanel>
     </template>
+    <FishCatchModal
+      v-if="catchModal"
+      :user="user"
+      :token="token"
+      @close="catchModal = false"
+      @saved="catchSaved"
+      @expired="catchExpired"
+    />
   </main>
   <main v-else id="main-content" class="sign-in-layout">
     <SignInPanel :busy="signingIn" :error="loginError" @submit="handleSignIn" />
@@ -229,14 +264,6 @@ function handleSignOut() {
 </template>
 
 <style scoped>
-.catches-page {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 36px clamp(20px, 4vw, 48px) 48px;
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-}
 .page-actions {
   display: flex;
   gap: 10px;

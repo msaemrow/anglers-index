@@ -1,7 +1,11 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { X } from '@lucide/vue'
-const props = defineProps({ title: { type: String, required: true }, busy: Boolean })
+const props = defineProps({
+  title: { type: String, required: true },
+  busy: Boolean,
+  compact: Boolean,
+})
 const emit = defineEmits(['close'])
 const dialog = ref(null)
 let previousFocus
@@ -20,7 +24,7 @@ onBeforeUnmount(() => {
 
 <template>
   <Teleport to="body">
-    <dialog ref="dialog" aria-labelledby="modal-title" @cancel.prevent="close">
+    <dialog :class="{ compact }" ref="dialog" aria-labelledby="modal-title" @cancel.prevent="close">
       <header>
         <h2 id="modal-title">{{ title }}</h2>
         <button type="button" aria-label="Close dialog" :disabled="busy" @click="close">
@@ -42,6 +46,13 @@ dialog {
   border-radius: 14px;
   color: var(--navy);
   overflow-y: auto;
+}
+.compact {
+  width: min(640px, calc(100% - 24px));
+  padding: 20px;
+}
+.compact header {
+  margin-bottom: 16px;
 }
 dialog::backdrop {
   background: #192b4370;

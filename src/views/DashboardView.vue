@@ -1,16 +1,17 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { RefreshCw, Plus } from '@lucide/vue'
+import { Plus } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import ProfileSidebar from '@/components/dashboard/ProfileSidebar.vue'
 import CatchSection from '@/components/dashboard/CatchSection.vue'
+import CatchChart from '@/components/dashboard/CatchChart.vue'
 import AdminReviews from '@/components/dashboard/AdminReviews.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import FishCatchModal from '@/components/catches/FishCatchModal.vue'
 import { useSession } from '@/composables/useSession'
 import { getDashboard } from '@/api/dashboard'
-import { legacyUrl } from '@/api/legacy'
 
 const { token, user, signingIn, signIn, signOut } = useSession()
 const data = ref(null)
@@ -18,6 +19,22 @@ const loading = ref(false)
 const error = ref('')
 const loginError = ref('')
 const attempt = ref(0)
+const catchModal = ref(false)
+const catchNotice = ref('')
+const catchFilter = ref('all')
+watch(token, () => {
+  catchModal.value = false
+  catchNotice.value = ''
+})
+function catchSaved(item) {
+  catchModal.value = false
+  catchNotice.value = item.weather_warning ? `Catch saved. ${item.weather_warning}` : 'Catch saved.'
+  attempt.value++
+}
+function catchExpired() {
+  loginError.value = 'Your session has expired. Please sign in again.'
+  signOut()
+}
 const userPath = computed(() => `/${encodeURIComponent(user.value?.username || '')}`)
 
 watch(
@@ -68,18 +85,10 @@ function handleSignOut() {
   <a class="skip-link" href="#main-content">Skip to content</a>
   <AppNavbar :user="user" @sign-out="handleSignOut" />
   <div v-if="user" class="dashboard-layout">
-    <ProfileSidebar :user="user" :stats="data?.stats" />
+    <ProfileSidebar :user="user" :stats="data?.stats" @add-catch="catchModal = true" />
     <main id="main-content" class="dashboard" :aria-busy="loading">
-      <header class="page-header">
-        <div>
-          <p class="eyebrow">Your fishing journal</p>
-          <h1>Dashboard</h1>
-          <p class="muted">Your latest catches and the ones worth celebrating.</p>
-        </div>
-        <AppButton variant="secondary" :disabled="loading" @click="attempt++"
-          ><RefreshCw :size="15" aria-hidden="true" />Refresh</AppButton
-        >
-      </header>
+      <p v-if="catchNotice" role="status" class="catch-notice">{{ catchNotice }}</p>
+      <h1 class="sr-only">Dashboard</h1>
       <div v-if="loading" role="status" class="loading-state">
         <span class="loading-line" aria-hidden="true" />
         <p>Loading your fishing journal…</p>
@@ -96,36 +105,81 @@ function handleSignOut() {
           v-if="data.stats.totalCatches === 0"
           title="Your fishing journal starts with one catch"
           description="Log a catch to start tracking your fishing trips, favorite lakes, and personal bests."
-          ><AppButton :href="legacyUrl(`${userPath}/fishcatch/new`)"
+          ><AppButton @click="catchModal = true"
             ><Plus :size="16" aria-hidden="true" />Log your first catch</AppButton
           ></ContentPanel
         >
         <CatchSection
-          v-else
+          v-if="data.stats.totalCatches > 0"
           title="Recent catches"
-          description="The latest entries in your journal."
-          :catches="data.recentCatches"
+          :catches="catchFilter === 'all' ? data.recentCatches : data.recentMasterAngler"
           :username="user.username"
-          :view-all-to="{ name: 'fish-catches', params: { username: user.username } }"
-          empty-message="No recent catches to display."
-        />
-        <CatchSection
-          title="Master Angler catches"
-          description="The catches that stand out."
-          :catches="data.recentMasterAngler"
-          :username="user.username"
-          :view-all="legacyUrl(`${userPath}/master-angler/all`)"
-          empty-message="No Master Angler catches yet. Your next trip could change that."
-        />
+          :view-all-to="
+            catchFilter === 'all'
+              ? { name: 'fish-catches', params: { username: user.username } }
+              : `${userPath}/master-angler/all`
+          "
+          :empty-message="
+            catchFilter === 'all'
+              ? 'No recent catches to display.'
+              : 'No Master Angler catches yet.'
+          "
+        >
+          <template #filters>
+            <label class="catch-filter">
+              <span class="sr-only">Show catches</span>
+              <select v-model="catchFilter">
+                <option value="all">All catches</option>
+                <option value="master">Master Angler catches</option>
+              </select>
+            </label>
+          </template>
+        </CatchSection>
+        <CatchChart :user-id="user.user_id" :token="token" @expired="catchExpired" />
         <AdminReviews
           v-if="user.is_admin && data.pendingReviews"
           :reviews="data.pendingReviews"
           :username="user.username"
         />
       </template>
+      <FishCatchModal
+        v-if="catchModal"
+        :user="user"
+        :token="token"
+        @close="catchModal = false"
+        @saved="catchSaved"
+        @expired="catchExpired"
+      />
     </main>
   </div>
   <main v-else id="main-content" class="sign-in-layout">
     <SignInPanel :busy="signingIn" :error="loginError" @submit="handleSignIn" />
   </main>
 </template>
+
+<style scoped>
+.catch-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.catch-filter select {
+  min-width: 0;
+  min-height: 32px;
+  padding: 5px 8px;
+  border: 1px solid #9aadc3;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--navy);
+  font-size: 12px;
+}
+@media (pointer: coarse) {
+  .catch-filter select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}
+</style>

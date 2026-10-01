@@ -1,7 +1,7 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { ArrowLeft, Fish, MapPin, Trophy } from '@lucide/vue'
+import { ArrowLeft, Download, MapPin, Trophy } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
@@ -9,6 +9,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import DetailList from '@/components/ui/DetailList.vue'
 import { useSession } from '@/composables/useSession'
 import { getFishCatch, catchPhotoUrl } from '@/api/fishCatch'
+import { getMasterAnglerCertificate } from '@/api/masterAngler'
 
 const route = useRoute()
 const { token, user, signingIn, signIn, signOut } = useSession()
@@ -19,6 +20,56 @@ const missing = ref(false)
 const loginError = ref('')
 const attempt = ref(0)
 const imageFailed = ref(false)
+const certificateBusy = ref(false)
+const certificateError = ref('')
+const certificateNotice = ref('')
+let certificateController
+const canDownloadCertificate = computed(
+  () =>
+    fish.value?.master_angler === true &&
+    (String(fish.value.user_id) === String(user.value?.user_id) || user.value?.is_admin),
+)
+function resetCertificate() {
+  certificateController?.abort()
+  certificateBusy.value = false
+  certificateError.value = ''
+  certificateNotice.value = ''
+}
+onBeforeUnmount(resetCertificate)
+async function downloadCertificate() {
+  if (certificateBusy.value || !canDownloadCertificate.value) return
+  const id = fish.value.id
+  const controller = new AbortController()
+  certificateController = controller
+  certificateBusy.value = true
+  certificateError.value = ''
+  certificateNotice.value = ''
+  try {
+    const pdf = await getMasterAnglerCertificate(id, token.value, controller.signal)
+    if (controller.signal.aborted) return
+    const url = URL.createObjectURL(pdf)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `master_angler_${id}_certificate.pdf`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    certificateNotice.value = 'Your certificate download has started.'
+  } catch (failure) {
+    if (controller.signal.aborted) return
+    if (failure.status === 401) {
+      loginError.value = 'Your session has expired. Please sign in again.'
+      signOut()
+    } else
+      certificateError.value =
+        failure.status === 403 || failure.status === 404
+          ? failure.message
+          : 'Unable to generate your certificate. Please try again.'
+  } finally {
+    if (!controller.signal.aborted) certificateBusy.value = false
+  }
+}
 const species = computed(() => fish.value?.species?.name || 'Unknown species')
 const photo = computed(() => catchPhotoUrl(fish.value?.fish_image))
 const date = computed(() => {
@@ -41,7 +92,7 @@ const catchDetails = computed(() => [
   { label: 'Species', value: species.value },
   { label: 'Date caught', value: date.value },
   { label: 'Time caught', value: time.value },
-  { label: 'Master Angler eligible', value: fish.value?.master_angler ? 'Yes' : 'No' },
+  { label: 'Master Angler', value: fish.value?.master_angler ? 'Yes' : 'No' },
   ...(fish.value?.witness && !['NA', 'N/A'].includes(fish.value.witness)
     ? [{ label: 'Witness', value: fish.value.witness }]
     : []),
@@ -67,6 +118,7 @@ const conditions = computed(() => [
 watch(
   [() => route.params.id, token, attempt],
   async ([id, currentToken], _, onCleanup) => {
+    resetCertificate()
     fish.value = null
     error.value = ''
     missing.value = false
@@ -146,29 +198,34 @@ function handleSignOut() {
             <MapPin :size="15" aria-hidden="true" />{{ fish.lake?.name || 'Lake not recorded' }}
           </p>
         </div>
-        <span v-if="fish.master_angler" class="eligibility"
-          ><Trophy :size="16" aria-hidden="true" />Master Angler eligible</span
-        >
+        <div v-if="fish.master_angler" class="certificate-actions">
+          <span class="eligibility"><Trophy :size="16" aria-hidden="true" />Master Angler</span>
+          <AppButton
+            v-if="canDownloadCertificate"
+            variant="navy"
+            :disabled="certificateBusy"
+            :aria-busy="certificateBusy"
+            @click="downloadCertificate"
+          >
+            <Download :size="16" aria-hidden="true" />{{
+              certificateBusy ? 'Generating PDF…' : 'Download certificate'
+            }}
+          </AppButton>
+        </div>
       </header>
+      <p v-if="certificateError" role="alert" class="error-message">{{ certificateError }}</p>
+      <p v-if="certificateNotice" role="status" class="muted">{{ certificateNotice }}</p>
       <div class="catch-overview">
         <section class="catch-photo" aria-label="Catch photo">
           <img
-            v-if="photo && !imageFailed"
-            :src="photo"
-            :alt="`${species} caught on ${date}`"
+            :src="photo && !imageFailed ? photo : '/images/stock-fish.jpg'"
+            :alt="
+              photo && !imageFailed
+                ? `${species} caught on ${date}`
+                : 'Default fish image — no catch photo available'
+            "
             @error="imageFailed = true"
           />
-          <div v-else class="photo-placeholder">
-            <Fish :size="64" :stroke-width="1.3" aria-hidden="true" />
-            <h2>{{ imageFailed ? 'Photo unavailable' : 'No catch photo' }}</h2>
-            <p>
-              {{
-                imageFailed
-                  ? 'The saved photo could not be loaded.'
-                  : 'A photo hasn’t been added to this catch.'
-              }}
-            </p>
-          </div>
         </section>
         <ContentPanel title="Catch details">
           <dl class="measurements">
@@ -215,6 +272,22 @@ function handleSignOut() {
 </template>
 
 <style scoped>
+.certificate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+@media (max-width: 650px) {
+  .certificate-actions {
+    width: 100%;
+  }
+  .certificate-actions .button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
 .catch-page {
   max-width: 1250px;
   margin: 0 auto;
@@ -290,22 +363,6 @@ function handleSignOut() {
   width: 100%;
   max-height: 500px;
   object-fit: contain;
-}
-.photo-placeholder {
-  padding: 40px 24px;
-  text-align: center;
-  color: #7e95ae;
-}
-.photo-placeholder h2 {
-  margin-top: 22px;
-  color: #4f6781;
-  font-size: 17px;
-}
-.photo-placeholder p {
-  margin-top: 10px;
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.7;
 }
 .measurements {
   display: grid;

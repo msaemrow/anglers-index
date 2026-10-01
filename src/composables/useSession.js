@@ -18,17 +18,14 @@ export function useSession() {
 
   const user = computed(() => (token.value ? decodeSession(token.value) : null))
 
-  async function signIn(credentials) {
+  async function authenticate(path, body) {
     loginController?.abort()
     loginController = new AbortController()
     signingIn.value = true
     try {
-      const response = await request('/users/login', {
+      const response = await request(path, {
         method: 'POST',
-        body: {
-          username: credentials.username.trim().toLowerCase(),
-          password: credentials.password,
-        },
+        body,
         signal: loginController.signal,
       })
       if (!decodeSession(response.token))
@@ -44,6 +41,23 @@ export function useSession() {
     }
   }
 
+  function signIn(credentials) {
+    return authenticate('/users/login', {
+      username: credentials.username.trim().toLowerCase(),
+      password: credentials.password,
+    })
+  }
+
+  function signUp(details) {
+    return authenticate('/users/signup', {
+      username: details.username.trim().toLowerCase(),
+      password: details.password,
+      first_name: details.first_name.trim(),
+      last_name: details.last_name.trim(),
+      email: details.email.trim().toLowerCase(),
+    })
+  }
+
   function signOut() {
     loginController?.abort()
     token.value = ''
@@ -55,5 +69,5 @@ export function useSession() {
   }
 
   onScopeDispose(() => loginController?.abort())
-  return { token, user, signingIn, signIn, signOut }
+  return { token, user, signingIn, signIn, signUp, signOut }
 }

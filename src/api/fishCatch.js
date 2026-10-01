@@ -15,11 +15,11 @@ export function catchPhotoUrl(path) {
   return `${base}/${path.replace(/^\/+/, '')}`
 }
 
-export async function getFishCatches(userId, token, signal) {
+export async function getFishCatches(userId, token, signal, date) {
   if (!userId) throw new ApiError('A user is required to load catches.', 400)
   try {
     const data = await request(
-      `/fishcatch?${new URLSearchParams({ user_id: userId, orderBy: 'date:DESC' })}`,
+      `/fishcatch?${new URLSearchParams({ user_id: userId, orderBy: 'date:DESC', ...(date ? { date } : {}) })}`,
       { token, signal },
     )
     if (!Array.isArray(data) || data.some((fish) => !fish?.id))
@@ -31,4 +31,46 @@ export async function getFishCatches(userId, token, signal) {
       return []
     throw error
   }
+}
+
+export async function getCatchSpecies(signal) {
+  const data = await request('/species', { signal })
+  if (!Array.isArray(data) || data.some((item) => !item?.id))
+    throw new ApiError('The API returned an unexpected species list.', 200)
+  return data
+}
+
+export async function createFishCatch(fields, token, signal) {
+  const body = {}
+  for (const field of ['species_id', 'lake_id', 'lure_id']) {
+    const value = Number(fields[field])
+    if (!Number.isSafeInteger(value) || value <= 0)
+      throw new ApiError('Select a species, lake, and lure.', 400)
+    body[field] = value
+  }
+  for (const field of ['length', 'weight']) {
+    const value = Number(fields[field])
+    if (String(fields[field] ?? '').trim() === '' || !Number.isFinite(value) || value < 0)
+      throw new ApiError('Enter a nonnegative length and weight, or 0 if not measured.', 400)
+    body[field] = value
+  }
+  const local = String(fields.datetime ?? '')
+  const date = new Date(local)
+  if (
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(local) ||
+    Number.isNaN(date.getTime()) ||
+    localDateTime(date) !== local
+  )
+    throw new ApiError('Enter a valid catch date and time.', 400)
+  body.date = local.slice(0, 10)
+  body.time = `${local.slice(11)}:00`
+  body.timestamp = Math.floor(date.getTime() / 1000)
+  const data = await request('/fishcatch', { method: 'POST', body, token, signal })
+  if (!data.id) throw new ApiError('The API returned an unexpected catch.', 200)
+  return data
+}
+
+export function localDateTime(date = new Date()) {
+  const pad = (value) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }

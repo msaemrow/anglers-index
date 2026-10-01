@@ -31,11 +31,14 @@ export async function saveLure(fields, token, id, signal) {
     id,
   )
 }
-export async function getTackleIds(userId, token, signal) {
+export async function getTackleBox(userId, token, signal) {
   const data = await request(`/tackle-box/${encodeURIComponent(userId)}`, { token, signal })
   if (!Array.isArray(data.tackle_box) || data.tackle_box.some((lure) => !lure?.id))
     throw new ApiError('The API returned an unexpected tackle box.', 200)
-  return data.tackle_box.map((lure) => String(lure.id))
+  return data.tackle_box
+}
+export async function getTackleIds(userId, token, signal) {
+  return (await getTackleBox(userId, token, signal)).map((lure) => String(lure.id))
 }
 export function setTackleMembership(userId, lureId, included, token, signal) {
   return request('/tackle-box', {

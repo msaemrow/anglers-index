@@ -6,11 +6,22 @@ import AppNavbar from '@/components/AppNavbar.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
 import DataTable from '@/components/ui/DataTable.vue'
+import LakeEditor from '@/components/lakes/LakeEditor.vue'
 import { useSession } from '@/composables/useSession'
 import { getLakes } from '@/api/lakes'
-import { legacyUrl } from '@/api/legacy'
 
-const { user, signOut } = useSession()
+const { user, token, signOut } = useSession()
+const editor = ref(null)
+const notice = ref('')
+const sessionError = ref('')
+watch(token, () => {
+  editor.value = null
+})
+function expired() {
+  editor.value = null
+  sessionError.value = 'Your session has expired. Sign in from the dashboard to save lakes.'
+  signOut()
+}
 const lakes = ref([])
 const loading = ref(true)
 const error = ref('')
@@ -38,6 +49,15 @@ const columns = [
   { key: 'state', label: 'State' },
   { key: 'actions', label: 'Details', sortable: false },
 ]
+function saved(lake) {
+  const editing = Boolean(editor.value?.lake)
+  lakes.value = editing
+    ? lakes.value.map((item) => (String(item.id) === String(lake.id) ? lake : item))
+    : [...lakes.value, lake]
+  editor.value = null
+  clearFilters()
+  notice.value = `${lake.name} ${editing ? 'updated' : 'added'}.`
+}
 function clearFilters() {
   search.value = ''
   state.value = ''
@@ -66,17 +86,24 @@ watch(
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
   <AppNavbar :user="user" @sign-out="signOut" />
-  <main id="main-content" class="lakes-page" :aria-busy="loading">
+  <main id="main-content" class="list-page compact-list" :aria-busy="loading">
+    <p v-if="notice" class="save-notice" role="status">{{ notice }}</p>
+    <p v-if="sessionError" class="error-message" role="alert">
+      {{ sessionError }} <RouterLink to="/dashboard">Go to dashboard</RouterLink>
+    </p>
     <header class="page-header">
       <div>
-        <p class="eyebrow">Explore the water</p>
-        <h1>Lakes</h1>
-        <p class="muted">Find your next fishing spot and explore lake details.</p>
+        <h1>
+          Lakes
+          <span v-if="!loading && !error" class="directory-count">{{
+            lakes.length.toLocaleString()
+          }}</span>
+        </h1>
       </div>
       <div class="page-actions">
         <AppButton variant="secondary" :disabled="loading" @click="attempt++"
           ><RefreshCw :size="15" aria-hidden="true" />Refresh</AppButton
-        ><AppButton v-if="user?.is_admin" :href="legacyUrl('/lakes/new')"
+        ><AppButton v-if="user?.is_admin" :disabled="loading" @click="editor = { lake: null }"
           ><Plus :size="16" aria-hidden="true" />Add lake</AppButton
         >
       </div>
@@ -97,11 +124,7 @@ watch(
       title="No lakes yet"
       description="Lakes will appear here when added to the directory."
     />
-    <ContentPanel
-      v-else
-      title="Lake directory"
-      :description="`${lakes.length.toLocaleString()} lakes to explore. Open a lake to see its location and details.`"
-    >
+    <ContentPanel v-else title="Lake directory" hide-header>
       <div class="toolbar">
         <label class="search"
           >Search lakes<input
@@ -137,6 +160,14 @@ watch(
             :to="{ name: 'lake', params: { id: row.id } }"
             :aria-label="`View ${row.name || 'lake'} details`"
             >View lake →</RouterLink
+          >
+          <AppButton
+            v-if="user?.is_admin"
+            class="edit-button"
+            variant="secondary"
+            :aria-label="`Edit ${row.name}`"
+            @click="editor = { lake: row }"
+            >Edit</AppButton
           ></template
         >
       </DataTable>
@@ -145,17 +176,28 @@ watch(
         <p>Try another search or clear your filters.</p>
       </div>
     </ContentPanel>
+    <LakeEditor
+      v-if="editor && user?.is_admin"
+      :lake="editor.lake"
+      :token="token"
+      @close="editor = null"
+      @saved="saved"
+      @expired="expired"
+    />
   </main>
 </template>
 
 <style scoped>
-.lakes-page {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 36px clamp(20px, 4vw, 48px) 48px;
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
+.edit-button {
+  margin-left: 12px;
+}
+.save-notice {
+  color: #28543f;
+  background: #e3f1e8;
+  border: 1px solid #a8cbb6;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 13px;
 }
 .page-actions {
   display: flex;

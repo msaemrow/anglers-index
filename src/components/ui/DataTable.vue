@@ -129,8 +129,8 @@ table {
   white-space: nowrap;
 }
 th {
-  background: #f1f5fa;
-  color: #526a85;
+  background: var(--blue);
+  color: #fff;
   font-weight: 600;
 }
 th,
@@ -151,8 +151,18 @@ th button {
 tbody tr + tr {
   border-top: 1px solid var(--border);
 }
-tbody tr:hover {
-  background: #f7f9fc;
+th + th {
+  border-left: 1px solid #ffffff26;
+}
+th button:focus-visible {
+  outline-color: #fff;
+}
+tbody tr:nth-child(even) {
+  background: #f0f5fa;
+}
+tbody tr:hover,
+tbody tr:focus-within {
+  background: #e1edf7;
 }
 .pagination {
   display: flex;
@@ -161,6 +171,8 @@ tbody tr:hover {
   flex-wrap: wrap;
   gap: 16px;
   margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
   font-size: 12px;
   color: var(--muted);
 }

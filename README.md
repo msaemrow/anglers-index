@@ -16,7 +16,6 @@ The default configuration works without an environment file. Copy `.env.example`
 - `VITE_API_BASE_URL`: `/api` by default.
 - `API_PROXY_TARGET`: existing API address, default `http://localhost:3001`.
 - `VITE_MAPBOX_ACCESS_TOKEN`: public Mapbox token (`pk.*`) for the interactive lake map. Add it to `.env.local` and restart Vite. For deployed builds, set it before building. The map uses Mapbox Outdoors with a lake marker, zoom controls, and an approximate-location label. Without a token, lake details remain available and a map placeholder is shown.
-- `VITE_LEGACY_APP_URL`: existing frontend address, default `http://localhost:3000`.
 
 The development proxy forwards `/api/*` to the backend. It strips the browser Origin header on that server-to-server request so no backend CORS change is needed for local development.
 
@@ -45,4 +44,4 @@ Tests cover session parsing/expiry, API authentication and cancellation, catch r
 
 ## Deployment
 
-`npm run build` produces `dist/`. Configure your host to serve `index.html` for Vue Router history routes. The Vite development proxy is not part of the production build: configure your deployment to proxy `/api` to the backend, or set `VITE_API_BASE_URL` to the deployed API URL and allow the frontend origin in backend CORS. Set `VITE_LEGACY_APP_URL` to the existing production app during migration. Do not put secrets in `VITE_*` variables.
+`npm run build` produces `dist/`. Configure your host to serve `index.html` for Vue Router history routes. The Vite development proxy is not part of the production build: configure your deployment to proxy `/api` to the backend, or set `VITE_API_BASE_URL` to the deployed API URL and allow the frontend origin in backend CORS. Unimplemented routes stay in this app and display a placeholder page. Do not put secrets in `VITE_*` variables.

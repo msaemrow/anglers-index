@@ -1,7 +1,6 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { Fish, LogOut, Menu, X } from '@lucide/vue'
-import { legacyUrl } from '@/api/legacy'
 
 defineProps({ user: { type: Object, default: null } })
 const emit = defineEmits(['sign-out'])
@@ -9,7 +8,6 @@ const menuOpen = ref(false)
 const navbar = ref(null)
 const menuButton = ref(null)
 const navId = 'primary-navigation'
-const staticLinks = [{ label: 'Species', path: '/species/all' }]
 function closeOnOutside(event) {
   if (!navbar.value?.contains(event.target)) menuOpen.value = false
 }
@@ -70,8 +68,12 @@ function signOut() {
           @click="menuOpen = false"
           >Catches</RouterLink
         >
-        <a class="nav-link" :href="legacyUrl(`/${encodeURIComponent(user.username)}/tackle-box`)"
-          >Tackle box</a
+        <RouterLink
+          class="nav-link"
+          active-class="nav-link--active"
+          :to="{ name: 'tackle-box', params: { username: user.username } }"
+          @click="menuOpen = false"
+          >Tackle box</RouterLink
         >
         <RouterLink
           to="/lure/all"
@@ -87,12 +89,12 @@ function signOut() {
           @click="menuOpen = false"
           >Lakes</RouterLink
         >
-        <a
-          v-for="link in staticLinks"
-          :key="link.path"
+        <RouterLink
+          to="/species/all"
           class="nav-link"
-          :href="legacyUrl(link.path)"
-          >{{ link.label }}</a
+          active-class="nav-link--active"
+          @click="menuOpen = false"
+          >Species</RouterLink
         >
         <div class="nav-account">
           <span>{{ user.first_name || user.username }}</span
