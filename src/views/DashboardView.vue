@@ -1,5 +1,6 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
+import { ref, watch } from 'vue'
 import { Plus } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
@@ -35,7 +36,6 @@ function catchExpired() {
   loginError.value = 'Your session has expired. Please sign in again.'
   signOut()
 }
-const userPath = computed(() => `/${encodeURIComponent(user.value?.username || '')}`)
 
 watch(
   [token, attempt],
@@ -112,33 +112,46 @@ function handleSignOut() {
         <CatchSection
           v-if="data.stats.totalCatches > 0"
           title="Recent catches"
-          :catches="catchFilter === 'all' ? data.recentCatches : data.recentMasterAngler"
-          :username="user.username"
-          :view-all-to="
+          :catches="
             catchFilter === 'all'
-              ? { name: 'fish-catches', params: { username: user.username } }
-              : `${userPath}/master-angler/all`
+              ? data.recentCatches
+              : catchFilter === 'eligible'
+                ? data.recentEligible
+                : data.recentMasterAngler
           "
+          :username="user.username"
+          :view-all-to="{
+            name: 'fish-catches',
+            params: { username: user.username },
+            query:
+              catchFilter === 'all'
+                ? {}
+                : { award: catchFilter === 'eligible' ? 'eligible' : 'approved' },
+          }"
           :empty-message="
             catchFilter === 'all'
               ? 'No recent catches to display.'
-              : 'No Master Angler catches yet.'
+              : catchFilter === 'eligible'
+                ? 'No eligible catches awaiting review.'
+                : 'No approved Master Angler catches yet.'
           "
         >
           <template #filters>
             <label class="catch-filter">
               <span class="sr-only">Show catches</span>
-              <select v-model="catchFilter">
+              <AppSelect size="compact" v-model="catchFilter">
                 <option value="all">All catches</option>
-                <option value="master">Master Angler catches</option>
-              </select>
+                <option value="eligible">Eligible · awaiting review</option>
+                <option value="master">Approved Master Angler catches</option>
+              </AppSelect>
             </label>
           </template>
         </CatchSection>
         <CatchChart :user-id="user.user_id" :token="token" @expired="catchExpired" />
         <AdminReviews
-          v-if="user.is_admin && data.pendingReviews"
-          :reviews="data.pendingReviews"
+          v-if="user.is_admin"
+          :token="token"
+          @expired="catchExpired"
           :username="user.username"
         />
       </template>
@@ -165,21 +178,5 @@ function handleSignOut() {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-}
-.catch-filter select {
-  min-width: 0;
-  min-height: 32px;
-  padding: 5px 8px;
-  border: 1px solid #9aadc3;
-  border-radius: 8px;
-  background: #fff;
-  color: var(--navy);
-  font-size: 12px;
-}
-@media (pointer: coarse) {
-  .catch-filter select {
-    min-height: 44px;
-    font-size: 16px;
-  }
 }
 </style>

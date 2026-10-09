@@ -1,7 +1,10 @@
 <script setup>
+import IconButton from '@/components/ui/IconButton.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Plus, RefreshCw } from '@lucide/vue'
+import { Eye, Pencil, Plus } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
@@ -91,23 +94,18 @@ watch(
     <p v-if="sessionError" class="error-message" role="alert">
       {{ sessionError }} <RouterLink to="/dashboard">Go to dashboard</RouterLink>
     </p>
-    <header class="page-header">
-      <div>
-        <h1>
-          Lakes
-          <span v-if="!loading && !error" class="directory-count">{{
-            lakes.length.toLocaleString()
-          }}</span>
-        </h1>
-      </div>
-      <div class="page-actions">
-        <AppButton variant="secondary" :disabled="loading" @click="attempt++"
-          ><RefreshCw :size="15" aria-hidden="true" />Refresh</AppButton
-        ><AppButton v-if="user?.is_admin" :disabled="loading" @click="editor = { lake: null }"
-          ><Plus :size="16" aria-hidden="true" />Add lake</AppButton
-        >
-      </div>
-    </header>
+    <PageHeader
+      title="Lakes"
+      :count-text="
+        !loading && !error
+          ? `${lakes.length.toLocaleString()} ${lakes.length === 1 ? 'lake' : 'lakes'}`
+          : ''
+      "
+    >
+      <AppButton v-if="user?.is_admin" :disabled="loading" @click="editor = { lake: null }"
+        ><Plus :size="16" aria-hidden="true" />Add lake</AppButton
+      >
+    </PageHeader>
     <div v-if="loading" class="loading-state" role="status">
       <span class="loading-line" aria-hidden="true" />
       <p>Loading lakes…</p>
@@ -133,10 +131,10 @@ watch(
             placeholder="Lake, town, county, or state"
         /></label>
         <label
-          >State<select v-model="state">
+          >State<AppSelect size="compact" v-model="state">
             <option value="">All states</option>
             <option v-for="value in states" :key="value" :value="value">{{ value }}</option>
-          </select></label
+          </AppSelect></label
         >
         <AppButton v-if="search || state" variant="secondary" @click="clearFilters"
           >Clear filters</AppButton
@@ -154,22 +152,21 @@ watch(
             row.name || 'Unnamed lake'
           }}</RouterLink></template
         >
-        <template #cell-actions="{ row }"
-          ><RouterLink
-            class="detail-link"
+        <template #cell-actions="{ row }">
+          <IconButton
             :to="{ name: 'lake', params: { id: row.id } }"
-            :aria-label="`View ${row.name || 'lake'} details`"
-            >View lake →</RouterLink
+            :label="`View ${row.name || 'lake'} details`"
           >
-          <AppButton
+            <Eye :size="18" aria-hidden="true" />
+          </IconButton>
+          <IconButton
             v-if="user?.is_admin"
-            class="edit-button"
-            variant="secondary"
-            :aria-label="`Edit ${row.name}`"
+            :label="`Edit ${row.name || 'lake'}`"
             @click="editor = { lake: row }"
-            >Edit</AppButton
-          ></template
-        >
+          >
+            <Pencil :size="18" aria-hidden="true" />
+          </IconButton>
+        </template>
       </DataTable>
       <div v-else class="empty-message" role="status">
         <h3>No matching lakes</h3>
@@ -188,9 +185,6 @@ watch(
 </template>
 
 <style scoped>
-.edit-button {
-  margin-left: 12px;
-}
 .save-notice {
   color: #28543f;
   background: #e3f1e8;
@@ -223,8 +217,7 @@ watch(
   max-width: 440px;
   min-width: min(100%, 240px);
 }
-.toolbar input,
-.toolbar select {
+.toolbar input {
   width: 100%;
   min-height: 42px;
   padding: 10px 12px;
@@ -237,12 +230,7 @@ watch(
 .lake-link {
   font-weight: 600;
 }
-.detail-link {
-  color: #577394;
-  font-size: 12px;
-}
-.lake-link:hover,
-.detail-link:hover {
+.lake-link:hover {
   text-decoration: underline;
 }
 .empty-message p {

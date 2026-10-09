@@ -1,5 +1,5 @@
 <script setup>
-import { MapPin, Trophy, ArrowUpRight } from '@lucide/vue'
+import { MapPin, Trophy, ArrowUpRight, Clock } from '@lucide/vue'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 const props = defineProps({
@@ -23,13 +23,22 @@ function measurement(value, unit) {
     <div class="catch-card__top">
       <time :datetime="catchData.date || undefined">{{ date }}</time
       ><span
-        v-if="catchData.approved_master_angler"
+        v-if="catchData.master_angler_status === 'approved'"
         class="trophy"
         title="Approved Master Angler catch"
         ><Trophy :size="16" aria-hidden="true" /><span class="sr-only"
           >Approved Master Angler catch</span
         ></span
       >
+      <span
+        v-else-if="catchData.master_angler_status === 'pending'"
+        class="eligible"
+        title="Eligible · awaiting review"
+      >
+        <Clock :size="16" aria-hidden="true" /><span class="sr-only"
+          >Eligible · awaiting Master Angler review</span
+        >
+      </span>
     </div>
     <h3>{{ catchData.species?.name || 'Unknown species' }}</h3>
     <p class="catch-card__lake">
@@ -48,3 +57,10 @@ function measurement(value, unit) {
     <span class="catch-card__link">View catch <ArrowUpRight :size="14" aria-hidden="true" /></span>
   </RouterLink>
 </template>
+
+<style scoped>
+.eligible {
+  color: #577394;
+  display: inline-flex;
+}
+</style>

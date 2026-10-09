@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Plus, RefreshCw, Trophy } from '@lucide/vue'
+import { Plus, Trophy } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -116,9 +116,7 @@ function handleSignOut() {
         <h1>Species &amp; personal bests</h1>
       </div>
       <div class="page-actions">
-        <AppButton variant="secondary" :disabled="loading" @click="attempt++"
-          ><RefreshCw :size="15" aria-hidden="true" />Refresh</AppButton
-        ><AppButton v-if="user.is_admin" @click="editor = true"
+        <AppButton v-if="user.is_admin" @click="editor = true"
           ><Plus :size="16" aria-hidden="true" />Add species</AppButton
         >
       </div>
@@ -166,7 +164,7 @@ function handleSignOut() {
           <template #cell-name="{ row }"
             ><span class="species-name"
               ><Trophy
-                v-if="row.approved_master_angler"
+                v-if="row.master_angler_status === 'approved'"
                 class="trophy"
                 :size="16"
                 aria-label="Approved Master Angler"

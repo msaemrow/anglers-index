@@ -30,6 +30,17 @@ export default createRouter({
       name: 'fish-catch',
       component: () => import('@/views/FishCatchView.vue'),
     },
+    {
+      path: '/:username/catch-analysis',
+      name: 'catch-analysis',
+      component: () => import('@/views/CatchAnalysisView.vue'),
+    },
+    { path: '/:username/trips', name: 'trips', component: () => import('@/views/TripsView.vue') },
+    {
+      path: '/:username/trips/:id(\\d+)',
+      name: 'trip',
+      component: () => import('@/views/TripView.vue'),
+    },
     { path: '/resources', name: 'resources', component: () => import('@/views/ResourcesView.vue') },
     ...['podcasts', 'channels', 'how-to-videos', 'blog'].map((kind) => ({
       path: `/resources/${kind}`,

@@ -1,12 +1,13 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { ArrowLeft, Download, MapPin, Trophy } from '@lucide/vue'
+import { ArrowLeft, Download, MapPin, Trophy, Clock } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import DetailList from '@/components/ui/DetailList.vue'
+import MasterAnglerReviewControls from '@/components/catches/MasterAnglerReviewControls.vue'
 import { useSession } from '@/composables/useSession'
 import { getFishCatch, catchPhotoUrl } from '@/api/fishCatch'
 import { getMasterAnglerCertificate } from '@/api/masterAngler'
@@ -26,7 +27,7 @@ const certificateNotice = ref('')
 let certificateController
 const canDownloadCertificate = computed(
   () =>
-    fish.value?.master_angler === true &&
+    fish.value?.master_angler_status === 'approved' &&
     (String(fish.value.user_id) === String(user.value?.user_id) || user.value?.is_admin),
 )
 function resetCertificate() {
@@ -70,6 +71,20 @@ async function downloadCertificate() {
     if (!controller.signal.aborted) certificateBusy.value = false
   }
 }
+function reviewSaved(review) {
+  fish.value = {
+    ...fish.value,
+    master_angler_review: review,
+    master_angler_status: review.status,
+    master_angler: review.status === 'approved',
+    approved_master_angler: review.status === 'approved',
+    eligible_master_angler: false,
+  }
+}
+function reviewExpired() {
+  loginError.value = 'Your session has expired. Please sign in again.'
+  signOut()
+}
 const species = computed(() => fish.value?.species?.name || 'Unknown species')
 const photo = computed(() => catchPhotoUrl(fish.value?.fish_image))
 const date = computed(() => {
@@ -88,11 +103,25 @@ const time = computed(() => {
 function recorded(value, unit = '') {
   return value === null || value === undefined || value === '' ? 'Not recorded' : `${value}${unit}`
 }
+const masterAnglerStatus = computed(() => {
+  const status = fish.value?.master_angler_status
+  return status && status !== 'not_eligible'
+    ? status.charAt(0).toUpperCase() + status.slice(1)
+    : 'Not eligible'
+})
 const catchDetails = computed(() => [
   { label: 'Species', value: species.value },
   { label: 'Date caught', value: date.value },
   { label: 'Time caught', value: time.value },
-  { label: 'Master Angler', value: fish.value?.master_angler ? 'Yes' : 'No' },
+  { label: 'Master Angler', value: masterAnglerStatus.value },
+  ...(user.value?.is_admin && fish.value?.master_angler_status === 'pending'
+    ? [
+        {
+          label: 'Required award length',
+          value: recorded(fish.value.species?.master_angler_length, ' in'),
+        },
+      ]
+    : []),
   ...(fish.value?.witness && !['NA', 'N/A'].includes(fish.value.witness)
     ? [{ label: 'Witness', value: fish.value.witness }]
     : []),
@@ -167,9 +196,7 @@ function handleSignOut() {
   <a class="skip-link" href="#main-content">Skip to content</a>
   <AppNavbar :user="user" @sign-out="handleSignOut" />
   <main v-if="user" id="main-content" class="catch-page" :aria-busy="loading">
-    <RouterLink
-      :to="{ name: 'fish-catches', params: { username: user.username } }"
-      class="back-link"
+    <RouterLink :to="{ name: 'dashboard' }" class="back-link"
       ><ArrowLeft :size="16" aria-hidden="true" />Back to dashboard</RouterLink
     >
     <div v-if="loading" class="loading-state" role="status">
@@ -190,15 +217,32 @@ function handleSignOut() {
     </ContentPanel>
     <template v-else-if="fish">
       <header class="page-header catch-header">
-        <div>
-          <p class="eyebrow">Your fishing journal · Catch #{{ fish.id }}</p>
+        <div class="catch-heading">
           <h1>{{ species }}</h1>
           <p class="muted">{{ date }} <span aria-hidden="true">·</span> {{ time }}</p>
           <p class="catch-location">
             <MapPin :size="15" aria-hidden="true" />{{ fish.lake?.name || 'Lake not recorded' }}
           </p>
+          <RouterLink
+            v-if="fish.trip_id && String(fish.user_id) === String(user.user_id)"
+            :to="{ name: 'trip', params: { username: user.username, id: fish.trip_id } }"
+            >View fishing trip →</RouterLink
+          >
         </div>
-        <div v-if="fish.master_angler" class="certificate-actions">
+        <MasterAnglerReviewControls
+          v-if="user.is_admin && fish.master_angler_status === 'pending'"
+          :key="fish.master_angler_review.id"
+          :submission-id="fish.master_angler_review.id"
+          :token="token"
+          :reasons="fish.master_angler_denial_reasons || []"
+          @reviewed="reviewSaved"
+          @expired="reviewExpired"
+          @refresh="attempt++"
+        />
+        <span v-if="fish.master_angler_status === 'denied'" class="denial-notice" role="status"
+          >Denied - {{ fish.master_angler_review.denial_reason }}</span
+        >
+        <div v-if="fish.master_angler_status === 'approved'" class="certificate-actions">
           <span class="eligibility"><Trophy :size="16" aria-hidden="true" />Master Angler</span>
           <AppButton
             v-if="canDownloadCertificate"
@@ -208,11 +252,14 @@ function handleSignOut() {
             @click="downloadCertificate"
           >
             <Download :size="16" aria-hidden="true" />{{
-              certificateBusy ? 'Generating PDF…' : 'Download certificate'
+              certificateBusy ? 'Generating PDF…' : 'Generate certificate'
             }}
           </AppButton>
         </div>
       </header>
+      <p v-if="fish.master_angler_status === 'pending'" role="status" class="eligibility">
+        <Clock :size="16" aria-hidden="true" />Catch is under review for Master Angler award.
+      </p>
       <p v-if="certificateError" role="alert" class="error-message">{{ certificateError }}</p>
       <p v-if="certificateNotice" role="status" class="muted">{{ certificateNotice }}</p>
       <div class="catch-overview">
@@ -272,6 +319,24 @@ function handleSignOut() {
 </template>
 
 <style scoped>
+.catch-heading {
+  min-width: 0;
+  max-width: 100%;
+}
+.denial-notice {
+  margin-left: auto;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e8b9b9;
+  border-radius: 7px;
+  background: #fff5f5;
+  color: #a33b3b;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
 .certificate-actions {
   display: flex;
   flex-wrap: wrap;

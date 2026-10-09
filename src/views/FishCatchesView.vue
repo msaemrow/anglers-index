@@ -1,7 +1,10 @@
 <script setup>
+import PageHeader from '@/components/ui/PageHeader.vue'
+import IconButton from '@/components/ui/IconButton.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { Plus, RefreshCw, Trophy, Fish } from '@lucide/vue'
+import { Eye, Plus, Trophy, Fish, Clock } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -51,7 +54,15 @@ function catchExpired() {
   signOut()
 }
 const search = ref('')
-const eligibleOnly = ref(false)
+const awardFilter = ref(
+  ['eligible', 'approved'].includes(route.query.award) ? route.query.award : 'all',
+)
+watch(
+  () => route.query.award,
+  (value) => {
+    awardFilter.value = ['eligible', 'approved'].includes(value) ? value : 'all'
+  },
+)
 const columns = [
   { key: 'date', label: 'Date' },
   { key: 'species', label: 'Species' },
@@ -65,7 +76,10 @@ const rows = computed(() => {
   return catches.value
     .filter(
       (fish) =>
-        (!eligibleOnly.value || fish.master_angler) &&
+        (awardFilter.value === 'all' ||
+          (awardFilter.value === 'eligible'
+            ? fish.master_angler_status === 'pending'
+            : fish.master_angler_status === 'approved')) &&
         (!query ||
           [fish.species?.name, fish.lake?.name, fish.lure?.name, fish.date].some((value) =>
             value?.toLowerCase().includes(query),
@@ -78,10 +92,13 @@ const rows = computed(() => {
       lake: fish.lake?.name || 'Unknown lake',
       length: fish.length,
       weight: fish.weight,
-      eligible: fish.master_angler,
+      eligible: fish.master_angler_status === 'pending',
+      approved: fish.master_angler_status === 'approved',
     }))
 })
-const eligibleCount = computed(() => catches.value.filter((fish) => fish.master_angler).length)
+const eligibleCount = computed(
+  () => catches.value.filter((fish) => fish.master_angler_status === 'pending').length,
+)
 const lakeCount = computed(
   () => new Set(catches.value.map((fish) => fish.lake_id || fish.lake?.name).filter(Boolean)).size,
 )
@@ -94,7 +111,7 @@ function formatDate(value) {
 }
 function clearFilters() {
   search.value = ''
-  eligibleOnly.value = false
+  awardFilter.value = 'all'
 }
 
 watch(
@@ -147,19 +164,11 @@ function handleSignOut() {
   <AppNavbar :user="user" @sign-out="handleSignOut" />
   <main v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
     <p v-if="catchNotice" role="status" class="catch-notice">{{ catchNotice }}</p>
-    <header class="page-header">
-      <div>
-        <h1>All fish catches</h1>
-      </div>
-      <div class="page-actions">
-        <AppButton variant="secondary" :disabled="loading" @click="attempt++"
-          ><RefreshCw :size="15" aria-hidden="true" />Refresh</AppButton
-        >
-        <AppButton @click="catchModal = true"
-          ><Plus :size="16" aria-hidden="true" />Log a catch</AppButton
-        >
-      </div>
-    </header>
+    <PageHeader title="All fish catches">
+      <AppButton @click="catchModal = true"
+        ><Plus :size="16" aria-hidden="true" />Log a catch</AppButton
+      >
+    </PageHeader>
     <div v-if="loading" class="loading-state" role="status">
       <span class="loading-line" aria-hidden="true" />
       <p>Loading your catches…</p>
@@ -203,13 +212,18 @@ function handleSignOut() {
               type="search"
               placeholder="Species, lake, lure, or date"
           /></label>
-          <label class="checkbox"
-            ><input v-model="eligibleOnly" type="checkbox" /><Trophy
-              :size="16"
-              aria-hidden="true"
-            />Master Angler eligible only</label
-          >
-          <AppButton v-if="search || eligibleOnly" variant="secondary" @click="clearFilters"
+          <label class="award-filter"
+            >Master Angler status
+            <AppSelect size="compact" v-model="awardFilter">
+              <option value="all">All catches</option>
+              <option value="eligible">Eligible · awaiting review</option>
+              <option value="approved">Approved Master Angler</option>
+            </AppSelect>
+          </label>
+          <AppButton
+            v-if="search || awardFilter !== 'all'"
+            variant="secondary"
+            @click="clearFilters"
             >Clear filters</AppButton
           >
         </div>
@@ -228,20 +242,23 @@ function handleSignOut() {
               :to="{ name: 'fish-catch', params: { username: user.username, id: row.id } }"
               >{{ row.species }}</RouterLink
             ><Trophy
-              v-if="row.eligible"
+              v-if="row.approved"
               class="trophy-icon"
               :size="14"
               role="img"
-              aria-label="Master Angler eligible"
+              aria-label="Approved Master Angler" /><Clock
+              v-else-if="row.eligible"
+              class="eligible-icon"
+              :size="14"
+              role="img"
+              aria-label="Eligible · awaiting Master Angler review"
           /></template>
           <template #cell-actions="{ row }"
-            ><RouterLink
-              class="detail-link"
+            ><IconButton
               :to="{ name: 'fish-catch', params: { username: user.username, id: row.id } }"
-              :aria-label="`View ${row.species} catch from ${formatDate(row.date)}`"
-              >View catch →</RouterLink
-            ></template
-          >
+              :label="`View ${row.species} catch from ${formatDate(row.date)}`"
+              ><Eye :size="18" aria-hidden="true" /></IconButton
+          ></template>
         </DataTable>
         <div v-else class="empty-message" role="status">
           <h3>No matching catches</h3>
@@ -264,6 +281,18 @@ function handleSignOut() {
 </template>
 
 <style scoped>
+.award-filter {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.eligible-icon {
+  color: #577394;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
 .page-actions {
   display: flex;
   gap: 10px;
@@ -348,13 +377,8 @@ function handleSignOut() {
 .catch-link {
   font-weight: 600;
 }
-.catch-link:hover,
-.detail-link:hover {
+.catch-link:hover {
   text-decoration: underline;
-}
-.detail-link {
-  color: #577394;
-  font-size: 12px;
 }
 .empty-fish {
   display: block;

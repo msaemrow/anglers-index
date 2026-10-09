@@ -1,7 +1,10 @@
 <script setup>
+import IconButton from '@/components/ui/IconButton.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Trash2 } from '@lucide/vue'
+import { Eye, Minus } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -43,7 +46,7 @@ const columns = [
   { key: 'name', label: 'Name' },
   { key: 'color', label: 'Color' },
   { key: 'size', label: 'Size' },
-  { key: 'remove', label: 'Remove', sortable: false },
+  { key: 'actions', label: 'Actions', sortable: false },
 ]
 function clearFilters() {
   search.value = ''
@@ -120,17 +123,16 @@ function handleSignOut() {
   <a class="skip-link" href="#main-content">Skip to content</a>
   <AppNavbar :user="user" @sign-out="handleSignOut" />
   <main v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
-    <header class="page-header">
-      <div>
-        <h1>
-          My tackle box
-          <span v-if="!loading && !error" class="directory-count">{{
-            lures.length.toLocaleString()
-          }}</span>
-        </h1>
-      </div>
+    <PageHeader
+      title="My tackle box"
+      :count-text="
+        !loading && !error
+          ? `${lures.length.toLocaleString()} ${lures.length === 1 ? 'lure' : 'lures'}`
+          : ''
+      "
+    >
       <AppButton :to="{ name: 'lures' }">Browse lure database</AppButton>
-    </header>
+    </PageHeader>
     <p v-if="notice" class="notice" role="status">{{ notice }}</p>
     <p v-if="actionError" class="error-message" role="alert">{{ actionError }}</p>
     <div v-if="loading" class="loading-state" role="status">
@@ -157,11 +159,11 @@ function handleSignOut() {
             placeholder="Brand, name, color, or size"
         /></label>
         <label
-          >Brand<select v-model="brand">
+          >Brand<AppSelect size="compact" v-model="brand">
             <option value="">All brands</option>
             <option v-if="brand && !brands.includes(brand)" :value="brand">{{ brand }}</option>
             <option v-for="value in brands" :key="value" :value="value">{{ value }}</option>
-          </select></label
+          </AppSelect></label
         >
         <AppButton v-if="search || brand" variant="secondary" @click="clearFilters"
           >Clear search &amp; brand</AppButton
@@ -179,17 +181,22 @@ function handleSignOut() {
             row.name || 'Unnamed lure'
           }}</RouterLink></template
         >
-        <template #cell-remove="{ row }"
-          ><AppButton
-            variant="secondary"
+        <template #cell-actions="{ row }">
+          <IconButton
+            :to="{ name: 'lure', params: { id: row.id } }"
+            :label="`View ${row.name || 'lure'} details`"
+          >
+            <Eye :size="18" aria-hidden="true" />
+          </IconButton>
+          <IconButton
             :disabled="pending.has(String(row.id))"
-            :aria-label="`Remove ${row.name || 'lure'} from tackle box`"
+            :aria-busy="pending.has(String(row.id))"
+            :label="`Remove ${row.name || 'lure'} from tackle box`"
             @click="remove(row)"
-            ><Trash2 :size="15" aria-hidden="true" />{{
-              pending.has(String(row.id)) ? 'Removing…' : 'Remove'
-            }}</AppButton
-          ></template
-        >
+          >
+            <Minus :size="18" aria-hidden="true" />
+          </IconButton>
+        </template>
       </DataTable>
       <div v-else role="status">
         <h3>No matching lures</h3>
@@ -222,8 +229,7 @@ function handleSignOut() {
   flex: 1;
   min-width: min(100%, 230px);
 }
-.filters input,
-.filters select {
+.filters input {
   width: 100%;
   min-height: 42px;
   padding: 10px 12px;

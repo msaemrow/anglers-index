@@ -40,3 +40,21 @@ test('preserves certificate errors instead of downloading them as PDFs', async (
   )
   await assert.rejects(getMasterAnglerCertificate(42, 'session'), /invalid PDF/)
 })
+
+test('review API loads the admin queue and sends explicit denial decisions', async (t) => {
+  const { getMasterAnglerReviews, reviewMasterAngler } = await import('../src/api/masterAngler.js')
+  const calls = []
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    calls.push({ url, options })
+    return new Response(JSON.stringify({ items: [], denialReasons: ['Photo appears modified'] }))
+  })
+  await getMasterAnglerReviews('admin')
+  await reviewMasterAngler(3, 'denied', 'Photo appears modified', 'admin')
+  assert.equal(calls[0].url, '/api/masterangler')
+  assert.equal(calls[0].options.headers.Authorization, 'Bearer admin')
+  assert.equal(calls[1].options.method, 'PATCH')
+  assert.deepEqual(JSON.parse(calls[1].options.body), {
+    status: 'denied',
+    denial_reason: 'Photo appears modified',
+  })
+})

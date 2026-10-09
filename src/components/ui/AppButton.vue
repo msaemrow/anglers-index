@@ -24,6 +24,18 @@ defineProps({
 </template>
 
 <style scoped>
+.button:not(:disabled) {
+  cursor: pointer;
+}
+.button--danger {
+  background: #a62936;
+  border-color: #a62936;
+  color: white;
+}
+.button--danger:not(:disabled):hover {
+  background: #86212c;
+  border-color: #86212c;
+}
 .button--navy {
   background: #082f6b;
   border-color: #082f6b;

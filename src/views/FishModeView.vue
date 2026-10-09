@@ -1,13 +1,16 @@
 <script setup>
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Fish, Plus, RefreshCw } from '@lucide/vue'
+import { Fish, Plus } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
+import CollapsiblePanel from '@/components/ui/CollapsiblePanel.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
 import DataTable from '@/components/ui/DataTable.vue'
+import FishModeTripPanel from '@/components/trips/FishModeTripPanel.vue'
+import { formatTime, tripToday } from '@/utils/dateTime'
 import FishCatchModal from '@/components/catches/FishCatchModal.vue'
 import { useSession } from '@/composables/useSession'
 import { getLakes } from '@/api/lakes'
@@ -24,10 +27,20 @@ const actionError = ref('')
 const attempt = ref(0)
 const catalog = ref(null)
 const lakeId = ref('')
+const activeTrip = ref(null)
+const setupExpanded = ref(true)
+const tripsReady = ref(false)
+const catchTripId = ref('')
+function selectTrip(trip) {
+  activeTrip.value = trip
+  if (trip) lakeId.value = trip.lake_id
+}
 const lureId = ref('')
 const tackleOnly = ref(false)
 const editor = ref(null)
 const today = ref(localDateTime().slice(0, 10))
+const tripDay = ref(tripToday())
+const tripRefresh = ref(0)
 const catches = ref([])
 const catchesLoading = ref(false)
 const catchesError = ref('')
@@ -49,6 +62,7 @@ const lureOptions = computed(() =>
 )
 const ready = computed(
   () =>
+    tripsReady.value &&
     lakeOptions.value.some((item) => String(item.value) === String(lakeId.value)) &&
     lureOptions.value.some((item) => String(item.value) === String(lureId.value)),
 )
@@ -147,6 +161,7 @@ watch(
     lakeId.value = catalog.value.lakes.some((item) => String(item.id) === String(saved.lakeId))
       ? saved.lakeId
       : ''
+    if (activeTrip.value) lakeId.value = activeTrip.value.lake_id
     lureId.value = catalog.value.lures.some((item) => String(item.id) === String(saved.lureId))
       ? saved.lureId
       : ''
@@ -194,10 +209,6 @@ watch(
   },
   { immediate: true },
 )
-function refresh() {
-  attempt.value++
-  catchAttempt.value++
-}
 function openCatch(speciesId = '') {
   if (!ready.value) {
     actionError.value = 'Choose a lake and lure first.'
@@ -205,6 +216,7 @@ function openCatch(speciesId = '') {
   }
   actionError.value = ''
   editor.value = {
+    trip_id: activeTrip.value?.id,
     species_id: speciesId,
     lake_id: lakeId.value,
     lure_id: lureId.value,
@@ -214,6 +226,7 @@ function openCatch(speciesId = '') {
 }
 function saved(item) {
   editor.value = null
+  if (item.trip_id) catchTripId.value = item.trip_id
   notice.value = item.weather_warning
     ? `Catch saved. ${item.weather_warning}`
     : 'Catch saved. Ready for the next one.'
@@ -243,15 +256,20 @@ function handleSignOut() {
 }
 function updateDay() {
   today.value = localDateTime().slice(0, 10)
+  tripDay.value = tripToday()
+}
+function refreshTrips() {
+  updateDay()
+  tripRefresh.value++
 }
 let timer
 onMounted(() => {
   timer = setInterval(updateDay, 30000)
-  window.addEventListener('focus', updateDay)
+  window.addEventListener('focus', refreshTrips)
 })
 onBeforeUnmount(() => {
   clearInterval(timer)
-  window.removeEventListener('focus', updateDay)
+  window.removeEventListener('focus', refreshTrips)
 })
 </script>
 <template>
@@ -260,9 +278,6 @@ onBeforeUnmount(() => {
   <main v-if="user" id="main-content" class="list-page fishing-page">
     <header class="page-header">
       <h1>Fishing mode</h1>
-      <AppButton variant="secondary" :disabled="loading || catchesLoading" @click="refresh"
-        ><RefreshCw :size="15" aria-hidden="true" />Refresh</AppButton
-      >
     </header>
     <p v-if="notice" class="catch-notice" role="status">{{ notice }}</p>
     <div v-if="loading" class="loading-state" role="status">Loading fishing mode…</div>
@@ -270,51 +285,77 @@ onBeforeUnmount(() => {
       ><p class="error-message" role="alert">{{ error }}</p>
       <AppButton @click="attempt++">Try again</AppButton></ContentPanel
     >
-    <section v-else-if="catalog" class="panel catch-controls" aria-label="Quick catch entry">
-      <div class="setup">
-        <SearchSelect
-          v-model="lakeId"
-          label="Lake"
-          :options="lakeOptions"
-          placeholder="Search lakes…"
-        /><SearchSelect
-          v-model="lureId"
-          label="Lure"
-          :options="lureOptions"
-          placeholder="Search lures…"
+    <template v-else-if="catalog">
+      <div class="fishing-setup">
+        <FishModeTripPanel
+          :expanded="setupExpanded"
+          @toggle="setupExpanded = !setupExpanded"
+          :token="token"
+          :username="user.username"
+          :lake-id="lakeId"
+          :lakes="catalog.lakes"
+          :refresh="catchAttempt + tripRefresh"
+          :day="tripDay"
+          :catch-trip-id="catchTripId"
+          @ready="tripsReady = $event"
+          @selected="selectTrip"
+          @expired="expired"
         />
-      </div>
-      <div class="setup-footer">
-        <label v-if="catalog.tackle.length"
-          ><input v-model="tackleOnly" type="checkbox" />My tackle box only</label
+        <CollapsiblePanel
+          title="Lake and lure"
+          class="catch-controls"
+          :expanded="setupExpanded"
+          @toggle="setupExpanded = !setupExpanded"
         >
+          <div class="setup">
+            <SearchSelect
+              v-model="lakeId"
+              label="Lake"
+              :options="lakeOptions"
+              placeholder="Search lakes…"
+              :disabled="!!activeTrip"
+            /><SearchSelect
+              v-model="lureId"
+              label="Lure"
+              :options="lureOptions"
+              placeholder="Search lures…"
+            />
+          </div>
+          <div class="setup-footer">
+            <label v-if="catalog.tackle.length"
+              ><input v-model="tackleOnly" type="checkbox" />My tackle box only</label
+            >
+          </div>
+          <p v-if="tackleError" class="muted" role="status">{{ tackleError }}</p>
+        </CollapsiblePanel>
       </div>
-      <p v-if="tackleError" class="muted" role="status">{{ tackleError }}</p>
-      <p
-        v-if="!catalog.lakes.length || !catalog.lures.length || !catalog.species.length"
-        class="error-message"
-      >
-        Add a lake, lure, and species to the directories before logging a catch.
-      </p>
+      <section class="panel catch-controls" aria-label="Quick catch entry">
+        <p
+          v-if="!catalog.lakes.length || !catalog.lures.length || !catalog.species.length"
+          class="error-message"
+        >
+          Add a lake, lure, and species to the directories before logging a catch.
+        </p>
 
-      <p v-if="actionError" class="error-message" role="alert">{{ actionError }}</p>
-      <p class="species-hint">Tap a species to log your catch.</p>
-      <div class="species-buttons">
-        <AppButton
-          variant="navy"
-          v-for="item in quickSpecies"
-          :key="item.id"
-          :disabled="!ready"
-          @click="openCatch(item.id)"
-          ><Fish :size="18" aria-hidden="true" />{{ item.name }}</AppButton
-        ><AppButton
-          variant="navy"
-          :disabled="!ready || !catalog.species.length"
-          @click="openCatch()"
-          ><Plus :size="18" aria-hidden="true" />Other species</AppButton
-        >
-      </div>
-    </section>
+        <p v-if="actionError" class="error-message" role="alert">{{ actionError }}</p>
+        <p class="species-hint">Tap a species to log your catch.</p>
+        <div class="species-buttons">
+          <AppButton
+            variant="navy"
+            v-for="item in quickSpecies"
+            :key="item.id"
+            :disabled="!ready"
+            @click="openCatch(item.id)"
+            ><Fish :size="18" aria-hidden="true" />{{ item.name }}</AppButton
+          ><AppButton
+            variant="navy"
+            :disabled="!ready || !catalog.species.length"
+            @click="openCatch()"
+            ><Plus :size="18" aria-hidden="true" />Other species</AppButton
+          >
+        </div>
+      </section>
+    </template>
     <ContentPanel
       :title="`Today’s catches${catchesLoading || catchesError ? '' : ` (${rows.length})`}`"
     >
@@ -330,7 +371,7 @@ onBeforeUnmount(() => {
         caption="Today’s catches"
         initial-sort="time"
         initial-direction="desc"
-        ><template #cell-time="{ value }">{{ value?.slice(0, 5) || '—' }}</template
+        ><template #cell-time="{ value }">{{ formatTime(value) }}</template
         ><template #cell-speciesName="{ row }"
           ><RouterLink
             class="catch-link"
@@ -373,15 +414,24 @@ h1 {
 .setup-footer {
   margin-bottom: 14px;
 }
-.fishing-page :deep(.panel__header) {
+.fishing-page :deep(.panel:not(.is-collapsed) .panel__header) {
   padding-bottom: 12px;
   margin-bottom: 14px;
 }
 
-.setup {
+.fishing-setup {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
+  align-items: stretch;
+}
+.fishing-setup > * {
+  min-width: 0;
+}
+.setup {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
 }
 .setup-footer {
   display: flex;
@@ -420,6 +470,9 @@ h1 {
   cursor: not-allowed;
 }
 @media (max-width: 650px) {
+  .fishing-setup {
+    grid-template-columns: 1fr;
+  }
   .setup {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -445,11 +498,26 @@ h1 {
   flex-shrink: 0;
 }
 .setup :deep(input) {
-  min-height: 48px;
-  font-size: 16px;
+  min-height: 40px;
+  font-size: 14px;
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+.setup :deep(label) {
+  font-size: 12px;
+}
+.fishing-setup > .catch-controls {
+  padding: 14px;
+}
+.fishing-setup :deep(.panel:not(.is-collapsed) .panel__header) {
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+.fishing-setup .setup-footer {
+  margin-bottom: 0;
 }
 .setup-footer label {
-  min-height: 44px;
-  font-size: 14px;
+  min-height: 32px;
+  font-size: 12px;
 }
 </style>

@@ -1,4 +1,5 @@
 <script setup>
+import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, ref, watch } from 'vue'
 import { ArrowUp, ArrowDown, ArrowUpDown } from '@lucide/vue'
 import AppButton from './AppButton.vue'
@@ -58,6 +59,7 @@ function sort(column) {
           <th
             v-for="column in columns"
             :key="column.key"
+            :class="{ 'hide-on-mobile': column.hideOnMobile }"
             scope="col"
             :aria-sort="
               column.sortable === false
@@ -85,7 +87,11 @@ function sort(column) {
       </thead>
       <tbody>
         <tr v-for="row in visibleRows" :key="row.id">
-          <td v-for="column in columns" :key="column.key">
+          <td
+            v-for="column in columns"
+            :key="column.key"
+            :class="{ 'hide-on-mobile': column.hideOnMobile }"
+          >
             <slot :name="`cell-${column.key}`" :row="row" :value="row[column.key]">{{
               row[column.key] ?? '—'
             }}</slot>
@@ -103,9 +109,9 @@ function sort(column) {
     </p>
     <label
       >Rows per page
-      <select v-model="pageSize">
+      <AppSelect size="compact" v-model="pageSize">
         <option v-for="size in [10, 15, 25, 50, 100]" :key="size" :value="size">{{ size }}</option>
-      </select></label
+      </AppSelect></label
     >
     <nav aria-label="Table pagination">
       <AppButton variant="secondary" :disabled="page <= 1" @click="page--">Previous</AppButton>
@@ -116,6 +122,11 @@ function sort(column) {
 </template>
 
 <style scoped>
+@media (max-width: 650px) {
+  .hide-on-mobile {
+    display: none;
+  }
+}
 .table-scroll {
   overflow-x: auto;
   border: 1px solid var(--border);
@@ -181,13 +192,5 @@ tbody tr:focus-within {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-select {
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: white;
-  color: var(--navy);
-  font: inherit;
 }
 </style>

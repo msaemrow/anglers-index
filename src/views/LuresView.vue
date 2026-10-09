@@ -1,7 +1,10 @@
 <script setup>
+import IconButton from '@/components/ui/IconButton.vue'
+import PageHeader from '@/components/ui/PageHeader.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, reactive, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Plus, RefreshCw } from '@lucide/vue'
+import { Eye, Pencil, Plus } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -54,11 +57,11 @@ const rows = computed(() =>
 )
 const hasFilters = computed(() => search.value || Object.values(filters).some(Boolean))
 const columns = [
+  { key: 'tackle', label: 'My tackle box', sortable: false },
   { key: 'brand', label: 'Brand' },
   { key: 'name', label: 'Lure' },
   { key: 'color', label: 'Color' },
   { key: 'size', label: 'Size' },
-  { key: 'tackle', label: 'My tackle box', sortable: false },
   { key: 'actions', label: 'Actions', sortable: false },
 ]
 function clearFilters() {
@@ -72,27 +75,22 @@ function clearFilters() {
   <a class="skip-link" href="#main-content">Skip to content</a
   ><AppNavbar :user="user" @sign-out="handleSignOut" />
   <main v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
-    <header class="page-header">
-      <div>
-        <h1>
-          Lure database
-          <span v-if="!loading && !error" class="directory-count">{{
-            lures.length.toLocaleString()
-          }}</span>
-        </h1>
-      </div>
-      <div class="actions">
-        <AppButton variant="secondary" :disabled="loading || pending.size > 0" @click="attempt++"
-          ><RefreshCw :size="15" aria-hidden="true" />Refresh</AppButton
-        ><AppButton
-          :to="{ name: 'tackle-box', params: { username: user.username } }"
-          variant="secondary"
-          >My tackle box</AppButton
-        ><AppButton @click="editor = { lure: null, editing: false }"
-          ><Plus :size="16" aria-hidden="true" />Add lure</AppButton
-        >
-      </div>
-    </header>
+    <PageHeader
+      title="Lure database"
+      :count-text="
+        !loading && !error
+          ? `${lures.length.toLocaleString()} ${lures.length === 1 ? 'lure' : 'lures'}`
+          : ''
+      "
+    >
+      <AppButton
+        :to="{ name: 'tackle-box', params: { username: user.username } }"
+        variant="secondary"
+        >My tackle box</AppButton
+      ><AppButton @click="editor = { lure: null, editing: false }"
+        ><Plus :size="16" aria-hidden="true" />Add lure</AppButton
+      >
+    </PageHeader>
     <div v-if="loading" class="loading-state" role="status">
       <span class="loading-line" aria-hidden="true" />
       <p>Loading lures…</p>
@@ -119,12 +117,12 @@ function clearFilters() {
               placeholder="Name, brand, color, or size" /></label
           ><label v-for="(_, field) in filters" :key="field"
             >{{ field
-            }}<select v-model="filters[field]">
+            }}<AppSelect size="compact" v-model="filters[field]">
               <option value="">All {{ field === 'size' ? 'sizes' : field + 's' }}</option>
               <option v-for="value in options[field]" :key="value" :value="value">
                 {{ value }}
               </option>
-            </select></label
+            </AppSelect></label
           ><AppButton v-if="hasFilters" variant="secondary" @click="clearFilters"
             >Clear filters</AppButton
           >
@@ -143,24 +141,37 @@ function clearFilters() {
           >
           <template #cell-tackle="{ row }"
             ><TackleButton
+              compact
+              add-only
               :included="tackleIds.has(String(row.id))"
               :busy="pending.has(String(row.id))"
               :disabled="!tackleReady"
               :name="row.name"
-              @click="toggle(row)"
+              @click="!tackleIds.has(String(row.id)) && toggle(row)"
           /></template>
-          <template #cell-actions="{ row }"
-            ><div class="actions">
-              <AppButton variant="secondary" @click="editor = { lure: row, editing: false }"
-                >Create similar</AppButton
-              ><AppButton
-                v-if="user.is_admin"
-                variant="secondary"
-                @click="editor = { lure: row, editing: true }"
-                >Edit</AppButton
+          <template #cell-actions="{ row }">
+            <div class="actions">
+              <IconButton
+                :to="{ name: 'lure', params: { id: row.id } }"
+                :label="`View ${row.name || 'lure'} details`"
               >
-            </div></template
-          >
+                <Eye :size="18" aria-hidden="true" />
+              </IconButton>
+              <IconButton
+                :label="`Add a lure similar to ${row.name || 'this lure'}`"
+                @click="editor = { lure: row, editing: false }"
+              >
+                <Plus :size="18" aria-hidden="true" />
+              </IconButton>
+              <IconButton
+                v-if="user.is_admin"
+                :label="`Edit ${row.name || 'lure'}`"
+                @click="editor = { lure: row, editing: true }"
+              >
+                <Pencil :size="18" aria-hidden="true" />
+              </IconButton>
+            </div>
+          </template>
         </DataTable>
         <div v-else class="empty-message" role="status">
           <h3>No matching lures</h3>
@@ -208,8 +219,7 @@ function clearFilters() {
   flex: 1;
   min-width: min(100%, 230px);
 }
-.filters input,
-.filters select {
+.filters input {
   width: 100%;
   min-height: 42px;
   padding: 10px 12px;

@@ -1,4 +1,5 @@
 <script setup>
+import AppSelect from '@/components/ui/AppSelect.vue'
 import { reactive, ref, onBeforeUnmount } from 'vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -67,13 +68,13 @@ async function submit() {
           :disabled="busy"
       /></label>
       <label class="field"
-        >State<select v-model="form.state" name="state" required :disabled="busy">
+        >State<AppSelect size="regular" v-model="form.state" name="state" required :disabled="busy">
           <option value="" disabled>Select a state</option>
           <option v-if="form.state && !states.includes(form.state)" :value="form.state">
             {{ form.state }}
           </option>
           <option v-for="state in states" :key="state" :value="state">{{ state }}</option>
-        </select></label
+        </AppSelect></label
       >
       <CoordinatePicker
         :latitude="form.latitude"
@@ -127,8 +128,7 @@ async function submit() {
   font-weight: 600;
   min-width: 0;
 }
-.field input,
-.field select {
+.field input {
   width: 100%;
   min-height: 42px;
   padding: 10px 12px;

@@ -174,6 +174,14 @@ input {
   font: inherit;
   text-overflow: ellipsis;
 }
+input:disabled {
+  background: #e8edf2;
+  color: var(--muted);
+  border-color: #c5ced7;
+  cursor: not-allowed;
+  opacity: 1;
+  -webkit-text-fill-color: var(--muted);
+}
 .chevron {
   position: absolute;
   right: 10px;

@@ -71,6 +71,20 @@ function signOut() {
         <RouterLink
           class="nav-link"
           active-class="nav-link--active"
+          :to="{ name: 'catch-analysis', params: { username: user.username } }"
+          @click="menuOpen = false"
+          >Analysis</RouterLink
+        >
+        <RouterLink
+          class="nav-link"
+          active-class="nav-link--active"
+          :to="{ name: 'trips', params: { username: user.username } }"
+          @click="menuOpen = false"
+          >Trips</RouterLink
+        >
+        <RouterLink
+          class="nav-link"
+          active-class="nav-link--active"
           :to="{ name: 'tackle-box', params: { username: user.username } }"
           @click="menuOpen = false"
           >Tackle box</RouterLink

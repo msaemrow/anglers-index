@@ -65,7 +65,7 @@ export function useLurePage(id = ref(null)) {
         tackleIds.value = new Set(tackle.value)
         tackleReady.value = true
       } else
-        tackleError.value = 'Your tackle box couldn’t load. Refresh to enable tackle-box actions.'
+        tackleError.value = 'Your tackle box couldn’t load. Try again to enable tackle-box actions.'
     },
     { immediate: true },
   )

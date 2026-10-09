@@ -866,3 +866,13 @@ h3 {
     font-size: 16px;
   }
 }
+
+/* Pages with the shared list header align with the compact directories. */
+.list-page.header-page {
+  padding-top: 18px;
+}
+@media (max-width: 650px) {
+  .list-page.header-page {
+    padding: 12px 12px 32px;
+  }
+}

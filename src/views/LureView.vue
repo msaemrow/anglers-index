@@ -75,7 +75,8 @@ const details = computed(() =>
         <ContentPanel title="Lure details"><DetailList :items="details" /></ContentPanel
         ><ContentPanel title="Your tackle box" description="Keep track of the lures you fish with.">
           <p v-if="tackleError" class="error-message" role="alert">
-            {{ tackleError }} <AppButton variant="secondary" @click="attempt++">Refresh</AppButton>
+            {{ tackleError }}
+            <AppButton variant="secondary" @click="attempt++">Try again</AppButton>
           </p>
           <div class="actions">
             <TackleButton

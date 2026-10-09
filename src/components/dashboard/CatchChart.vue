@@ -1,4 +1,5 @@
 <script setup>
+import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, ref, watch } from 'vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
 import CatchColumnChart from './CatchColumnChart.vue'
@@ -15,10 +16,13 @@ const catches = ref([])
 const loading = ref(false)
 const error = ref('')
 const attempt = ref(0)
+const selectedDimension = ref('lake')
 const charts = computed(() =>
   [
-    { dimension: 'lake', title: 'Top lakes' },
-    { dimension: 'species', title: 'Top species' },
+    {
+      dimension: selectedDimension.value,
+      title: selectedDimension.value === 'lake' ? 'Top lakes' : 'Top species',
+    },
     { dimension: 'lure', title: 'Top lures' },
   ].map((chart) => ({
     ...chart,
@@ -60,10 +64,6 @@ watch(
         Log your first catch to see your most common species, lakes, and lures.
       </p>
       <template v-else>
-        <p class="chart-summary">
-          All time · {{ catches.length.toLocaleString() }}
-          {{ catches.length === 1 ? 'catch' : 'catches' }} · Top 5 in each category
-        </p>
         <div class="charts-grid">
           <ContentPanel
             v-for="chart in charts"
@@ -71,6 +71,15 @@ watch(
             :title="chart.title"
             class="chart-card"
           >
+            <template v-if="chart.dimension !== 'lure'" #action>
+              <label>
+                <span class="sr-only">Chart category</span>
+                <AppSelect size="compact" v-model="selectedDimension">
+                  <option value="lake">Lakes</option>
+                  <option value="species">Species</option>
+                </AppSelect>
+              </label>
+            </template>
             <CatchColumnChart
               :title="chart.title"
               :dimension="chart.dimension"
@@ -86,24 +95,18 @@ watch(
 <style scoped>
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
 }
 .chart-card {
   min-width: 0;
   padding: 20px 16px;
 }
-.chart-summary,
 .chart-state {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.6;
   margin-bottom: 24px;
-}
-@media (max-width: 1300px) {
-  .charts-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 @media (max-width: 700px) {
   .charts-grid {
