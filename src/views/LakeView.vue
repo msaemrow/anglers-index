@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS, EVENTS } from '@/constants'
+
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { ArrowLeft, MapPin, ExternalLink, Pencil } from '@lucide/vue'
@@ -80,7 +82,7 @@ watch(
 
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <AppNavbar :user="user" @sign-out="signOut" />
+  <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
   <main id="main-content" class="lake-page" :aria-busy="loading">
     <p v-if="notice" class="save-notice" role="status">{{ notice }}</p>
     <p v-if="sessionError" class="error-message" role="alert">
@@ -103,7 +105,7 @@ watch(
     />
     <ContentPanel v-else-if="error" title="This lake couldn’t load"
       ><p class="error-message" role="alert">{{ error }}</p>
-      <AppButton @click="attempt++">Try again</AppButton></ContentPanel
+      <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
     >
     <template v-else-if="lake">
       <header class="page-header">
@@ -137,8 +139,8 @@ watch(
       v-if="editor && user?.is_admin"
       :lake="editor.lake"
       :token="token"
-      @close="editor = null"
-      @saved="saved"
+      @[EVENTS.CLOSE]="editor = null"
+      @[EVENTS.SAVED]="saved"
     />
   </main>
 </template>

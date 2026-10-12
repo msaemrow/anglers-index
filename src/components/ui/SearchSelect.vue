@@ -1,4 +1,5 @@
 <script setup>
+import { EVENTS } from '@/constants'
 import { computed, nextTick, ref, useId, watch } from 'vue'
 import { ChevronDown } from '@lucide/vue'
 
@@ -10,7 +11,7 @@ const props = defineProps({
   required: Boolean,
   disabled: Boolean,
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits([EVENTS.UPDATE_MODEL_VALUE])
 const id = useId()
 const input = ref(null)
 const list = ref(null)
@@ -65,10 +66,10 @@ function type(event) {
   text.value = event.target.value
   query.value = text.value
   open.value = true
-  emit('update:modelValue', '')
+  emit(EVENTS.UPDATE_MODEL_VALUE, '')
 }
 function choose(option) {
-  emit('update:modelValue', option.value)
+  emit(EVENTS.UPDATE_MODEL_VALUE, option.value)
   text.value = option.label
   open.value = false
   query.value = ''

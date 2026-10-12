@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS, EVENTS } from '@/constants'
+
 import PageHeader from '@/components/ui/PageHeader.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, ref, watch } from 'vue'
@@ -155,7 +157,7 @@ async function handleSignIn(credentials) {
 </script>
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <AppNavbar :user="user" @sign-out="signOut" />
+  <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
   <main v-if="user" id="main-content" class="list-page header-page" :aria-busy="loading">
     <PageHeader title="Catch analysis" />
     <ContentPanel
@@ -173,7 +175,7 @@ async function handleSignIn(credentials) {
     <p v-if="loading" role="status">Loading your catch history…</p>
     <ContentPanel v-else-if="error" title="Analysis couldn’t load"
       ><p role="alert">{{ error }}</p>
-      <AppButton @click="attempt++">Try again</AppButton></ContentPanel
+      <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
     >
     <ContentPanel v-else-if="!catches.length" title="No catches yet"
       ><p>Log catches to start exploring your history.</p>
@@ -226,7 +228,7 @@ async function handleSignIn(credentials) {
             title="Month"
             :rows="monthRows"
             :selected="selected?.dimension === 'month' ? selected.key : null"
-            @select="select('month', $event)"
+            @[EVENTS.SELECT]="select('month', $event)"
         /></ContentPanel>
         <ContentPanel
           title="Catches by time of day"
@@ -235,7 +237,7 @@ async function handleSignIn(credentials) {
             title="Time of day"
             :rows="timeRows"
             :selected="selected?.dimension === 'time' ? selected.key : null"
-            @select="select('time', $event)"
+            @[EVENTS.SELECT]="select('time', $event)"
         /></ContentPanel>
       </div>
       <ContentPanel title="Weather at the catch">
@@ -250,7 +252,7 @@ async function handleSignIn(credentials) {
           :title="dimensions[weather]"
           :rows="weatherRows"
           :selected="selected?.dimension === weather ? selected.key : null"
-          @select="select(weather, $event)"
+          @[EVENTS.SELECT]="select(weather, $event)"
         />
       </ContentPanel>
       <ContentPanel
@@ -285,7 +287,7 @@ async function handleSignIn(credentials) {
     </template>
   </main>
   <main v-else id="main-content" class="sign-in-layout">
-    <SignInPanel :busy="signingIn" :error="loginError" @submit="handleSignIn" />
+    <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
   </main>
 </template>
 <style scoped>

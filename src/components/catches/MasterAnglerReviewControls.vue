@@ -1,4 +1,6 @@
 <script setup>
+import { STATUS, LABELS, EVENTS } from '@/constants'
+
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { ref, watch } from 'vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -9,7 +11,7 @@ const props = defineProps({
   token: { type: String, required: true },
   reasons: { type: Array, required: true },
 })
-const emit = defineEmits(['reviewed', 'refresh'])
+const emit = defineEmits([EVENTS.REVIEWED, EVENTS.REFRESH])
 const reason = ref('')
 const busy = ref(false)
 const error = ref('')
@@ -29,7 +31,7 @@ watch(
   { immediate: true },
 )
 async function decide(status) {
-  if (busy.value || stale.value || (status === 'denied' && !reason.value)) return
+  if (busy.value || stale.value || (status === STATUS.DENIED && !reason.value)) return
   const current = controller
   busy.value = true
   error.value = ''
@@ -41,13 +43,11 @@ async function decide(status) {
       props.token,
       current.signal,
     )
-    if (!current.signal.aborted) emit('reviewed', review)
+    if (!current.signal.aborted) emit(EVENTS.REVIEWED, review)
   } catch (failure) {
     if (current.signal.aborted) return
-    {
-      error.value = failure.message
-      stale.value = failure.status === 409 || failure.status === 404 || failure.status === 403
-    }
+    error.value = failure.message
+    stale.value = failure.status === 409 || failure.status === 404 || failure.status === 403
   } finally {
     if (!current.signal.aborted) busy.value = false
   }
@@ -65,15 +65,20 @@ async function decide(status) {
       </AppSelect>
     </label>
     <div class="review-actions">
-      <AppButton variant="navy" :disabled="busy || stale" @click="decide('approved')"
-        >Approve</AppButton
-      >
-      <AppButton variant="secondary" :disabled="busy || stale || !reason" @click="decide('denied')"
-        >Deny</AppButton
+      <AppButton variant="navy" :disabled="busy || stale" @click="decide(STATUS.APPROVED)">{{
+        LABELS.APPROVE
+      }}</AppButton>
+      <AppButton
+        variant="secondary"
+        :disabled="busy || stale || !reason"
+        @click="decide(STATUS.DENIED)"
+        >{{ LABELS.DENY }}</AppButton
       >
     </div>
     <p v-if="error" class="error-message" role="alert">{{ error }}</p>
-    <AppButton v-if="stale" variant="secondary" @click="emit('refresh')">Try again</AppButton>
+    <AppButton v-if="stale" variant="secondary" @click="emit(EVENTS.REFRESH)">{{
+      LABELS.TRY_AGAIN
+    }}</AppButton>
   </section>
 </template>
 

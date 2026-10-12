@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS } from '@/constants'
+
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, ref, watch } from 'vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
@@ -11,7 +13,6 @@ const props = defineProps({
   userId: { type: [Number, String], required: true },
   token: { type: String, required: true },
 })
-const emit = defineEmits(['expired'])
 const catches = ref([])
 const loading = ref(false)
 const error = ref('')
@@ -57,7 +58,7 @@ watch(
       <p v-if="loading" class="chart-state" role="status">Loading catch data…</p>
       <div v-else-if="error">
         <p class="error-message" role="alert">{{ error }}</p>
-        <AppButton variant="secondary" @click="attempt++">Try again</AppButton>
+        <AppButton variant="secondary" @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton>
       </div>
       <p v-else-if="!catches.length" class="chart-state">
         Log your first catch to see your most common species, lakes, and lures.

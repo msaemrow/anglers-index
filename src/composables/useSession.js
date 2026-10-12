@@ -1,3 +1,4 @@
+import { MESSAGES } from '../constants.js'
 import { computed, onScopeDispose, ref } from 'vue'
 import { request, onSessionExpired } from '../api/client.js'
 import { decodeSession } from './session.js'
@@ -29,8 +30,7 @@ export function useSession() {
         body,
         signal: loginController.signal,
       })
-      if (!decodeSession(response.token))
-        throw new Error('The API returned an invalid session. Please sign in again.')
+      if (!decodeSession(response.token)) throw new Error(MESSAGES.INVALID_SESSION)
       sessionError.value = ''
       token.value = response.token
       try {
@@ -74,7 +74,7 @@ export function useSession() {
   const unsubscribe = onSessionExpired((failedToken) => {
     if (!token.value || failedToken !== token.value) return
     signOut()
-    sessionError.value = 'Your session has expired. Please sign in again.'
+    sessionError.value = MESSAGES.SESSION_EXPIRED
   })
   onScopeDispose(() => {
     unsubscribe()

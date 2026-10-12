@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS, EVENTS } from '@/constants'
+
 import { computed, onBeforeUnmount, ref } from 'vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -11,7 +13,7 @@ const props = defineProps({
   user: { type: Object, required: true },
   token: { type: String, required: true },
 })
-const emit = defineEmits(['saved', 'close'])
+const emit = defineEmits([EVENTS.SAVED, EVENTS.CLOSE])
 const catches = ref([]),
   loading = ref(false),
   busy = ref(false),
@@ -53,7 +55,7 @@ async function save() {
   error.value = ''
   try {
     await attachTripCatch(props.trip.id, Number(selected.value), props.token, controller.signal)
-    if (!controller.signal.aborted) emit('saved')
+    if (!controller.signal.aborted) emit(EVENTS.SAVED)
   } catch (failure) {
     if (!controller.signal.aborted) {
       error.value = failure.message
@@ -64,7 +66,7 @@ async function save() {
 }
 </script>
 <template>
-  <AppModal title="Add an existing catch" :busy="busy" @close="emit('close')">
+  <AppModal title="Add an existing catch" :busy="busy" @[EVENTS.CLOSE]="emit(EVENTS.CLOSE)">
     <p v-if="loading" role="status">Loading catches…</p>
     <form v-else @submit.prevent="save">
       <p class="muted">
@@ -74,9 +76,12 @@ async function save() {
       <p v-if="!options.length" role="status">No unassigned catches from this lake.</p>
       <p v-if="error" role="alert" class="error-message">{{ error }}</p>
       <div class="actions">
-        <AppButton v-if="error && !catches.length" variant="secondary" @click="load"
-          >Retry</AppButton
-        ><AppButton variant="secondary" :disabled="busy" @click="emit('close')">Cancel</AppButton
+        <AppButton v-if="error && !catches.length" variant="secondary" @click="load">{{
+          LABELS.RETRY
+        }}</AppButton
+        ><AppButton variant="secondary" :disabled="busy" @click="emit(EVENTS.CLOSE)">{{
+          LABELS.CANCEL
+        }}</AppButton
         ><AppButton type="submit" :disabled="busy || !selected">{{
           busy ? 'Adding…' : 'Add to trip'
         }}</AppButton>

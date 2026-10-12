@@ -1,4 +1,6 @@
 <script setup>
+import { STATUS, LABELS, EVENTS } from '@/constants'
+
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { ref, watch } from 'vue'
 import { Plus } from '@lucide/vue'
@@ -71,9 +73,9 @@ function handleSignOut() {
 
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <AppNavbar :user="user" @sign-out="handleSignOut" />
+  <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
   <div v-if="user" class="dashboard-layout">
-    <ProfileSidebar :user="user" :stats="data?.stats" @add-catch="catchModal = true" />
+    <ProfileSidebar :user="user" :stats="data?.stats" @[EVENTS.ADD_CATCH]="catchModal = true" />
     <main id="main-content" class="dashboard" :aria-busy="loading">
       <p v-if="catchNotice" role="status" class="catch-notice">{{ catchNotice }}</p>
       <h1 class="sr-only">Dashboard</h1>
@@ -86,7 +88,7 @@ function handleSignOut() {
       </div>
       <ContentPanel v-else-if="error" title="Your dashboard couldn’t load"
         ><p role="alert" class="error-message">{{ error }}</p>
-        <AppButton @click="attempt++">Try again</AppButton></ContentPanel
+        <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
       >
       <template v-else-if="data">
         <ContentPanel
@@ -94,7 +96,7 @@ function handleSignOut() {
           title="Your fishing journal starts with one catch"
           description="Log a catch to start tracking your fishing trips, favorite lakes, and personal bests."
           ><AppButton @click="catchModal = true"
-            ><Plus :size="16" aria-hidden="true" />Log your first catch</AppButton
+            ><Plus :size="16" aria-hidden="true" />{{ LABELS.LOG_FIRST_CATCH }}</AppButton
           ></ContentPanel
         >
         <CatchSection
@@ -114,7 +116,7 @@ function handleSignOut() {
             query:
               catchFilter === 'all'
                 ? {}
-                : { award: catchFilter === 'eligible' ? 'eligible' : 'approved' },
+                : { award: catchFilter === 'eligible' ? 'eligible' : STATUS.APPROVED },
           }"
           :empty-message="
             catchFilter === 'all'
@@ -135,20 +137,20 @@ function handleSignOut() {
             </label>
           </template>
         </CatchSection>
-        <CatchChart :user-id="user.user_id" :token="token" @expired="catchExpired" />
+        <CatchChart :user-id="user.user_id" :token="token" />
         <AdminReviews v-if="user.is_admin" :token="token" :username="user.username" />
       </template>
       <FishCatchModal
         v-if="catchModal"
         :user="user"
         :token="token"
-        @close="catchModal = false"
-        @saved="catchSaved"
+        @[EVENTS.CLOSE]="catchModal = false"
+        @[EVENTS.SAVED]="catchSaved"
       />
     </main>
   </div>
   <main v-else id="main-content" class="sign-in-layout">
-    <SignInPanel :busy="signingIn" :error="loginError" @submit="handleSignIn" />
+    <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
   </main>
 </template>
 

@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS, EVENTS } from '@/constants'
+
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { X } from '@lucide/vue'
 const props = defineProps({
@@ -6,11 +8,11 @@ const props = defineProps({
   busy: Boolean,
   compact: Boolean,
 })
-const emit = defineEmits(['close'])
+const emit = defineEmits([EVENTS.CLOSE])
 const dialog = ref(null)
 let previousFocus
 function close() {
-  if (!props.busy) emit('close')
+  if (!props.busy) emit(EVENTS.CLOSE)
 }
 onMounted(() => {
   previousFocus = document.activeElement
@@ -27,7 +29,7 @@ onBeforeUnmount(() => {
     <dialog :class="{ compact }" ref="dialog" aria-labelledby="modal-title" @cancel.prevent="close">
       <header>
         <h2 id="modal-title">{{ title }}</h2>
-        <button type="button" aria-label="Close dialog" :disabled="busy" @click="close">
+        <button type="button" :aria-label="LABELS.CLOSE_DIALOG" :disabled="busy" @click="close">
           <X :size="20" />
         </button>
       </header>

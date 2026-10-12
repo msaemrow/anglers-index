@@ -1,9 +1,11 @@
 <script setup>
+import { APP_NAME, LABELS, EVENTS } from '@/constants'
+
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { Fish, LogOut, Menu, X } from '@lucide/vue'
 
 defineProps({ user: { type: Object, default: null } })
-const emit = defineEmits(['sign-out'])
+const emit = defineEmits([EVENTS.SIGN_OUT])
 const menuOpen = ref(false)
 const navbar = ref(null)
 const menuButton = ref(null)
@@ -27,15 +29,15 @@ onBeforeUnmount(() => {
 })
 function signOut() {
   menuOpen.value = false
-  emit('sign-out')
+  emit(EVENTS.SIGN_OUT)
 }
 </script>
 
 <template>
   <header ref="navbar" class="navbar">
     <RouterLink class="brand" to="/dashboard" @click="menuOpen = false"
-      ><span class="brand__mark"><Fish :size="21" aria-hidden="true" /></span>Anglers
-      Index</RouterLink
+      ><span class="brand__mark"><Fish :size="21" aria-hidden="true" /></span
+      >{{ APP_NAME }}</RouterLink
     >
     <template v-if="user">
       <button
@@ -113,7 +115,7 @@ function signOut() {
         <div class="nav-account">
           <span>{{ user.first_name || user.username }}</span
           ><button class="nav-link" @click="signOut">
-            <LogOut :size="15" aria-hidden="true" />Log out
+            <LogOut :size="15" aria-hidden="true" />{{ LABELS.SIGN_OUT }}
           </button>
         </div>
       </nav>

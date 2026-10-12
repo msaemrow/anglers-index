@@ -1,4 +1,5 @@
 <script setup>
+import { EVENTS } from '@/constants'
 import { useId } from 'vue'
 import { Plus, Minus } from '@lucide/vue'
 import ContentPanel from './ContentPanel.vue'
@@ -6,7 +7,7 @@ const props = defineProps({
   title: { type: String, required: true },
   expanded: { type: Boolean, default: true },
 })
-const emit = defineEmits(['toggle'])
+const emit = defineEmits([EVENTS.TOGGLE])
 const bodyId = useId()
 </script>
 <template>
@@ -19,7 +20,7 @@ const bodyId = useId()
           :aria-expanded="expanded"
           :aria-controls="bodyId"
           :aria-label="`${expanded ? 'Collapse' : 'Expand'} ${props.title}`"
-          @click="emit('toggle')"
+          @click="emit(EVENTS.TOGGLE)"
         >
           <span>{{ title }}</span>
           <Minus v-if="expanded" :size="18" aria-hidden="true" /><Plus

@@ -1,4 +1,6 @@
 <script setup>
+import { STATUS, LABELS, EVENTS } from '@/constants'
+
 import PageHeader from '@/components/ui/PageHeader.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -50,12 +52,12 @@ function catchSaved(item) {
 }
 const search = ref('')
 const awardFilter = ref(
-  ['eligible', 'approved'].includes(route.query.award) ? route.query.award : 'all',
+  ['eligible', STATUS.APPROVED].includes(route.query.award) ? route.query.award : 'all',
 )
 watch(
   () => route.query.award,
   (value) => {
-    awardFilter.value = ['eligible', 'approved'].includes(value) ? value : 'all'
+    awardFilter.value = ['eligible', STATUS.APPROVED].includes(value) ? value : 'all'
   },
 )
 const columns = [
@@ -73,8 +75,8 @@ const rows = computed(() => {
       (fish) =>
         (awardFilter.value === 'all' ||
           (awardFilter.value === 'eligible'
-            ? fish.master_angler_status === 'pending'
-            : fish.master_angler_status === 'approved')) &&
+            ? fish.master_angler_status === STATUS.PENDING
+            : fish.master_angler_status === STATUS.APPROVED)) &&
         (!query ||
           [fish.species?.name, fish.lake?.name, fish.lure?.name, fish.date].some((value) =>
             value?.toLowerCase().includes(query),
@@ -87,12 +89,12 @@ const rows = computed(() => {
       lake: fish.lake?.name || 'Unknown lake',
       length: fish.length,
       weight: fish.weight,
-      eligible: fish.master_angler_status === 'pending',
-      approved: fish.master_angler_status === 'approved',
+      eligible: fish.master_angler_status === STATUS.PENDING,
+      approved: fish.master_angler_status === STATUS.APPROVED,
     }))
 })
 const eligibleCount = computed(
-  () => catches.value.filter((fish) => fish.master_angler_status === 'pending').length,
+  () => catches.value.filter((fish) => fish.master_angler_status === STATUS.PENDING).length,
 )
 const lakeCount = computed(
   () => new Set(catches.value.map((fish) => fish.lake_id || fish.lake?.name).filter(Boolean)).size,
@@ -149,12 +151,12 @@ function handleSignOut() {
 
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <AppNavbar :user="user" @sign-out="handleSignOut" />
+  <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
   <main v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
     <p v-if="catchNotice" role="status" class="catch-notice">{{ catchNotice }}</p>
     <PageHeader title="All fish catches">
       <AppButton @click="catchModal = true"
-        ><Plus :size="16" aria-hidden="true" />Log a catch</AppButton
+        ><Plus :size="16" aria-hidden="true" />{{ LABELS.LOG_CATCH }}</AppButton
       >
     </PageHeader>
     <div v-if="loading" class="loading-state" role="status">
@@ -166,7 +168,7 @@ function handleSignOut() {
     </div>
     <ContentPanel v-else-if="error" title="Your catches couldn’t load"
       ><p role="alert" class="error-message">{{ error }}</p>
-      <AppButton @click="attempt++">Try again</AppButton></ContentPanel
+      <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
     >
     <template v-else>
       <dl class="summary">
@@ -189,7 +191,7 @@ function handleSignOut() {
         description="Log your first catch to start tracking your trips, favorite lakes, and personal bests."
         ><Fish class="empty-fish" :size="40" aria-hidden="true" /><AppButton
           @click="catchModal = true"
-          ><Plus :size="16" aria-hidden="true" />Log your first catch</AppButton
+          ><Plus :size="16" aria-hidden="true" />{{ LABELS.LOG_FIRST_CATCH }}</AppButton
         ></ContentPanel
       >
       <ContentPanel v-else title="Catch log" hide-header>
@@ -205,7 +207,7 @@ function handleSignOut() {
             <AppSelect size="compact" v-model="awardFilter">
               <option value="all">All catches</option>
               <option value="eligible">Eligible · awaiting review</option>
-              <option value="approved">Approved Master Angler</option>
+              <option :value="STATUS.APPROVED">Approved Master Angler</option>
             </AppSelect>
           </label>
           <AppButton
@@ -258,12 +260,12 @@ function handleSignOut() {
       v-if="catchModal"
       :user="user"
       :token="token"
-      @close="catchModal = false"
-      @saved="catchSaved"
+      @[EVENTS.CLOSE]="catchModal = false"
+      @[EVENTS.SAVED]="catchSaved"
     />
   </main>
   <main v-else id="main-content" class="sign-in-layout">
-    <SignInPanel :busy="signingIn" :error="loginError" @submit="handleSignIn" />
+    <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
   </main>
 </template>
 

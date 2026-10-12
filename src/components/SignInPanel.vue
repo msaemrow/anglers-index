@@ -1,14 +1,16 @@
 <script setup>
+import { APP_NAME, LABELS, EVENTS } from '@/constants'
+
 import { ref } from 'vue'
 import { Fish } from '@lucide/vue'
 import AppButton from './ui/AppButton.vue'
 
 defineProps({ busy: Boolean, error: { type: String, default: '' } })
-const emit = defineEmits(['submit'])
+const emit = defineEmits([EVENTS.SUBMIT])
 const username = ref('')
 const password = ref('')
 function submit() {
-  emit('submit', { username: username.value, password: password.value })
+  emit(EVENTS.SUBMIT, { username: username.value, password: password.value })
 }
 </script>
 
@@ -17,7 +19,7 @@ function submit() {
     <div class="sign-in__icon"><Fish :size="30" aria-hidden="true" /></div>
     <p class="eyebrow">Welcome back</p>
     <h1 id="sign-in-title">Your next chapter starts here.</h1>
-    <p class="muted">Sign in with your Anglers Index account to see your fishing journal.</p>
+    <p class="muted">Sign in with your {{ APP_NAME }} account to see your fishing journal.</p>
     <form class="sign-in__form" @submit.prevent="submit">
       <label for="username">Username</label
       ><input
@@ -36,7 +38,9 @@ function submit() {
         :disabled="busy"
       />
       <p v-if="error" class="error-message" role="alert">{{ error }}</p>
-      <AppButton type="submit" :disabled="busy">{{ busy ? 'Signing in…' : 'Sign in' }}</AppButton>
+      <AppButton type="submit" :disabled="busy">{{
+        busy ? LABELS.SIGNING_IN : LABELS.SIGN_IN
+      }}</AppButton>
     </form>
   </section>
 </template>

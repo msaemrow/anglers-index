@@ -1,4 +1,6 @@
 <script setup>
+import { STATUS, LABELS, EVENTS } from '@/constants'
+
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { ArrowLeft, Download, MapPin, Trophy, Clock } from '@lucide/vue'
@@ -26,7 +28,7 @@ const certificateNotice = ref('')
 let certificateController
 const canDownloadCertificate = computed(
   () =>
-    fish.value?.master_angler_status === 'approved' &&
+    fish.value?.master_angler_status === STATUS.APPROVED &&
     (String(fish.value.user_id) === String(user.value?.user_id) || user.value?.is_admin),
 )
 function resetCertificate() {
@@ -68,8 +70,8 @@ function reviewSaved(review) {
     ...fish.value,
     master_angler_review: review,
     master_angler_status: review.status,
-    master_angler: review.status === 'approved',
-    approved_master_angler: review.status === 'approved',
+    master_angler: review.status === STATUS.APPROVED,
+    approved_master_angler: review.status === STATUS.APPROVED,
     eligible_master_angler: false,
   }
 }
@@ -102,7 +104,7 @@ const catchDetails = computed(() => [
   { label: 'Date caught', value: date.value },
   { label: 'Time caught', value: time.value },
   { label: 'Master Angler', value: masterAnglerStatus.value },
-  ...(user.value?.is_admin && fish.value?.master_angler_status === 'pending'
+  ...(user.value?.is_admin && fish.value?.master_angler_status === STATUS.PENDING
     ? [
         {
           label: 'Required award length',
@@ -175,7 +177,7 @@ function handleSignOut() {
 
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <AppNavbar :user="user" @sign-out="handleSignOut" />
+  <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
   <main v-if="user" id="main-content" class="catch-page" :aria-busy="loading">
     <RouterLink :to="{ name: 'dashboard' }" class="back-link"
       ><ArrowLeft :size="16" aria-hidden="true" />Back to dashboard</RouterLink
@@ -194,7 +196,7 @@ function handleSignOut() {
     />
     <ContentPanel v-else-if="error" title="This catch couldn’t load">
       <p class="error-message" role="alert">{{ error }}</p>
-      <AppButton @click="attempt++">Try again</AppButton>
+      <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton>
     </ContentPanel>
     <template v-else-if="fish">
       <header class="page-header catch-header">
@@ -211,18 +213,18 @@ function handleSignOut() {
           >
         </div>
         <MasterAnglerReviewControls
-          v-if="user.is_admin && fish.master_angler_status === 'pending'"
+          v-if="user.is_admin && fish.master_angler_status === STATUS.PENDING"
           :key="fish.master_angler_review.id"
           :submission-id="fish.master_angler_review.id"
           :token="token"
           :reasons="fish.master_angler_denial_reasons || []"
-          @reviewed="reviewSaved"
-          @refresh="attempt++"
+          @[EVENTS.REVIEWED]="reviewSaved"
+          @[EVENTS.REFRESH]="attempt++"
         />
-        <span v-if="fish.master_angler_status === 'denied'" class="denial-notice" role="status"
+        <span v-if="fish.master_angler_status === STATUS.DENIED" class="denial-notice" role="status"
           >Denied - {{ fish.master_angler_review.denial_reason }}</span
         >
-        <div v-if="fish.master_angler_status === 'approved'" class="certificate-actions">
+        <div v-if="fish.master_angler_status === STATUS.APPROVED" class="certificate-actions">
           <span class="eligibility"><Trophy :size="16" aria-hidden="true" />Master Angler</span>
           <AppButton
             v-if="canDownloadCertificate"
@@ -237,7 +239,7 @@ function handleSignOut() {
           </AppButton>
         </div>
       </header>
-      <p v-if="fish.master_angler_status === 'pending'" role="status" class="eligibility">
+      <p v-if="fish.master_angler_status === STATUS.PENDING" role="status" class="eligibility">
         <Clock :size="16" aria-hidden="true" />Catch is under review for Master Angler award.
       </p>
       <p v-if="certificateError" role="alert" class="error-message">{{ certificateError }}</p>
@@ -294,7 +296,7 @@ function handleSignOut() {
     </template>
   </main>
   <main v-else id="main-content" class="sign-in-layout">
-    <SignInPanel :busy="signingIn" :error="loginError" @submit="handleSignIn" />
+    <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
   </main>
 </template>
 

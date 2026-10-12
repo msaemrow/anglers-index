@@ -1,4 +1,5 @@
 <script setup>
+import { EVENTS } from '@/constants'
 import { useRoute } from 'vue-router'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -11,7 +12,7 @@ const { user, signOut } = useSession()
 
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <AppNavbar :user="user" @sign-out="signOut" />
+  <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
   <main id="main-content" class="list-page">
     <ContentPanel
       title="Route has not been implemented"

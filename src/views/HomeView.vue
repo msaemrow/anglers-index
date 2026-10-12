@@ -1,4 +1,6 @@
 <script setup>
+import { APP_NAME } from '@/constants'
+
 import { ref } from 'vue'
 import { ArrowDown, ArrowUpRight, Fish, MapPin, NotebookPen, Trophy } from '@lucide/vue'
 import LandingAuth from '@/components/LandingAuth.vue'
@@ -37,7 +39,7 @@ const features = [
     <a class="skip-link" href="#home-content">Skip to content</a>
     <header class="landing-header">
       <RouterLink to="/" class="landing-brand"
-        ><span><Fish :size="23" aria-hidden="true" /></span>Anglers Index</RouterLink
+        ><span><Fish :size="23" aria-hidden="true" /></span>{{ APP_NAME }}</RouterLink
       >
       <nav aria-label="Account navigation"><LandingAuth ref="auth" /></nav>
     </header>
@@ -48,7 +50,7 @@ const features = [
           <h1 id="home-title">Good days on the water.<br /><em>Great stories to keep.</em></h1>
           <p class="hero-intro">
             Your catches, your favorite spots, your next personal best. Keep your fishing story
-            together with Anglers Index.
+            together with {{ APP_NAME }}.
           </p>
           <div class="hero-actions">
             <AppButton v-if="user" to="/dashboard" class="hero-cta"
@@ -88,7 +90,7 @@ const features = [
       </section>
     </main>
     <footer class="landing-footer">
-      <RouterLink to="/">Anglers Index</RouterLink>
+      <RouterLink to="/">{{ APP_NAME }}</RouterLink>
       <p>For the love of fishing.</p>
       <a href="mailto:anglersindex@gmail.com">Get in touch ↗</a>
     </footer>

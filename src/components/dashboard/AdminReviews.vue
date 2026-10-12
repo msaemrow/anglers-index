@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS } from '@/constants'
+
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ArrowUpRight } from '@lucide/vue'
@@ -10,7 +12,6 @@ const props = defineProps({
   token: { type: String, required: true },
   username: { type: String, required: true },
 })
-const emit = defineEmits(['expired'])
 const items = ref([])
 const error = ref('')
 const loading = ref(false)
@@ -58,7 +59,9 @@ watch(
   >
     <div v-if="error">
       <p class="error-message" role="alert">{{ error }}</p>
-      <AppButton variant="secondary" :disabled="loading" @click="attempt++">Try again</AppButton>
+      <AppButton variant="secondary" :disabled="loading" @click="attempt++">{{
+        LABELS.TRY_AGAIN
+      }}</AppButton>
     </div>
     <p v-if="loading" role="status">Loading reviews…</p>
     <template v-else>

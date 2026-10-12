@@ -1,3 +1,4 @@
+import { MESSAGES, HTTP_ERROR_MESSAGES } from '../constants.js'
 import axios from 'axios'
 
 const apiBase = (import.meta.env?.VITE_API_BASE_URL || '/api').replace(/\/+$/, '')
@@ -8,16 +9,6 @@ export class ApiError extends Error {
     this.name = 'ApiError'
     this.status = status
   }
-}
-
-const defaultMessages = {
-  400: 'Invalid request. Please check your input.',
-  401: 'Your session has expired. Please sign in again.',
-  403: 'You don’t have permission to perform this action.',
-  404: 'No data found.',
-  409: 'This request conflicts with the current data. Please refresh and try again.',
-  422: 'Invalid request. Please check your input.',
-  429: 'Too many requests. Please try again later.',
 }
 
 export const apiClient = axios.create({
@@ -62,10 +53,8 @@ apiClient.interceptors.response.use(
     )
     throw new ApiError(
       message?.trim() ||
-        defaultMessages[status] ||
-        (status
-          ? 'Error processing request. Please try again.'
-          : 'Unable to connect to the server. Please try again.'),
+        HTTP_ERROR_MESSAGES[status] ||
+        (status ? MESSAGES.REQUEST_FAILED : MESSAGES.CONNECTION_FAILED),
       status,
     )
   },
@@ -81,7 +70,7 @@ export async function request(path, { token, body, signal, method = 'GET' } = {}
   })
   const data = response.data
   if (!data || typeof data !== 'object')
-    throw new ApiError('The API returned an unexpected response.', response.status)
+    throw new ApiError(MESSAGES.UNEXPECTED_RESPONSE, response.status)
   return data
 }
 

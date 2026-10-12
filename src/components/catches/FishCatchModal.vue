@@ -1,4 +1,5 @@
 <script setup>
+import { EVENTS } from '@/constants'
 import { ref } from 'vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import FishCatchForm from './FishCatchForm.vue'
@@ -8,19 +9,19 @@ defineProps({
   initialValues: { type: Object, default: () => ({}) },
   choices: { type: Object, default: null },
 })
-const emit = defineEmits(['close', 'saved'])
+const emit = defineEmits([EVENTS.CLOSE, EVENTS.SAVED])
 const busy = ref(false)
 </script>
 <template>
-  <AppModal title="Log a catch" compact :busy="busy" @close="emit('close')">
+  <AppModal title="Log a catch" compact :busy="busy" @[EVENTS.CLOSE]="emit(EVENTS.CLOSE)">
     <FishCatchForm
       :initial-values="initialValues"
       :choices="choices"
       :user="user"
       :token="token"
-      @busy="busy = $event"
-      @close="emit('close')"
-      @saved="emit('saved', $event)"
+      @[EVENTS.BUSY]="busy = $event"
+      @[EVENTS.CLOSE]="emit(EVENTS.CLOSE)"
+      @[EVENTS.SAVED]="emit(EVENTS.SAVED, $event)"
     />
   </AppModal>
 </template>

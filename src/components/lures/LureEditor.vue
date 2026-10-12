@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS, EVENTS } from '@/constants'
+
 import { reactive, ref, onBeforeUnmount } from 'vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -8,7 +10,7 @@ const props = defineProps({
   editing: Boolean,
   token: { type: String, required: true },
 })
-const emit = defineEmits(['close', 'saved'])
+const emit = defineEmits([EVENTS.CLOSE, EVENTS.SAVED])
 const fields = ['brand', 'name', 'color', 'size']
 const form = reactive({
   ...Object.fromEntries(fields.map((field) => [field, props.lure?.[field] || ''])),
@@ -30,7 +32,7 @@ async function submit() {
       controller.signal,
     )
     if (!controller.signal.aborted)
-      emit('saved', { lure, added: !props.editing && form.add_to_tackle_box })
+      emit(EVENTS.SAVED, { lure, added: !props.editing && form.add_to_tackle_box })
   } catch (failure) {
     if (controller.signal.aborted) return
     error.value = failure.message
@@ -44,7 +46,7 @@ async function submit() {
   <AppModal
     :title="editing ? 'Edit lure' : lure ? 'Create a similar lure' : 'Add a lure'"
     :busy="busy"
-    @close="emit('close')"
+    @[EVENTS.CLOSE]="emit(EVENTS.CLOSE)"
   >
     <form @submit.prevent="submit">
       <p v-if="lure && !editing" class="hint">
@@ -59,8 +61,12 @@ async function submit() {
       >
       <p v-if="error" class="error-message" role="alert">{{ error }}</p>
       <div class="actions">
-        <AppButton variant="secondary" :disabled="busy" @click="emit('close')">Cancel</AppButton
-        ><AppButton type="submit" :disabled="busy">{{ busy ? 'Saving…' : 'Save lure' }}</AppButton>
+        <AppButton variant="secondary" :disabled="busy" @click="emit(EVENTS.CLOSE)">{{
+          LABELS.CANCEL
+        }}</AppButton
+        ><AppButton type="submit" :disabled="busy">{{
+          busy ? LABELS.SAVING : LABELS.SAVE_LURE
+        }}</AppButton>
       </div>
     </form>
   </AppModal>

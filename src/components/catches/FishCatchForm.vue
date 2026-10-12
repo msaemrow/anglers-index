@@ -1,4 +1,6 @@
 <script setup>
+import { STATUS, LABELS, EVENTS } from '@/constants'
+
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, reactive, ref, watch } from 'vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -14,7 +16,7 @@ const props = defineProps({
   initialValues: { type: Object, default: () => ({}) },
   choices: { type: Object, default: null },
 })
-const emit = defineEmits(['saved', 'busy', 'close'])
+const emit = defineEmits([EVENTS.SAVED, EVENTS.BUSY, EVENTS.CLOSE])
 const form = reactive({
   species_id: props.initialValues.species_id ?? '',
   lake_id: props.initialValues.lake_id ?? '',
@@ -81,7 +83,7 @@ watch(
           const trip = data.find(
             (item) =>
               String(item.id) === remembered &&
-              item.status === 'active' &&
+              item.status === STATUS.ACTIVE &&
               (!form.lake_id || String(item.lake_id) === String(form.lake_id)) &&
               form.datetime.slice(0, 10) >= item.start_date &&
               form.datetime.slice(0, 10) <= item.end_date,
@@ -169,7 +171,7 @@ async function submit() {
   )
     return
   busy.value = true
-  emit('busy', true)
+  emit(EVENTS.BUSY, true)
   error.value = ''
   const current = controller
   try {
@@ -199,7 +201,7 @@ async function submit() {
       } catch {
         /* Storage is optional. */
       }
-      emit('saved', saved)
+      emit(EVENTS.SAVED, saved)
     }
   } catch (failure) {
     if (current.signal.aborted) return
@@ -207,7 +209,7 @@ async function submit() {
   } finally {
     if (!current.signal.aborted) {
       busy.value = false
-      emit('busy', false)
+      emit(EVENTS.BUSY, false)
     }
   }
 }
@@ -216,7 +218,7 @@ async function submit() {
   <div v-if="loading" role="status" class="loading-state">Loading species, lakes, and lures…</div>
   <div v-else-if="loadError">
     <p class="error-message" role="alert">{{ loadError }}</p>
-    <AppButton @click="attempt++">Try again</AppButton>
+    <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton>
   </div>
   <div v-else-if="!species.length || !lakes.length || !lures.length" role="status">
     <h3>The catch form isn’t ready yet</h3>
@@ -340,13 +342,15 @@ async function submit() {
       </p>
       <p v-if="error" class="error-message" role="alert">{{ error }}</p>
       <div class="actions">
-        <AppButton variant="secondary" :disabled="busy" @click="emit('close')">Cancel</AppButton>
+        <AppButton variant="secondary" :disabled="busy" @click="emit(EVENTS.CLOSE)">{{
+          LABELS.CANCEL
+        }}</AppButton>
         <AppButton
           variant="navy"
           type="submit"
           :disabled="busy || (!!form.trip_id && !startingTrip && (tripsLoading || !selectedTrip))"
           >{{
-            busy ? 'Saving…' : startingTrip ? 'Start trip & save catch' : 'Save catch'
+            busy ? LABELS.SAVING : startingTrip ? LABELS.START_TRIP_SAVE_CATCH : LABELS.SAVE_CATCH
           }}</AppButton
         >
       </div>

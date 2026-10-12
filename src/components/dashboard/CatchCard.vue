@@ -1,4 +1,6 @@
 <script setup>
+import { STATUS } from '@/constants'
+
 import { MapPin, Trophy, ArrowUpRight, Clock } from '@lucide/vue'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
@@ -23,7 +25,7 @@ function measurement(value, unit) {
     <div class="catch-card__top">
       <time :datetime="catchData.date || undefined">{{ date }}</time
       ><span
-        v-if="catchData.master_angler_status === 'approved'"
+        v-if="catchData.master_angler_status === STATUS.APPROVED"
         class="trophy"
         title="Approved Master Angler catch"
         ><Trophy :size="16" aria-hidden="true" /><span class="sr-only"
@@ -31,7 +33,7 @@ function measurement(value, unit) {
         ></span
       >
       <span
-        v-else-if="catchData.master_angler_status === 'pending'"
+        v-else-if="catchData.master_angler_status === STATUS.PENDING"
         class="eligible"
         title="Eligible · awaiting review"
       >

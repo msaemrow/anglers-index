@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS } from '@/constants'
+
 import { computed, ref, watch } from 'vue'
 import { MapPin } from '@lucide/vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -96,7 +98,9 @@ watch(
       />
       <div v-if="loading || error" class="map-overlay" :role="error ? 'alert' : 'status'">
         <p>{{ error || 'Loading lake map…' }}</p>
-        <AppButton v-if="error" variant="secondary" @click="attempt++">Retry map</AppButton>
+        <AppButton v-if="error" variant="secondary" @click="attempt++">{{
+          LABELS.RETRY_MAP
+        }}</AppButton>
       </div>
     </template>
   </div>

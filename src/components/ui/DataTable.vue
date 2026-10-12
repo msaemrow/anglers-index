@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS } from '@/constants'
+
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, ref, watch } from 'vue'
 import { ArrowUp, ArrowDown, ArrowUpDown } from '@lucide/vue'
@@ -114,9 +116,13 @@ function sort(column) {
       </AppSelect></label
     >
     <nav aria-label="Table pagination">
-      <AppButton variant="secondary" :disabled="page <= 1" @click="page--">Previous</AppButton>
+      <AppButton variant="secondary" :disabled="page <= 1" @click="page--">{{
+        LABELS.PREVIOUS
+      }}</AppButton>
       <span>Page {{ page }} of {{ pageCount }}</span>
-      <AppButton variant="secondary" :disabled="page >= pageCount" @click="page++">Next</AppButton>
+      <AppButton variant="secondary" :disabled="page >= pageCount" @click="page++">{{
+        LABELS.NEXT
+      }}</AppButton>
     </nav>
   </div>
 </template>

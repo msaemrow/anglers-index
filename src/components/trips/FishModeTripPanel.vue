@@ -1,4 +1,6 @@
 <script setup>
+import { STATUS, LABELS, EVENTS } from '@/constants'
+
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -17,7 +19,7 @@ const props = defineProps({
   catchTripId: { type: [String, Number], default: '' },
   day: { type: String, required: true },
 })
-const emit = defineEmits(['selected', 'ready', 'toggle'])
+const emit = defineEmits([EVENTS.SELECTED, EVENTS.READY, EVENTS.TOGGLE])
 const route = useRoute()
 const trips = ref([]),
   selected = ref(''),
@@ -39,7 +41,7 @@ watch(
   },
 )
 watch(selected, (id) => {
-  emit('selected', trips.value.find((trip) => String(trip.id) === String(id)) || null)
+  emit(EVENTS.SELECTED, trips.value.find((trip) => String(trip.id) === String(id)) || null)
   try {
     localStorage.setItem(`anglers-index.active-trip.${props.username}`, id)
   } catch {
@@ -60,9 +62,9 @@ watch(
     onCleanup(() => controller.abort())
     loading.value = true
     error.value = ''
-    emit('ready', false)
+    emit(EVENTS.READY, false)
     try {
-      const data = await getTrips(props.token, controller.signal, 'active')
+      const data = await getTrips(props.token, controller.signal, STATUS.ACTIVE)
       if (controller.signal.aborted) return
       trips.value = data
       let remembered = ''
@@ -76,8 +78,8 @@ watch(
       selected.value = data.some((trip) => String(trip.id) === String(preferred))
         ? String(preferred)
         : ''
-      emit('ready', true)
-      emit('selected', data.find((trip) => String(trip.id) === selected.value) || null)
+      emit(EVENTS.READY, true)
+      emit(EVENTS.SELECTED, data.find((trip) => String(trip.id) === selected.value) || null)
     } catch (failure) {
       if (!controller.signal.aborted) {
         error.value = failure.message
@@ -90,7 +92,7 @@ watch(
 )
 function saved(trip) {
   editorOpen.value = false
-  if (trip.status === 'active') selected.value = String(trip.id)
+  if (trip.status === STATUS.ACTIVE) selected.value = String(trip.id)
   else selected.value = ''
   attempt.value++
 }
@@ -100,16 +102,17 @@ function saved(trip) {
     title="Fishing trip"
     class="trip-panel"
     :expanded="expanded"
-    @toggle="emit('toggle')"
+    @[EVENTS.TOGGLE]="emit(EVENTS.TOGGLE)"
   >
     <p v-if="loading" role="status">Loading trips…</p>
     <template v-else-if="error"
       ><p role="alert" class="error-message">{{ error }}</p>
-      <AppButton @click="attempt++">Retry trips</AppButton></template
+      <AppButton @click="attempt++">{{ LABELS.RETRY_TRIPS }}</AppButton></template
     >
     <template v-else>
       <label
-        >Active trip<AppSelect size="regular" v-model="selected">
+        >{{ LABELS.ACTIVE_TRIP
+        }}<AppSelect size="regular" v-model="selected">
           <option value="">Fishing without a trip</option>
           <option v-for="trip in trips" :key="trip.id" :value="String(trip.id)">
             {{ tripLabel(trip) }} · {{ trip.catch_count }} catches
@@ -126,8 +129,8 @@ function saved(trip) {
       :token="token"
       :lake-id="lakeId"
       :lakes="lakes"
-      @saved="saved"
-      @close="editorOpen = false"
+      @[EVENTS.SAVED]="saved"
+      @[EVENTS.CLOSE]="editorOpen = false"
     />
   </CollapsiblePanel>
 </template>

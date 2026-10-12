@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS, EVENTS } from '@/constants'
+
 import { computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { ArrowLeft, Copy, Pencil } from '@lucide/vue'
@@ -42,7 +44,7 @@ const details = computed(() =>
 </script>
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a
-  ><AppNavbar :user="user" @sign-out="handleSignOut" />
+  ><AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
   <main v-if="user" id="main-content" class="lure-page" :aria-busy="loading">
     <RouterLink to="/lure/all" class="back-link"
       ><ArrowLeft :size="16" aria-hidden="true" />All lures</RouterLink
@@ -58,7 +60,7 @@ const details = computed(() =>
     />
     <ContentPanel v-else-if="error" title="This lure couldn’t load"
       ><p class="error-message" role="alert">{{ error }}</p>
-      <AppButton @click="attempt++">Try again</AppButton></ContentPanel
+      <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
     >
     <template v-else-if="lure">
       <header class="page-header">
@@ -75,7 +77,7 @@ const details = computed(() =>
         ><ContentPanel title="Your tackle box" description="Keep track of the lures you fish with.">
           <p v-if="tackleError" class="error-message" role="alert">
             {{ tackleError }}
-            <AppButton variant="secondary" @click="attempt++">Try again</AppButton>
+            <AppButton variant="secondary" @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton>
           </p>
           <div class="actions">
             <TackleButton
@@ -100,12 +102,12 @@ const details = computed(() =>
       :lure="editor.lure"
       :editing="editor.editing"
       :token="token"
-      @close="editor = null"
-      @saved="saved"
+      @[EVENTS.CLOSE]="editor = null"
+      @[EVENTS.SAVED]="saved"
     />
   </main>
   <main v-else id="main-content" class="sign-in-layout">
-    <SignInPanel :busy="signingIn" :error="loginError" @submit="handleSignIn" />
+    <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
   </main>
 </template>
 <style scoped>

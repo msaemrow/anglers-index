@@ -1,4 +1,5 @@
 <script setup>
+import { EVENTS } from '@/constants'
 import { Check, Plus } from '@lucide/vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -10,7 +11,7 @@ defineProps({
   disabled: Boolean,
   name: { type: String, default: 'lure' },
 })
-defineEmits(['click'])
+defineEmits([EVENTS.CLICK])
 </script>
 <template>
   <span
@@ -27,7 +28,7 @@ defineEmits(['click'])
     :disabled="disabled || busy"
     :aria-pressed="included"
     :aria-busy="busy"
-    @click="$emit('click', $event)"
+    @click="$emit(EVENTS.CLICK, $event)"
     :label="
       busy
         ? 'Updating tackle box…'
@@ -44,7 +45,7 @@ defineEmits(['click'])
     :disabled="disabled || busy"
     :aria-pressed="included"
     :aria-label="`${included ? 'Remove' : 'Add'} ${name} ${included ? 'from' : 'to'} tackle box`"
-    @click="$emit('click', $event)"
+    @click="$emit(EVENTS.CLICK, $event)"
     ><component :is="included ? Check : Plus" :size="14" aria-hidden="true" />{{
       busy ? 'Updating…' : included ? 'In tackle box' : 'Add to tackle box'
     }}</AppButton

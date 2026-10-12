@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS, EVENTS } from '@/constants'
+
 import IconButton from '@/components/ui/IconButton.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -72,7 +74,7 @@ function clearFilters() {
 </script>
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a
-  ><AppNavbar :user="user" @sign-out="handleSignOut" />
+  ><AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
   <main v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
     <PageHeader
       title="Lure database"
@@ -87,7 +89,7 @@ function clearFilters() {
         variant="secondary"
         >My tackle box</AppButton
       ><AppButton @click="editor = { lure: null, editing: false }"
-        ><Plus :size="16" aria-hidden="true" />Add lure</AppButton
+        ><Plus :size="16" aria-hidden="true" />{{ LABELS.ADD_LURE }}</AppButton
       >
     </PageHeader>
     <div v-if="loading" class="loading-state" role="status">
@@ -96,7 +98,7 @@ function clearFilters() {
     </div>
     <ContentPanel v-else-if="error" title="Lures couldn’t load"
       ><p class="error-message" role="alert">{{ error }}</p>
-      <AppButton @click="attempt++">Try again</AppButton></ContentPanel
+      <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
     >
     <template v-else>
       <p v-if="tackleError" class="error-message" role="alert">{{ tackleError }}</p>
@@ -183,12 +185,12 @@ function clearFilters() {
       :lure="editor.lure"
       :editing="editor.editing"
       :token="token"
-      @close="editor = null"
-      @saved="saved"
+      @[EVENTS.CLOSE]="editor = null"
+      @[EVENTS.SAVED]="saved"
     />
   </main>
   <main v-else id="main-content" class="sign-in-layout">
-    <SignInPanel :busy="signingIn" :error="loginError" @submit="handleSignIn" />
+    <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
   </main>
 </template>
 <style scoped>

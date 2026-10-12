@@ -1,4 +1,6 @@
 <script setup>
+import { STATUS, LABELS, EVENTS } from '@/constants'
+
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppNavbar from '@/components/AppNavbar.vue'
@@ -80,7 +82,7 @@ function saved(item) {
 </script>
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a
-  ><AppNavbar :user="user" @sign-out="signOut" />
+  ><AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
   <main v-if="user" id="main-content" class="list-page trip-page" :aria-busy="loading">
     <RouterLink :to="{ name: 'trips', params: { username: user.username } }"
       >← Fishing trips</RouterLink
@@ -89,22 +91,24 @@ function saved(item) {
     <p v-if="loading" role="status">Loading fishing trip…</p>
     <ContentPanel v-else-if="error" title="Trip couldn’t load"
       ><p role="alert">{{ error }}</p>
-      <AppButton @click="attempt++">Try again</AppButton></ContentPanel
+      <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
     >
     <template v-else-if="trip">
       <header class="page-header">
         <div>
           <h1>{{ trip.lake?.name || 'Fishing trip' }}</h1>
           <p class="muted">
-            {{ trip.status === 'active' ? 'Active trip' : 'Completed trip' }} ·
+            {{ trip.status === STATUS.ACTIVE ? LABELS.ACTIVE_TRIP : LABELS.COMPLETED_TRIP }} ·
             {{ formatDate(trip.start_date) }}
           </p>
         </div>
         <div class="actions">
-          <AppButton v-if="trip.status === 'active'" @click="editor = 'catch'"
-            >Log a catch</AppButton
-          >
-          <AppButton variant="danger" @click="editor = 'delete'">Delete trip</AppButton>
+          <AppButton v-if="trip.status === STATUS.ACTIVE" @click="editor = 'catch'">{{
+            LABELS.LOG_CATCH
+          }}</AppButton>
+          <AppButton variant="danger" @click="editor = 'delete'">{{
+            LABELS.DELETE_TRIP
+          }}</AppButton>
         </div>
       </header>
       <ContentPanel title="Trip summary">
@@ -140,16 +144,16 @@ function saved(item) {
         </p>
         <p v-if="trip.notes" class="notes">{{ trip.notes }}</p>
         <RouterLink
-          v-if="trip.status === 'active'"
+          v-if="trip.status === STATUS.ACTIVE"
           :to="{ name: 'fish-mode', params: { username: user.username }, query: { trip: trip.id } }"
           >Continue in Fish Mode →</RouterLink
         >
       </ContentPanel>
       <ContentPanel :title="`Trip catches (${trip.catch_count})`">
         <template #action
-          ><AppButton variant="secondary" @click="editor = 'attach'"
-            >Add existing catch</AppButton
-          ></template
+          ><AppButton variant="secondary" @click="editor = 'attach'">{{
+            LABELS.ADD_EXISTING_CATCH
+          }}</AppButton></template
         >
         <DataTable
           v-if="rows.length"
@@ -173,29 +177,29 @@ function saved(item) {
         v-if="editor === 'delete'"
         :trip="trip"
         :token="token"
-        @close="editor = ''"
-        @deleted="deleted"
+        @[EVENTS.CLOSE]="editor = ''"
+        @[EVENTS.DELETED]="deleted"
       />
       <FishCatchModal
-        v-if="editor === 'catch' && trip.status === 'active'"
+        v-if="editor === 'catch' && trip.status === STATUS.ACTIVE"
         :token="token"
         :user="user"
         :initial-values="initialCatch"
-        @close="editor = ''"
-        @saved="saved"
+        @[EVENTS.CLOSE]="editor = ''"
+        @[EVENTS.SAVED]="saved"
       />
       <AttachCatchModal
         v-if="editor === 'attach'"
         :token="token"
         :user="user"
         :trip="trip"
-        @close="editor = ''"
-        @saved="saved"
+        @[EVENTS.CLOSE]="editor = ''"
+        @[EVENTS.SAVED]="saved"
       />
     </template>
   </main>
   <main v-else id="main-content" class="sign-in-layout">
-    <SignInPanel :busy="signingIn" :error="loginError" @submit="handleSignIn" />
+    <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
   </main>
 </template>
 <style scoped>

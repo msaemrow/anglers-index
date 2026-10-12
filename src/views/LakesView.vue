@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS, EVENTS } from '@/constants'
+
 import IconButton from '@/components/ui/IconButton.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -81,7 +83,7 @@ watch(
 
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <AppNavbar :user="user" @sign-out="signOut" />
+  <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
   <main id="main-content" class="list-page compact-list" :aria-busy="loading">
     <p v-if="notice" class="save-notice" role="status">{{ notice }}</p>
     <p v-if="sessionError" class="error-message" role="alert">
@@ -96,7 +98,7 @@ watch(
       "
     >
       <AppButton v-if="user?.is_admin" :disabled="loading" @click="editor = { lake: null }"
-        ><Plus :size="16" aria-hidden="true" />Add lake</AppButton
+        ><Plus :size="16" aria-hidden="true" />{{ LABELS.ADD_LAKE }}</AppButton
       >
     </PageHeader>
     <div v-if="loading" class="loading-state" role="status">
@@ -108,7 +110,7 @@ watch(
     </div>
     <ContentPanel v-else-if="error" title="The lake directory couldn’t load"
       ><p role="alert" class="error-message">{{ error }}</p>
-      <AppButton @click="attempt++">Try again</AppButton></ContentPanel
+      <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
     >
     <ContentPanel
       v-else-if="!lakes.length"
@@ -170,8 +172,8 @@ watch(
       v-if="editor && user?.is_admin"
       :lake="editor.lake"
       :token="token"
-      @close="editor = null"
-      @saved="saved"
+      @[EVENTS.CLOSE]="editor = null"
+      @[EVENTS.SAVED]="saved"
     />
   </main>
 </template>

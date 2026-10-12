@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS, EVENTS } from '@/constants'
+
 import { computed, onBeforeUnmount, ref } from 'vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -11,7 +13,7 @@ const props = defineProps({
   lakeId: { type: [String, Number], default: '' },
   lakes: { type: Array, default: null },
 })
-const emit = defineEmits(['saved', 'close'])
+const emit = defineEmits([EVENTS.SAVED, EVENTS.CLOSE])
 const busy = ref(false),
   error = ref(''),
   loading = ref(false),
@@ -60,7 +62,7 @@ async function save() {
       props.token,
       controller.signal,
     )
-    if (!controller.signal.aborted) emit('saved', result)
+    if (!controller.signal.aborted) emit(EVENTS.SAVED, result)
   } catch (failure) {
     if (!controller.signal.aborted) {
       error.value = failure.message
@@ -71,7 +73,7 @@ async function save() {
 }
 </script>
 <template>
-  <AppModal title="Add fishing trip" :busy="busy" @close="emit('close')">
+  <AppModal title="Add fishing trip" :busy="busy" @[EVENTS.CLOSE]="emit(EVENTS.CLOSE)">
     <p v-if="loading" role="status">Loading lakes…</p>
     <form v-else @submit.prevent="save">
       <fieldset :disabled="busy">
@@ -89,9 +91,9 @@ async function save() {
         <p v-if="error" role="alert" class="error-message">{{ error }}</p>
         <AppButton v-if="!choices.length" variant="secondary" @click="load">Reload lakes</AppButton>
         <div class="actions">
-          <AppButton variant="secondary" @click="emit('close')">Cancel</AppButton
+          <AppButton variant="secondary" @click="emit(EVENTS.CLOSE)">{{ LABELS.CANCEL }}</AppButton
           ><AppButton type="submit" :disabled="busy || !lake">{{
-            busy ? 'Saving…' : 'Save trip'
+            busy ? LABELS.SAVING : LABELS.SAVE_TRIP
           }}</AppButton>
         </div>
       </fieldset>

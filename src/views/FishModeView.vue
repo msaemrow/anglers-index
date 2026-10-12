@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS, EVENTS } from '@/constants'
+
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Fish, Plus } from '@lucide/vue'
@@ -260,7 +262,7 @@ onBeforeUnmount(() => {
 </script>
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a
-  ><AppNavbar :user="user" @sign-out="handleSignOut" />
+  ><AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
   <main v-if="user" id="main-content" class="list-page fishing-page">
     <header class="page-header">
       <h1>Fishing mode</h1>
@@ -269,13 +271,13 @@ onBeforeUnmount(() => {
     <div v-if="loading" class="loading-state" role="status">Loading fishing mode…</div>
     <ContentPanel v-else-if="error" title="Fishing mode couldn’t load"
       ><p class="error-message" role="alert">{{ error }}</p>
-      <AppButton @click="attempt++">Try again</AppButton></ContentPanel
+      <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
     >
     <template v-else-if="catalog">
       <div class="fishing-setup">
         <FishModeTripPanel
           :expanded="setupExpanded"
-          @toggle="setupExpanded = !setupExpanded"
+          @[EVENTS.TOGGLE]="setupExpanded = !setupExpanded"
           :token="token"
           :username="user.username"
           :lake-id="lakeId"
@@ -283,14 +285,14 @@ onBeforeUnmount(() => {
           :refresh="catchAttempt + tripRefresh"
           :day="tripDay"
           :catch-trip-id="catchTripId"
-          @ready="tripsReady = $event"
-          @selected="selectTrip"
+          @[EVENTS.READY]="tripsReady = $event"
+          @[EVENTS.SELECTED]="selectTrip"
         />
         <CollapsiblePanel
           title="Lake and lure"
           class="catch-controls"
           :expanded="setupExpanded"
-          @toggle="setupExpanded = !setupExpanded"
+          @[EVENTS.TOGGLE]="setupExpanded = !setupExpanded"
         >
           <div class="setup">
             <SearchSelect
@@ -347,7 +349,7 @@ onBeforeUnmount(() => {
       <div v-if="catchesLoading" role="status">Loading today’s catches…</div>
       <div v-else-if="catchesError">
         <p class="error-message" role="alert">{{ catchesError }}</p>
-        <AppButton @click="catchAttempt++">Try again</AppButton>
+        <AppButton @click="catchAttempt++">{{ LABELS.TRY_AGAIN }}</AppButton>
       </div>
       <DataTable
         v-else-if="rows.length"
@@ -373,12 +375,12 @@ onBeforeUnmount(() => {
       :token="token"
       :initial-values="editor"
       :choices="catalog"
-      @close="editor = null"
-      @saved="saved"
+      @[EVENTS.CLOSE]="editor = null"
+      @[EVENTS.SAVED]="saved"
     />
   </main>
   <main v-else id="main-content" class="sign-in-layout">
-    <SignInPanel :busy="signingIn" :error="loginError" @submit="handleSignIn" />
+    <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
   </main>
 </template>
 <style scoped>

@@ -1,9 +1,11 @@
 <script setup>
+import { LABELS, EVENTS } from '@/constants'
+
 import { computed } from 'vue'
 import { Fish, Plus, BookOpen, Waves } from '@lucide/vue'
 import AppButton from '@/components/ui/AppButton.vue'
 
-const emit = defineEmits(['add-catch'])
+const emit = defineEmits([EVENTS.ADD_CATCH])
 const props = defineProps({
   user: { type: Object, required: true },
   stats: { type: Object, default: null },
@@ -44,8 +46,8 @@ const statsList = computed(() => [
     </dl>
     <div class="quick-actions">
       <p class="eyebrow">Quick actions</p>
-      <AppButton @click="emit('add-catch')"
-        ><Plus :size="17" aria-hidden="true" />Add fish catch</AppButton
+      <AppButton @click="emit(EVENTS.ADD_CATCH)"
+        ><Plus :size="17" aria-hidden="true" />{{ LABELS.ADD_FISH_CATCH }}</AppButton
       >
       <AppButton :to="`${userPath}/fish-mode`" variant="secondary"
         ><Fish :size="17" aria-hidden="true" />Fishing mode</AppButton

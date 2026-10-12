@@ -1,4 +1,6 @@
 <script setup>
+import { STATUS, LABELS, EVENTS } from '@/constants'
+
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Plus, Trophy } from '@lucide/vue'
@@ -99,7 +101,7 @@ function handleSignOut() {
 
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <AppNavbar :user="user" @sign-out="handleSignOut" />
+  <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
   <main v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
     <header class="page-header">
       <div>
@@ -107,7 +109,7 @@ function handleSignOut() {
       </div>
       <div class="page-actions">
         <AppButton v-if="user.is_admin" @click="editor = true"
-          ><Plus :size="16" aria-hidden="true" />Add species</AppButton
+          ><Plus :size="16" aria-hidden="true" />{{ LABELS.ADD_SPECIES }}</AppButton
         >
       </div>
     </header>
@@ -118,7 +120,7 @@ function handleSignOut() {
     </div>
     <ContentPanel v-else-if="error" title="Species couldn’t load"
       ><p class="error-message" role="alert">{{ error }}</p>
-      <AppButton @click="attempt++">Try again</AppButton></ContentPanel
+      <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
     >
     <ContentPanel
       v-else-if="!species.length"
@@ -154,7 +156,7 @@ function handleSignOut() {
           <template #cell-name="{ row }"
             ><span class="species-name"
               ><Trophy
-                v-if="row.master_angler_status === 'approved'"
+                v-if="row.master_angler_status === STATUS.APPROVED"
                 class="trophy"
                 :size="16"
                 aria-label="Approved Master Angler"
@@ -191,12 +193,12 @@ function handleSignOut() {
     <SpeciesEditor
       v-if="editor && user.is_admin"
       :token="token"
-      @close="editor = false"
-      @saved="saved"
+      @[EVENTS.CLOSE]="editor = false"
+      @[EVENTS.SAVED]="saved"
     />
   </main>
   <main v-else id="main-content" class="sign-in-layout">
-    <SignInPanel :busy="signingIn" :error="loginError" @submit="handleSignIn" />
+    <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
   </main>
 </template>
 <style scoped>

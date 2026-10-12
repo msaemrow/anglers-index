@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS, EVENTS } from '@/constants'
+
 import IconButton from '@/components/ui/IconButton.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -110,7 +112,7 @@ function handleSignOut() {
 
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <AppNavbar :user="user" @sign-out="handleSignOut" />
+  <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
   <main v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
     <PageHeader
       title="My tackle box"
@@ -130,7 +132,7 @@ function handleSignOut() {
     </div>
     <ContentPanel v-else-if="error" title="We couldn’t load your tackle box">
       <p class="error-message" role="alert">{{ error }}</p>
-      <AppButton @click="attempt++">Try again</AppButton>
+      <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton>
     </ContentPanel>
     <ContentPanel
       v-else-if="!lures.length"
@@ -194,7 +196,7 @@ function handleSignOut() {
     </ContentPanel>
   </main>
   <main v-else id="main-content" class="sign-in-layout">
-    <SignInPanel :busy="signingIn" :error="loginError" @submit="handleSignIn" />
+    <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
   </main>
 </template>
 

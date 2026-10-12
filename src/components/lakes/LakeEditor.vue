@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS, US_STATES, DEFAULT_STATE, EVENTS } from '@/constants'
+
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { reactive, ref, onBeforeUnmount } from 'vue'
 import AppModal from '@/components/ui/AppModal.vue'
@@ -9,11 +11,7 @@ const props = defineProps({
   lake: { type: Object, default: null },
   token: { type: String, required: true },
 })
-const emit = defineEmits(['close', 'saved'])
-const states =
-  'AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY'
-    .split(' ')
-    .sort()
+const emit = defineEmits([EVENTS.CLOSE, EVENTS.SAVED])
 const fields = [
   { key: 'name', label: 'Lake name' },
   { key: 'nearest_town', label: 'Nearest town' },
@@ -23,7 +21,7 @@ const form = reactive({
   name: props.lake?.name ?? '',
   nearest_town: props.lake?.nearest_town ?? '',
   county: props.lake?.county ?? '',
-  state: props.lake?.state ?? 'MN',
+  state: props.lake?.state ?? DEFAULT_STATE,
   latitude: props.lake?.latitude ?? '',
   longitude: props.lake?.longitude ?? '',
 })
@@ -37,7 +35,7 @@ async function submit() {
   error.value = ''
   try {
     const lake = await saveLake(form, props.token, props.lake?.id, controller.signal)
-    if (!controller.signal.aborted) emit('saved', lake)
+    if (!controller.signal.aborted) emit(EVENTS.SAVED, lake)
   } catch (failure) {
     if (controller.signal.aborted) return
     error.value = failure.message
@@ -47,7 +45,11 @@ async function submit() {
 }
 </script>
 <template>
-  <AppModal :title="lake ? 'Edit lake' : 'Add lake'" :busy="busy" @close="emit('close')">
+  <AppModal
+    :title="lake ? 'Edit lake' : LABELS.ADD_LAKE"
+    :busy="busy"
+    @[EVENTS.CLOSE]="emit(EVENTS.CLOSE)"
+  >
     <form @submit.prevent="submit">
       <label v-for="field in fields" :key="field.key" class="field"
         >{{ field.label
@@ -61,17 +63,17 @@ async function submit() {
       <label class="field"
         >State<AppSelect size="regular" v-model="form.state" name="state" required :disabled="busy">
           <option value="" disabled>Select a state</option>
-          <option v-if="form.state && !states.includes(form.state)" :value="form.state">
+          <option v-if="form.state && !US_STATES.includes(form.state)" :value="form.state">
             {{ form.state }}
           </option>
-          <option v-for="state in states" :key="state" :value="state">{{ state }}</option>
+          <option v-for="state in US_STATES" :key="state" :value="state">{{ state }}</option>
         </AppSelect></label
       >
       <CoordinatePicker
         :latitude="form.latitude"
         :longitude="form.longitude"
         :disabled="busy"
-        @select="Object.assign(form, $event)"
+        @[EVENTS.SELECT]="Object.assign(form, $event)"
       />
       <div class="coordinates">
         <label class="field"
@@ -101,9 +103,11 @@ async function submit() {
       </p>
       <p v-if="error" class="error-message" role="alert">{{ error }}</p>
       <div class="actions">
-        <AppButton variant="secondary" :disabled="busy" @click="emit('close')">Cancel</AppButton
+        <AppButton variant="secondary" :disabled="busy" @click="emit(EVENTS.CLOSE)">{{
+          LABELS.CANCEL
+        }}</AppButton
         ><AppButton type="submit" :disabled="busy">{{
-          busy ? 'Saving…' : lake ? 'Save changes' : 'Add lake'
+          busy ? LABELS.SAVING : lake ? LABELS.SAVE_CHANGES : LABELS.ADD_LAKE
         }}</AppButton>
       </div>
     </form>

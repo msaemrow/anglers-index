@@ -1,10 +1,12 @@
 <script setup>
+import { LABELS, EVENTS } from '@/constants'
+
 import { reactive, ref, onBeforeUnmount } from 'vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import { addSpecies } from '@/api/species'
 const props = defineProps({ token: { type: String, required: true } })
-const emit = defineEmits(['close', 'saved'])
+const emit = defineEmits([EVENTS.CLOSE, EVENTS.SAVED])
 const form = reactive({ name: '', master_angler_length: '' })
 const busy = ref(false)
 const error = ref('')
@@ -16,7 +18,7 @@ async function submit() {
   error.value = ''
   try {
     const species = await addSpecies(form, props.token, controller.signal)
-    if (!controller.signal.aborted) emit('saved', species)
+    if (!controller.signal.aborted) emit(EVENTS.SAVED, species)
   } catch (failure) {
     if (controller.signal.aborted) return
     error.value = failure.message
@@ -26,7 +28,7 @@ async function submit() {
 }
 </script>
 <template>
-  <AppModal title="Add species" :busy="busy" @close="emit('close')">
+  <AppModal title="Add species" :busy="busy" @[EVENTS.CLOSE]="emit(EVENTS.CLOSE)">
     <form @submit.prevent="submit">
       <label class="field"
         >Species name<input v-model="form.name" name="name" required :disabled="busy"
@@ -43,9 +45,11 @@ async function submit() {
       /></label>
       <p v-if="error" class="error-message" role="alert">{{ error }}</p>
       <div class="actions">
-        <AppButton variant="secondary" :disabled="busy" @click="emit('close')">Cancel</AppButton
+        <AppButton variant="secondary" :disabled="busy" @click="emit(EVENTS.CLOSE)">{{
+          LABELS.CANCEL
+        }}</AppButton
         ><AppButton type="submit" :disabled="busy">{{
-          busy ? 'Saving…' : 'Save species'
+          busy ? LABELS.SAVING : LABELS.SAVE_SPECIES
         }}</AppButton>
       </div>
     </form>

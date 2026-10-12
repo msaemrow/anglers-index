@@ -1,11 +1,12 @@
 <script setup>
+import { EVENTS } from '@/constants'
 import { computed } from 'vue'
 const props = defineProps({
   rows: { type: Array, required: true },
   selected: { type: String, default: null },
   title: { type: String, required: true },
 })
-defineEmits(['select'])
+defineEmits([EVENTS.SELECT])
 const max = computed(() => Math.max(1, ...props.rows.map((row) => row.count)))
 </script>
 <template>
@@ -14,7 +15,7 @@ const max = computed(() => Math.max(1, ...props.rows.map((row) => row.count)))
     <figcaption>{{ title }} · reported catches</figcaption>
     <ol>
       <li v-for="row in rows" :key="row.key">
-        <button :aria-pressed="selected === row.key" @click="$emit('select', row.key)">
+        <button :aria-pressed="selected === row.key" @click="$emit(EVENTS.SELECT, row.key)">
           <span class="label">{{ row.label }}</span>
           <span class="track" aria-hidden="true"
             ><span :style="{ width: `${(row.count / max) * 100}%` }"

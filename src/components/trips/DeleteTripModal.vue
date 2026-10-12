@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS, EVENTS } from '@/constants'
+
 import { onBeforeUnmount, ref } from 'vue'
 import AppModal from '@/components/ui/AppModal.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -8,7 +10,7 @@ const props = defineProps({
   trip: { type: Object, required: true },
   token: { type: String, required: true },
 })
-const emit = defineEmits(['close', 'deleted'])
+const emit = defineEmits([EVENTS.CLOSE, EVENTS.DELETED])
 const busy = ref(false),
   error = ref('')
 const controller = new AbortController()
@@ -19,7 +21,7 @@ async function remove() {
   error.value = ''
   try {
     await deleteTrip(props.trip.id, props.token, controller.signal)
-    if (!controller.signal.aborted) emit('deleted')
+    if (!controller.signal.aborted) emit(EVENTS.DELETED)
   } catch (failure) {
     if (!controller.signal.aborted) {
       error.value = failure.message
@@ -30,7 +32,7 @@ async function remove() {
 }
 </script>
 <template>
-  <AppModal title="Delete fishing trip?" :busy="busy" @close="emit('close')">
+  <AppModal title="Delete fishing trip?" :busy="busy" @[EVENTS.CLOSE]="emit(EVENTS.CLOSE)">
     <p>
       {{ trip.lake?.name || 'Fishing trip' }} · {{ formatDate(trip.start_date)
       }}<template v-if="trip.end_date !== trip.start_date"
@@ -43,9 +45,11 @@ async function remove() {
     </p>
     <p v-if="error" role="alert" class="error-message">{{ error }}</p>
     <div class="actions">
-      <AppButton variant="secondary" :disabled="busy" @click="emit('close')">Cancel</AppButton
+      <AppButton variant="secondary" :disabled="busy" @click="emit(EVENTS.CLOSE)">{{
+        LABELS.CANCEL
+      }}</AppButton
       ><AppButton variant="danger" :disabled="busy" @click="remove">{{
-        busy ? 'Deleting…' : 'Delete trip'
+        busy ? LABELS.DELETING : LABELS.DELETE_TRIP
       }}</AppButton>
     </div>
   </AppModal>

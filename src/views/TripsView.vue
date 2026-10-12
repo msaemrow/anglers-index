@@ -1,4 +1,6 @@
 <script setup>
+import { STATUS, LABELS, EVENTS } from '@/constants'
+
 import PageHeader from '@/components/ui/PageHeader.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, ref, watch } from 'vue'
@@ -52,10 +54,10 @@ function saved(trip) {
 </script>
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a
-  ><AppNavbar :user="user" @sign-out="signOut" />
+  ><AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
   <main v-if="user" id="main-content" class="list-page trips-page header-page" :aria-busy="loading">
     <PageHeader title="Fishing trips">
-      <AppButton @click="editor = true">Add trip</AppButton>
+      <AppButton @click="editor = true">{{ LABELS.ADD_TRIP }}</AppButton>
     </PageHeader>
     <p v-if="route.query.deleted === '1'" role="status" class="catch-notice">
       Trip deleted. All catches have been kept.
@@ -63,7 +65,7 @@ function saved(trip) {
     <p v-if="loading" role="status">Loading fishing trips…</p>
     <ContentPanel v-else-if="error" title="Trips couldn’t load"
       ><p role="alert">{{ error }}</p>
-      <AppButton @click="attempt++">Try again</AppButton></ContentPanel
+      <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
     >
     <ContentPanel
       v-else
@@ -79,8 +81,8 @@ function saved(trip) {
         ><label
           >Status<AppSelect size="compact" v-model="status">
             <option value="all">All trips</option>
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
+            <option :value="STATUS.ACTIVE">{{ LABELS.ACTIVE }}</option>
+            <option :value="STATUS.COMPLETED">{{ LABELS.COMPLETED }}</option>
           </AppSelect></label
         >
       </div>
@@ -94,7 +96,7 @@ function saved(trip) {
       >
         <template #cell-start_date="{ value }">{{ formatDate(value) }}</template>
         <template #cell-status="{ value }">{{
-          value === 'active' ? 'Active' : 'Completed'
+          value === STATUS.ACTIVE ? LABELS.ACTIVE : LABELS.COMPLETED
         }}</template>
         <template #cell-end_date="{ value }">{{ formatDate(value) }}</template>
         <template #cell-actions="{ row }"
@@ -111,10 +113,15 @@ function saved(trip) {
         }}
       </p>
     </ContentPanel>
-    <TripEditor v-if="editor" :token="token" @close="editor = false" @saved="saved" />
+    <TripEditor
+      v-if="editor"
+      :token="token"
+      @[EVENTS.CLOSE]="editor = false"
+      @[EVENTS.SAVED]="saved"
+    />
   </main>
   <main v-else id="main-content" class="sign-in-layout">
-    <SignInPanel :busy="signingIn" :error="loginError" @submit="handleSignIn" />
+    <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
   </main>
 </template>
 <style scoped>

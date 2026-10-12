@@ -1,4 +1,5 @@
 <script setup>
+import { EVENTS } from '@/constants'
 import { computed, ref, watch } from 'vue'
 import { Headphones, Video, BookOpen, ArrowRight } from '@lucide/vue'
 import { RouterLink } from 'vue-router'
@@ -54,7 +55,7 @@ const rows = computed(() =>
 </script>
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <AppNavbar :user="user" @sign-out="signOut" />
+  <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
   <main id="main-content" class="list-page">
     <header class="page-header">
       <div>

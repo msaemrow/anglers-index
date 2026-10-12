@@ -1,4 +1,6 @@
 <script setup>
+import { LABELS, EVENTS } from '@/constants'
+
 import { computed, ref, watch } from 'vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import { lakeCoordinates } from '@/api/lakes'
@@ -8,7 +10,7 @@ const props = defineProps({
   longitude: { type: [Number, String], default: '' },
   disabled: Boolean,
 })
-const emit = defineEmits(['select'])
+const emit = defineEmits([EVENTS.SELECT])
 const coordinates = computed(() => lakeCoordinates(props))
 const container = ref(null)
 const loading = ref(false)
@@ -36,7 +38,7 @@ function updateMarker() {
 function select(point) {
   if (props.disabled) return
   const wrapped = point.wrap()
-  emit('select', {
+  emit(EVENTS.SELECT, {
     latitude: Number(wrapped.lat.toFixed(6)),
     longitude: Number(wrapped.lng.toFixed(6)),
   })
@@ -145,9 +147,9 @@ watch(
         />
         <div v-if="loading || error" class="map-message" :role="error ? 'alert' : 'status'">
           <p>{{ error || 'Loading map…' }}</p>
-          <AppButton v-if="error" variant="secondary" :disabled="disabled" @click="attempt++"
-            >Retry map</AppButton
-          >
+          <AppButton v-if="error" variant="secondary" :disabled="disabled" @click="attempt++">{{
+            LABELS.RETRY_MAP
+          }}</AppButton>
         </div>
       </div>
       <div class="map-actions">
