@@ -11,6 +11,13 @@ export const STATUS = Object.freeze({
 })
 
 export const LABELS = Object.freeze({
+  ADD: 'Add',
+  REMOVE: 'Remove',
+  UPDATING: 'Updating…',
+  REVIEW: 'Review',
+  VIEW: 'View',
+  EDIT: 'Edit',
+  ADD_SIMILAR: 'Add similar',
   CANCEL: 'Cancel',
   SAVE: 'Save',
   SAVE_CHANGES: 'Save changes',

@@ -1,7 +1,6 @@
 <script setup>
-import { EVENTS } from '@/constants'
+import { EVENTS, LABELS } from '@/constants'
 import { Check, Plus } from '@lucide/vue'
-import IconButton from '@/components/ui/IconButton.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 defineProps({
   addOnly: Boolean,
@@ -23,13 +22,14 @@ defineEmits([EVENTS.CLICK])
   >
     <Check :size="18" aria-hidden="true" />
   </span>
-  <IconButton
+  <AppButton
+    variant="link"
     v-else-if="compact"
     :disabled="disabled || busy"
     :aria-pressed="included"
     :aria-busy="busy"
     @click="$emit(EVENTS.CLICK, $event)"
-    :label="
+    :aria-label="
       busy
         ? 'Updating tackle box…'
         : included
@@ -37,8 +37,8 @@ defineEmits([EVENTS.CLICK])
           : `Add ${name} to tackle box`
     "
   >
-    <component :is="included ? Check : Plus" :size="18" aria-hidden="true" />
-  </IconButton>
+    {{ busy ? LABELS.UPDATING : included ? LABELS.REMOVE : LABELS.ADD }}
+  </AppButton>
   <AppButton
     v-else
     variant="secondary"

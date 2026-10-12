@@ -1,8 +1,9 @@
 <script setup>
 import { APP_NAME, LABELS, EVENTS } from '@/constants'
 
+import logo from '@/assets/logo.png'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
-import { Fish, LogOut, Menu, X } from '@lucide/vue'
+import { LogOut, Menu, X } from '@lucide/vue'
 
 defineProps({ user: { type: Object, default: null } })
 const emit = defineEmits([EVENTS.SIGN_OUT])
@@ -36,7 +37,7 @@ function signOut() {
 <template>
   <header ref="navbar" class="navbar">
     <RouterLink class="brand" to="/dashboard" @click="menuOpen = false"
-      ><span class="brand__mark"><Fish :size="21" aria-hidden="true" /></span
+      ><span class="brand__mark"><img :src="logo" alt="" width="34" height="34" /></span
       >{{ APP_NAME }}</RouterLink
     >
     <template v-if="user">

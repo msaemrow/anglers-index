@@ -61,7 +61,7 @@ const columns = [
   { key: 'speciesName', label: 'Species' },
   { key: 'length', label: 'Length (in)', numeric: true },
   { key: 'weight', label: 'Weight (lb)', numeric: true },
-  { key: 'actions', label: 'Details', sortable: false },
+  { key: 'actions', label: '', sortable: false },
 ]
 function deleted() {
   const username = user.value.username
@@ -165,9 +165,10 @@ function saved(item) {
           ><template #cell-date="{ value }">{{ formatDate(value) }}</template
           ><template #cell-time="{ value }">{{ formatTime(value) }}</template
           ><template #cell-actions="{ row }"
-            ><RouterLink
+            ><AppButton
+              variant="link"
               :to="{ name: 'fish-catch', params: { username: user.username, id: row.id } }"
-              >View catch →</RouterLink
+              >{{ LABELS.VIEW }}</AppButton
             ></template
           ></DataTable
         >

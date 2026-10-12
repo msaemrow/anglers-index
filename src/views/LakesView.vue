@@ -1,12 +1,11 @@
 <script setup>
 import { LABELS, EVENTS } from '@/constants'
 
-import IconButton from '@/components/ui/IconButton.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Eye, Pencil, Plus } from '@lucide/vue'
+import { Plus } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
@@ -46,7 +45,7 @@ const columns = [
   { key: 'nearest_town', label: 'Nearest town' },
   { key: 'county', label: 'County' },
   { key: 'state', label: 'State' },
-  { key: 'actions', label: 'Details', sortable: false },
+  { key: 'actions', label: '', sortable: false },
 ]
 function saved(lake) {
   const editing = Boolean(editor.value?.lake)
@@ -148,19 +147,21 @@ watch(
           }}</RouterLink></template
         >
         <template #cell-actions="{ row }">
-          <IconButton
+          <AppButton
+            variant="link"
             :to="{ name: 'lake', params: { id: row.id } }"
-            :label="`View ${row.name || 'lake'} details`"
+            :aria-label="`View ${row.name || 'lake'} details`"
           >
-            <Eye :size="18" aria-hidden="true" />
-          </IconButton>
-          <IconButton
+            {{ LABELS.VIEW }}
+          </AppButton>
+          <AppButton
+            variant="link"
             v-if="user?.is_admin"
-            :label="`Edit ${row.name || 'lake'}`"
+            :aria-label="`Edit ${row.name || 'lake'}`"
             @click="editor = { lake: row }"
           >
-            <Pencil :size="18" aria-hidden="true" />
-          </IconButton>
+            {{ LABELS.EDIT }}
+          </AppButton>
         </template>
       </DataTable>
       <div v-else class="empty-message" role="status">

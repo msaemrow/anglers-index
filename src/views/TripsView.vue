@@ -45,7 +45,7 @@ const columns = [
   { key: 'catch_count', label: 'Catches', numeric: true },
   { key: 'status', label: 'Status' },
   { key: 'day_count', label: 'Days', numeric: true },
-  { key: 'actions', label: 'Details', sortable: false },
+  { key: 'actions', label: '', sortable: false },
 ]
 function saved(trip) {
   editor.value = false
@@ -100,8 +100,10 @@ function saved(trip) {
         }}</template>
         <template #cell-end_date="{ value }">{{ formatDate(value) }}</template>
         <template #cell-actions="{ row }"
-          ><RouterLink :to="{ name: 'trip', params: { username: user.username, id: row.id } }"
-            >View trip →</RouterLink
+          ><AppButton
+            variant="link"
+            :to="{ name: 'trip', params: { username: user.username, id: row.id } }"
+            >{{ LABELS.VIEW }}</AppButton
           ></template
         >
       </DataTable>

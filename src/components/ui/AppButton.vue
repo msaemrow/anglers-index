@@ -27,6 +27,23 @@ defineProps({
 .button:not(:disabled) {
   cursor: pointer;
 }
+.button--link {
+  min-height: 32px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.button--link:not(:disabled):hover {
+  color: var(--navy);
+}
+.button--link:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
 .button--danger {
   background: #a62936;
   border-color: #a62936;

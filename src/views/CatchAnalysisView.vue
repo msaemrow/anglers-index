@@ -104,7 +104,7 @@ const columns = [
   { key: 'species', label: 'Species' },
   { key: 'lake', label: 'Lake' },
   { key: 'condition', label: 'Selected weather' },
-  { key: 'actions', label: 'Details', sortable: false },
+  { key: 'actions', label: '', sortable: false },
 ]
 function select(dimension, key) {
   selected.value =
@@ -276,9 +276,10 @@ async function handleSignIn(credentials) {
           <template #cell-date="{ value }">{{ formatDate(value) }}</template>
           <template #cell-time="{ value }">{{ formatTime(value) }}</template>
           <template #cell-actions="{ row }"
-            ><RouterLink
+            ><AppButton
+              variant="link"
               :to="{ name: 'fish-catch', params: { username: user.username, id: row.id } }"
-              >View catch →</RouterLink
+              >{{ LABELS.VIEW }}</AppButton
             ></template
           >
         </DataTable>

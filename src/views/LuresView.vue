@@ -1,12 +1,11 @@
 <script setup>
 import { LABELS, EVENTS } from '@/constants'
 
-import IconButton from '@/components/ui/IconButton.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, reactive, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Eye, Pencil, Plus } from '@lucide/vue'
+import { Plus } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -63,7 +62,7 @@ const columns = [
   { key: 'name', label: 'Lure' },
   { key: 'color', label: 'Color' },
   { key: 'size', label: 'Size' },
-  { key: 'actions', label: 'Actions', sortable: false },
+  { key: 'actions', label: '', sortable: false },
 ]
 function clearFilters() {
   search.value = ''
@@ -152,25 +151,28 @@ function clearFilters() {
           /></template>
           <template #cell-actions="{ row }">
             <div class="actions">
-              <IconButton
+              <AppButton
+                variant="link"
                 :to="{ name: 'lure', params: { id: row.id } }"
-                :label="`View ${row.name || 'lure'} details`"
+                :aria-label="`View ${row.name || 'lure'} details`"
               >
-                <Eye :size="18" aria-hidden="true" />
-              </IconButton>
-              <IconButton
-                :label="`Add a lure similar to ${row.name || 'this lure'}`"
+                {{ LABELS.VIEW }}
+              </AppButton>
+              <AppButton
+                variant="link"
+                :aria-label="`Add a lure similar to ${row.name || 'this lure'}`"
                 @click="editor = { lure: row, editing: false }"
               >
-                <Plus :size="18" aria-hidden="true" />
-              </IconButton>
-              <IconButton
+                {{ LABELS.ADD_SIMILAR }}
+              </AppButton>
+              <AppButton
+                variant="link"
                 v-if="user.is_admin"
-                :label="`Edit ${row.name || 'lure'}`"
+                :aria-label="`Edit ${row.name || 'lure'}`"
                 @click="editor = { lure: row, editing: true }"
               >
-                <Pencil :size="18" aria-hidden="true" />
-              </IconButton>
+                {{ LABELS.EDIT }}
+              </AppButton>
             </div>
           </template>
         </DataTable>

@@ -2,8 +2,6 @@
 import { LABELS } from '@/constants'
 
 import { computed, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
-import { ArrowUpRight } from '@lucide/vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import DataTable from '@/components/ui/DataTable.vue'
@@ -72,27 +70,14 @@ watch(
         caption="Master Angler catches awaiting review"
       >
         <template #cell-action="{ row }"
-          ><RouterLink
-            class="review-link"
+          ><AppButton
+            variant="link"
             :to="{ name: 'fish-catch', params: { username: props.username, id: row.catch_id } }"
-            >Review catch <ArrowUpRight :size="16" aria-hidden="true" /></RouterLink
-        ></template>
+            >{{ LABELS.REVIEW }}</AppButton
+          ></template
+        >
       </DataTable>
       <p v-else class="empty-message">No catches are waiting for review.</p>
     </template>
   </ContentPanel>
 </template>
-
-<style scoped>
-.review-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #577394;
-}
-.review-link:hover {
-  text-decoration: underline;
-}
-</style>

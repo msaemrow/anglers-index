@@ -1,12 +1,10 @@
 <script setup>
 import { LABELS, EVENTS } from '@/constants'
 
-import IconButton from '@/components/ui/IconButton.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Eye, Minus } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -47,7 +45,7 @@ const columns = [
   { key: 'name', label: 'Name' },
   { key: 'color', label: 'Color' },
   { key: 'size', label: 'Size' },
-  { key: 'actions', label: 'Actions', sortable: false },
+  { key: 'actions', label: '', sortable: false },
 ]
 function clearFilters() {
   search.value = ''
@@ -173,20 +171,22 @@ function handleSignOut() {
           }}</RouterLink></template
         >
         <template #cell-actions="{ row }">
-          <IconButton
+          <AppButton
+            variant="link"
             :to="{ name: 'lure', params: { id: row.id } }"
-            :label="`View ${row.name || 'lure'} details`"
+            :aria-label="`View ${row.name || 'lure'} details`"
           >
-            <Eye :size="18" aria-hidden="true" />
-          </IconButton>
-          <IconButton
+            {{ LABELS.VIEW }}
+          </AppButton>
+          <AppButton
+            variant="link"
             :disabled="pending.has(String(row.id))"
             :aria-busy="pending.has(String(row.id))"
-            :label="`Remove ${row.name || 'lure'} from tackle box`"
+            :aria-label="`Remove ${row.name || 'lure'} from tackle box`"
             @click="remove(row)"
           >
-            <Minus :size="18" aria-hidden="true" />
-          </IconButton>
+            {{ pending.has(String(row.id)) ? LABELS.UPDATING : LABELS.REMOVE }}
+          </AppButton>
         </template>
       </DataTable>
       <div v-else role="status">

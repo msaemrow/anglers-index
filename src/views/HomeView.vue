@@ -1,8 +1,9 @@
 <script setup>
 import { APP_NAME } from '@/constants'
 
+import logo from '@/assets/logo.png'
 import { ref } from 'vue'
-import { ArrowDown, ArrowUpRight, Fish, MapPin, NotebookPen, Trophy } from '@lucide/vue'
+import { ArrowDown, ArrowUpRight, MapPin, NotebookPen, Trophy } from '@lucide/vue'
 import LandingAuth from '@/components/LandingAuth.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import { useSession } from '@/composables/useSession'
@@ -39,7 +40,7 @@ const features = [
     <a class="skip-link" href="#home-content">Skip to content</a>
     <header class="landing-header">
       <RouterLink to="/" class="landing-brand"
-        ><span><Fish :size="23" aria-hidden="true" /></span>{{ APP_NAME }}</RouterLink
+        ><span><img :src="logo" alt="" width="34" height="34" /></span>{{ APP_NAME }}</RouterLink
       >
       <nav aria-label="Account navigation"><LandingAuth ref="auth" /></nav>
     </header>
@@ -131,6 +132,12 @@ const features = [
   background: #28496d;
   color: white;
   border-radius: 10px;
+}
+.landing-brand img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .hero {
   min-height: min(780px, calc(100svh - 68px));

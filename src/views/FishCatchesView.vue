@@ -2,11 +2,10 @@
 import { STATUS, LABELS, EVENTS } from '@/constants'
 
 import PageHeader from '@/components/ui/PageHeader.vue'
-import IconButton from '@/components/ui/IconButton.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { Eye, Plus, Trophy, Fish, Clock } from '@lucide/vue'
+import { Plus, Trophy, Fish, Clock } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -66,7 +65,7 @@ const columns = [
   { key: 'lake', label: 'Lake' },
   { key: 'length', label: 'Length (in)', numeric: true },
   { key: 'weight', label: 'Weight (lb)', numeric: true },
-  { key: 'actions', label: 'Details', sortable: false },
+  { key: 'actions', label: '', sortable: false },
 ]
 const rows = computed(() => {
   const query = search.value.trim().toLowerCase()
@@ -244,11 +243,13 @@ function handleSignOut() {
               aria-label="Eligible · awaiting Master Angler review"
           /></template>
           <template #cell-actions="{ row }"
-            ><IconButton
+            ><AppButton
+              variant="link"
               :to="{ name: 'fish-catch', params: { username: user.username, id: row.id } }"
-              :label="`View ${row.species} catch from ${formatDate(row.date)}`"
-              ><Eye :size="18" aria-hidden="true" /></IconButton
-          ></template>
+              :aria-label="`View ${row.species} catch from ${formatDate(row.date)}`"
+              >{{ LABELS.VIEW }}</AppButton
+            ></template
+          >
         </DataTable>
         <div v-else class="empty-message" role="status">
           <h3>No matching catches</h3>
