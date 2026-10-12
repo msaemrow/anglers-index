@@ -14,11 +14,10 @@ import FishCatchModal from '@/components/catches/FishCatchModal.vue'
 import { useSession } from '@/composables/useSession'
 import { getFishCatches } from '@/api/fishCatch'
 
-const { token, user, signingIn, signIn, signOut } = useSession()
+const { token, user, signingIn, signIn, signOut, sessionError: loginError } = useSession()
 const catches = ref([])
 const loading = ref(false)
 const error = ref('')
-const loginError = ref('')
 const attempt = ref(0)
 const route = useRoute()
 const router = useRouter()
@@ -48,10 +47,6 @@ function catchSaved(item) {
   catchModal.value = false
   catchNotice.value = item.weather_warning ? `Catch saved. ${item.weather_warning}` : 'Catch saved.'
   attempt.value++
-}
-function catchExpired() {
-  loginError.value = 'Your session has expired. Please sign in again.'
-  signOut()
 }
 const search = ref('')
 const awardFilter = ref(
@@ -129,10 +124,7 @@ watch(
       if (!controller.signal.aborted) catches.value = data
     } catch (failure) {
       if (controller.signal.aborted) return
-      if (failure.status === 401) {
-        loginError.value = 'Your session has expired. Please sign in again.'
-        signOut()
-      } else error.value = 'We couldn’t load your catches. Please try again.'
+      error.value = failure.message
     } finally {
       if (!controller.signal.aborted) loading.value = false
     }
@@ -145,11 +137,7 @@ async function handleSignIn(credentials) {
   try {
     await signIn(credentials)
   } catch (failure) {
-    if (failure.name !== 'AbortError')
-      loginError.value =
-        failure.status === 401
-          ? 'Incorrect username or password.'
-          : 'Unable to sign in. Check your connection and try again.'
+    if (failure.name !== 'AbortError') loginError.value = failure.message
   }
 }
 function handleSignOut() {
@@ -272,7 +260,6 @@ function handleSignOut() {
       :token="token"
       @close="catchModal = false"
       @saved="catchSaved"
-      @expired="catchExpired"
     />
   </main>
   <main v-else id="main-content" class="sign-in-layout">

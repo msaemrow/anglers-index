@@ -8,7 +8,7 @@ const props = defineProps({
   editing: Boolean,
   token: { type: String, required: true },
 })
-const emit = defineEmits(['close', 'saved', 'expired'])
+const emit = defineEmits(['close', 'saved'])
 const fields = ['brand', 'name', 'color', 'size']
 const form = reactive({
   ...Object.fromEntries(fields.map((field) => [field, props.lure?.[field] || ''])),
@@ -33,14 +33,7 @@ async function submit() {
       emit('saved', { lure, added: !props.editing && form.add_to_tackle_box })
   } catch (failure) {
     if (controller.signal.aborted) return
-    if (failure.status === 401) emit('expired')
-    else
-      error.value =
-        failure.status === 400
-          ? failure.message
-          : failure.status === 403
-            ? 'You don’t have permission to edit this lure.'
-            : 'Unable to save this lure. Please try again.'
+    error.value = failure.message
   } finally {
     if (!controller.signal.aborted) busy.value = false
   }

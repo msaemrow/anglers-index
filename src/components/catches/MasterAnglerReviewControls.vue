@@ -9,7 +9,7 @@ const props = defineProps({
   token: { type: String, required: true },
   reasons: { type: Array, required: true },
 })
-const emit = defineEmits(['reviewed', 'expired', 'refresh'])
+const emit = defineEmits(['reviewed', 'refresh'])
 const reason = ref('')
 const busy = ref(false)
 const error = ref('')
@@ -44,8 +44,7 @@ async function decide(status) {
     if (!current.signal.aborted) emit('reviewed', review)
   } catch (failure) {
     if (current.signal.aborted) return
-    if (failure.status === 401) emit('expired')
-    else {
+    {
       error.value = failure.message
       stale.value = failure.status === 409 || failure.status === 404 || failure.status === 403
     }

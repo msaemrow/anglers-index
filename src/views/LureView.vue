@@ -30,7 +30,6 @@ const {
   editor,
   toggle,
   saved,
-  expired,
   handleSignIn,
   handleSignOut,
 } = useLurePage(computed(() => route.params.id))
@@ -103,7 +102,6 @@ const details = computed(() =>
       :token="token"
       @close="editor = null"
       @saved="saved"
-      @expired="expired"
     />
   </main>
   <main v-else id="main-content" class="sign-in-layout">

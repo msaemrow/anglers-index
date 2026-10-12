@@ -13,11 +13,10 @@ import DataTable from '@/components/ui/DataTable.vue'
 import { useSession } from '@/composables/useSession'
 import { getTackleBox, setTackleMembership } from '@/api/lures'
 
-const { user, token, signingIn, signIn, signOut } = useSession()
+const { user, token, signingIn, signIn, signOut, sessionError: loginError } = useSession()
 const lures = ref([])
 const loading = ref(false)
 const error = ref('')
-const loginError = ref('')
 const actionError = ref('')
 const notice = ref('')
 const attempt = ref(0)
@@ -52,10 +51,6 @@ function clearFilters() {
   search.value = ''
   brand.value = ''
 }
-function expired() {
-  loginError.value = 'Your session has expired. Please sign in again.'
-  signOut()
-}
 watch(
   [token, attempt],
   async ([currentToken], _, onCleanup) => {
@@ -74,8 +69,7 @@ watch(
       if (!controller.signal.aborted) lures.value = result
     } catch (failure) {
       if (controller.signal.aborted) return
-      if (failure.status === 401) expired()
-      else error.value = 'Unable to load your tackle box. Please try again.'
+      error.value = failure.message
     } finally {
       if (!controller.signal.aborted) loading.value = false
     }
@@ -95,8 +89,7 @@ async function remove(lure) {
     notice.value = `${lure.name || 'Lure'} removed from your tackle box.`
   } catch (failure) {
     if (controller.signal.aborted) return
-    if (failure.status === 401) expired()
-    else actionError.value = 'Unable to remove this lure. Please try again.'
+    actionError.value = failure.message
   } finally {
     if (!controller.signal.aborted) pending.value.delete(key)
   }
@@ -106,11 +99,7 @@ async function handleSignIn(credentials) {
   try {
     await signIn(credentials)
   } catch (failure) {
-    if (failure.name !== 'AbortError')
-      loginError.value =
-        failure.status === 401
-          ? 'Incorrect username or password.'
-          : 'Unable to sign in. Please try again.'
+    if (failure.name !== 'AbortError') loginError.value = failure.message
   }
 }
 function handleSignOut() {

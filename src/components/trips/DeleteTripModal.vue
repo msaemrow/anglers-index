@@ -8,7 +8,7 @@ const props = defineProps({
   trip: { type: Object, required: true },
   token: { type: String, required: true },
 })
-const emit = defineEmits(['close', 'deleted', 'expired'])
+const emit = defineEmits(['close', 'deleted'])
 const busy = ref(false),
   error = ref('')
 const controller = new AbortController()
@@ -22,8 +22,7 @@ async function remove() {
     if (!controller.signal.aborted) emit('deleted')
   } catch (failure) {
     if (!controller.signal.aborted) {
-      if (failure.status === 401) emit('expired')
-      else error.value = failure.message
+      error.value = failure.message
     }
   } finally {
     if (!controller.signal.aborted) busy.value = false

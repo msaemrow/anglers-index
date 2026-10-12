@@ -4,7 +4,7 @@ import AppModal from '@/components/ui/AppModal.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import { addSpecies } from '@/api/species'
 const props = defineProps({ token: { type: String, required: true } })
-const emit = defineEmits(['close', 'saved', 'expired'])
+const emit = defineEmits(['close', 'saved'])
 const form = reactive({ name: '', master_angler_length: '' })
 const busy = ref(false)
 const error = ref('')
@@ -19,14 +19,7 @@ async function submit() {
     if (!controller.signal.aborted) emit('saved', species)
   } catch (failure) {
     if (controller.signal.aborted) return
-    if (failure.status === 401) emit('expired')
-    else
-      error.value =
-        failure.status === 400
-          ? failure.message
-          : failure.status === 403
-            ? 'You don’t have permission to add species.'
-            : 'Unable to save this species. Please try again.'
+    error.value = failure.message
   } finally {
     if (!controller.signal.aborted) busy.value = false
   }

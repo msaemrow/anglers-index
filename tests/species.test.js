@@ -1,3 +1,4 @@
+import { mockApi } from './helpers/mockApi.js'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { getSpecies, addSpecies } from '../src/api/species.js'
@@ -13,7 +14,7 @@ test('loads personal bests for only the signed-in user with authentication and c
       approved_master_angler: true,
     },
   ]
-  const mock = t.mock.method(globalThis, 'fetch', async (url, options) => {
+  const mock = mockApi(t, async (url, options) => {
     assert.equal(url, '/api/species?includeCaughtSpecies=true&userId=42')
     assert.equal(options.headers.Authorization, 'Bearer session')
     assert.equal(options.signal, signal)
@@ -25,7 +26,7 @@ test('loads personal bests for only the signed-in user with authentication and c
 })
 
 test('distinguishes an empty species directory, malformed data, and expired sessions', async (t) => {
-  const mock = t.mock.method(globalThis, 'fetch', async () => Response.json([]))
+  const mock = mockApi(t, async () => Response.json([]))
   assert.deepEqual(await getSpecies(42), [])
   for (const data of [{}, [{ name: 'Bass' }]]) {
     mock.mock.mockImplementation(async () => Response.json(data))
@@ -37,7 +38,7 @@ test('distinguishes an empty species directory, malformed data, and expired sess
 
 test('validates new species before posting and preserves duplicate-name errors', async (t) => {
   const signal = new AbortController().signal
-  const mock = t.mock.method(globalThis, 'fetch', async (url, options) => {
+  const mock = mockApi(t, async (url, options) => {
     assert.equal(url, '/api/species')
     assert.equal(options.method, 'POST')
     assert.equal(options.headers.Authorization, 'Bearer admin')

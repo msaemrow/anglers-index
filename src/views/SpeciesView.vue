@@ -11,11 +11,10 @@ import SpeciesEditor from '@/components/species/SpeciesEditor.vue'
 import { useSession } from '@/composables/useSession'
 import { getSpecies } from '@/api/species'
 
-const { user, token, signingIn, signIn, signOut } = useSession()
+const { user, token, signingIn, signIn, signOut, sessionError: loginError } = useSession()
 const species = ref([])
 const loading = ref(false)
 const error = ref('')
-const loginError = ref('')
 const notice = ref('')
 const attempt = ref(0)
 const search = ref('')
@@ -52,10 +51,6 @@ function formatDate(value) {
     ? '—'
     : date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
-function expired() {
-  loginError.value = 'Your session has expired. Please sign in again.'
-  signOut()
-}
 watch(token, () => {
   clearFilters()
   notice.value = ''
@@ -76,8 +71,7 @@ watch(
       if (!controller.signal.aborted) species.value = data
     } catch (failure) {
       if (controller.signal.aborted) return
-      if (failure.status === 401) expired()
-      else error.value = 'We couldn’t load your species and personal bests. Please try again.'
+      error.value = failure.message
     } finally {
       if (!controller.signal.aborted) loading.value = false
     }
@@ -94,11 +88,7 @@ async function handleSignIn(credentials) {
   try {
     await signIn(credentials)
   } catch (failure) {
-    if (failure.name !== 'AbortError')
-      loginError.value =
-        failure.status === 401
-          ? 'Incorrect username or password.'
-          : 'Unable to sign in. Please try again.'
+    if (failure.name !== 'AbortError') loginError.value = failure.message
   }
 }
 function handleSignOut() {
@@ -203,7 +193,6 @@ function handleSignOut() {
       :token="token"
       @close="editor = false"
       @saved="saved"
-      @expired="expired"
     />
   </main>
   <main v-else id="main-content" class="sign-in-layout">

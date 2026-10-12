@@ -12,18 +12,12 @@ import { useSession } from '@/composables/useSession'
 import { getLake, lakeCoordinates } from '@/api/lakes'
 
 const route = useRoute()
-const { user, token, signOut } = useSession()
+const { user, token, signOut, sessionError } = useSession()
 const editor = ref(null)
 const notice = ref('')
-const sessionError = ref('')
 watch(token, () => {
   editor.value = null
 })
-function expired() {
-  editor.value = null
-  sessionError.value = 'Your session has expired. Sign in from the dashboard to save lakes.'
-  signOut()
-}
 const lake = ref(null)
 const loading = ref(true)
 const error = ref('')
@@ -75,7 +69,7 @@ watch(
     } catch (failure) {
       if (controller.signal.aborted) return
       if (failure.status === 404) missing.value = true
-      else error.value = 'We couldn’t load this lake. Please try again.'
+      else error.value = failure.message
     } finally {
       if (!controller.signal.aborted) loading.value = false
     }
@@ -145,7 +139,6 @@ watch(
       :token="token"
       @close="editor = null"
       @saved="saved"
-      @expired="expired"
     />
   </main>
 </template>

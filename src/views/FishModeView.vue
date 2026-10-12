@@ -17,8 +17,7 @@ import { getLakes } from '@/api/lakes'
 import { getLures, getTackleBox } from '@/api/lures'
 import { getCatchSpecies, getFishCatches, localDateTime } from '@/api/fishCatch'
 
-const { user, token, signingIn, signIn, signOut } = useSession()
-const loginError = ref('')
+const { user, token, signingIn, signIn, signOut, sessionError: loginError } = useSession()
 const loading = ref(false)
 const error = ref('')
 const tackleError = ref('')
@@ -108,10 +107,6 @@ const columns = [
   { key: 'length', label: 'Length (in)', numeric: true },
   { key: 'weight', label: 'Weight (lb)', numeric: true },
 ]
-function expired() {
-  loginError.value = 'Your session has expired. Please sign in again.'
-  signOut()
-}
 watch(token, () => {
   editor.value = null
   notice.value = ''
@@ -135,12 +130,9 @@ watch(
     ])
     if (controller.signal.aborted) return
     loading.value = false
-    if (results.some((result) => result.status === 'rejected' && result.reason.status === 401)) {
-      expired()
-      return
-    }
-    if (results.slice(0, 3).some((result) => result.status === 'rejected')) {
-      error.value = 'Unable to load fishing mode. Please try again.'
+    const failedCatalog = results.slice(0, 3).find((result) => result.status === 'rejected')
+    if (failedCatalog) {
+      error.value = failedCatalog.reason.message
       return
     }
     const tackle = results[3].status === 'fulfilled' ? results[3].value : []
@@ -150,8 +142,7 @@ watch(
       lures: results[2].value,
       tackle,
     }
-    if (results[3].status === 'rejected')
-      tackleError.value = 'Your tackle box couldn’t load. All lures are available instead.'
+    if (results[3].status === 'rejected') tackleError.value = results[3].reason.message
     let saved = {}
     try {
       saved = JSON.parse(localStorage.getItem(storageKey.value) || '{}') ?? {}
@@ -201,8 +192,7 @@ watch(
       if (!controller.signal.aborted) catches.value = data
     } catch (failure) {
       if (controller.signal.aborted) return
-      if (failure.status === 401) expired()
-      else catchesError.value = 'Unable to load today’s catches. You can still log a new catch.'
+      catchesError.value = failure.message
     } finally {
       if (!controller.signal.aborted) catchesLoading.value = false
     }
@@ -243,11 +233,7 @@ async function handleSignIn(credentials) {
   try {
     await signIn(credentials)
   } catch (failure) {
-    if (failure.name !== 'AbortError')
-      loginError.value =
-        failure.status === 401
-          ? 'Incorrect username or password.'
-          : 'Unable to sign in. Please try again.'
+    if (failure.name !== 'AbortError') loginError.value = failure.message
   }
 }
 function handleSignOut() {
@@ -299,7 +285,6 @@ onBeforeUnmount(() => {
           :catch-trip-id="catchTripId"
           @ready="tripsReady = $event"
           @selected="selectTrip"
-          @expired="expired"
         />
         <CollapsiblePanel
           title="Lake and lure"
@@ -390,7 +375,6 @@ onBeforeUnmount(() => {
       :choices="catalog"
       @close="editor = null"
       @saved="saved"
-      @expired="expired"
     />
   </main>
   <main v-else id="main-content" class="sign-in-layout">

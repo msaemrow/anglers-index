@@ -1,3 +1,4 @@
+import { mockApi } from './helpers/mockApi.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { getTrips, createTrip, attachTripCatch, deleteTrip } from '../src/api/trips.js'
@@ -5,7 +6,7 @@ import { createFishCatch } from '../src/api/fishCatch.js'
 import { formatDate, formatTime } from '../src/utils/dateTime.js'
 test('loads all trip pages with session authentication and abort signal', async (t) => {
   const signal = new AbortController().signal
-  t.mock.method(globalThis, 'fetch', async (url, options) => {
+  mockApi(t, async (url, options) => {
     assert.equal(options.headers.Authorization, 'Bearer session')
     assert.equal(options.signal, signal)
     const cursor = new URL(url, 'http://localhost').searchParams.get('after')
@@ -18,12 +19,12 @@ test('loads all trip pages with session authentication and abort signal', async 
   assert.deepEqual(await getTrips('session', signal), [{ id: 1 }, { id: 2 }])
 })
 test('rejects broken pagination instead of looping indefinitely', async (t) => {
-  t.mock.method(globalThis, 'fetch', async () => new Response('{"trips":[],"next":0}'))
+  mockApi(t, async () => new Response('{"trips":[],"next":0}'))
   await assert.rejects(getTrips('session'), /Unexpected trip/)
 })
 test('trip requests send only the intended actions and catch creation preserves trip association', async (t) => {
   const requests = []
-  t.mock.method(globalThis, 'fetch', async (url, options) => {
+  mockApi(t, async (url, options) => {
     requests.push({ url, body: JSON.parse(options.body), method: options.method })
     return new Response('{"id":5}')
   })
@@ -63,7 +64,7 @@ test('starts a trip with a catch in one request and validates its date range', a
     new_trip: { start_date: '2026-01-01', single_day: true },
   }
   let calls = 0
-  t.mock.method(globalThis, 'fetch', async (url, options) => {
+  mockApi(t, async (url, options) => {
     calls++
     assert.equal(url, '/api/fishcatch')
     const body = JSON.parse(options.body)
@@ -89,7 +90,7 @@ test('starts a trip with a catch in one request and validates its date range', a
 
 test('deletes only the selected trip with session authentication and cancellation', async (t) => {
   const signal = new AbortController().signal
-  t.mock.method(globalThis, 'fetch', async (url, options) => {
+  mockApi(t, async (url, options) => {
     assert.equal(url, '/api/trips/5')
     assert.equal(options.method, 'DELETE')
     assert.equal(options.headers.Authorization, 'Bearer session')

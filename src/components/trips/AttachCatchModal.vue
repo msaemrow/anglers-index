@@ -11,7 +11,7 @@ const props = defineProps({
   user: { type: Object, required: true },
   token: { type: String, required: true },
 })
-const emit = defineEmits(['saved', 'close', 'expired'])
+const emit = defineEmits(['saved', 'close'])
 const catches = ref([]),
   loading = ref(false),
   busy = ref(false),
@@ -40,8 +40,7 @@ async function load() {
     catches.value = await getFishCatches(props.user.user_id, props.token, controller.signal)
   } catch (failure) {
     if (!controller.signal.aborted) {
-      if (failure.status === 401) emit('expired')
-      else error.value = 'Unable to load catches. Please retry.'
+      error.value = failure.message
     }
   } finally {
     if (!controller.signal.aborted) loading.value = false
@@ -57,8 +56,7 @@ async function save() {
     if (!controller.signal.aborted) emit('saved')
   } catch (failure) {
     if (!controller.signal.aborted) {
-      if (failure.status === 401) emit('expired')
-      else error.value = failure.message
+      error.value = failure.message
     }
   } finally {
     if (!controller.signal.aborted) busy.value = false

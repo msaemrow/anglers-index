@@ -4,6 +4,7 @@ import { tripToday } from '@/utils/dateTime'
 // Shared session and request lifecycle for the trip list and detail pages.
 export function useTripPage(load, dependencies = []) {
   const session = useSession()
+  const loginError = session.sessionError
   const day = ref(tripToday())
   let timer
   function updateDay() {
@@ -24,12 +25,7 @@ export function useTripPage(load, dependencies = []) {
   const data = ref(null),
     loading = ref(false),
     error = ref(''),
-    loginError = ref(''),
     attempt = ref(0)
-  function expired() {
-    loginError.value = 'Your session has expired. Please sign in again.'
-    session.signOut()
-  }
   watch(
     [session.token, attempt, day, ...dependencies],
     async ([token], _, onCleanup) => {
@@ -45,12 +41,7 @@ export function useTripPage(load, dependencies = []) {
         if (!controller.signal.aborted) data.value = result
       } catch (failure) {
         if (!controller.signal.aborted) {
-          if (failure.status === 401) expired()
-          else
-            error.value =
-              failure.status === 404
-                ? 'Fishing trip not found.'
-                : 'Unable to load fishing trips. Please try again.'
+          error.value = failure.message
         }
       } finally {
         if (!controller.signal.aborted) loading.value = false
@@ -63,12 +54,8 @@ export function useTripPage(load, dependencies = []) {
     try {
       await session.signIn(credentials)
     } catch (failure) {
-      if (failure.name !== 'AbortError')
-        loginError.value =
-          failure.status === 401
-            ? 'Incorrect username or password.'
-            : 'Unable to sign in. Please try again.'
+      if (failure.name !== 'AbortError') loginError.value = failure.message
     }
   }
-  return { ...session, data, loading, error, loginError, attempt, expired, handleSignIn }
+  return { ...session, data, loading, error, loginError, attempt, handleSignIn }
 }

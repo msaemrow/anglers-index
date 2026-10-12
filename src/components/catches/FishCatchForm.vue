@@ -14,7 +14,7 @@ const props = defineProps({
   initialValues: { type: Object, default: () => ({}) },
   choices: { type: Object, default: null },
 })
-const emit = defineEmits(['saved', 'expired', 'busy', 'close'])
+const emit = defineEmits(['saved', 'busy', 'close'])
 const form = reactive({
   species_id: props.initialValues.species_id ?? '',
   lake_id: props.initialValues.lake_id ?? '',
@@ -91,10 +91,7 @@ watch(
       }
     } catch (failure) {
       if (!current.signal.aborted) {
-        if (failure.status === 401) emit('expired')
-        else
-          tripsError.value =
-            'Fishing trips couldn’t load. Retry to select a trip, or log without a trip.'
+        tripsError.value = failure.message
       }
     } finally {
       if (!current.signal.aborted) tripsLoading.value = false
@@ -149,12 +146,9 @@ watch(
     ])
     if (current.signal.aborted) return
     loading.value = false
-    if (results.some((result) => result.status === 'rejected' && result.reason.status === 401)) {
-      emit('expired')
-      return
-    }
-    if (results.slice(0, 3).some((result) => result.status === 'rejected')) {
-      loadError.value = 'We couldn’t load the species, lakes, and lures. Please try again.'
+    const failedCatalog = results.slice(0, 3).find((result) => result.status === 'rejected')
+    if (failedCatalog) {
+      loadError.value = failedCatalog.reason.message
       return
     }
     species.value = results[0].value.sort((a, b) => a.name.localeCompare(b.name))
@@ -162,8 +156,7 @@ watch(
     lures.value = results[2].value
     tackle.value = results[3].status === 'fulfilled' ? results[3].value : []
     tackleOnly.value = tackle.value.length > 0
-    if (results[3].status === 'rejected')
-      tackleError.value = 'Your tackle box couldn’t load. You can select from all lures below.'
+    if (results[3].status === 'rejected') tackleError.value = results[3].reason.message
   },
   { immediate: true },
 )
@@ -210,12 +203,7 @@ async function submit() {
     }
   } catch (failure) {
     if (current.signal.aborted) return
-    if (failure.status === 401) emit('expired')
-    else
-      error.value =
-        failure.status === 400
-          ? failure.message
-          : 'Unable to save this catch. Your entries are still here; please try again.'
+    error.value = failure.message
   } finally {
     if (!current.signal.aborted) {
       busy.value = false

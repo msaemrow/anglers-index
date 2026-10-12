@@ -12,19 +12,8 @@ import TripEditor from '@/components/trips/TripEditor.vue'
 import { getTrips } from '@/api/trips'
 import { useTripPage } from '@/composables/useTripPage'
 import { formatDate } from '@/utils/dateTime'
-const {
-  user,
-  token,
-  signingIn,
-  signOut,
-  data,
-  loading,
-  error,
-  loginError,
-  attempt,
-  expired,
-  handleSignIn,
-} = useTripPage(getTrips)
+const { user, token, signingIn, signOut, data, loading, error, loginError, attempt, handleSignIn } =
+  useTripPage(getTrips)
 const route = useRoute()
 const router = useRouter(),
   editor = ref(false),
@@ -122,13 +111,7 @@ function saved(trip) {
         }}
       </p>
     </ContentPanel>
-    <TripEditor
-      v-if="editor"
-      :token="token"
-      @close="editor = false"
-      @saved="saved"
-      @expired="expired"
-    />
+    <TripEditor v-if="editor" :token="token" @close="editor = false" @saved="saved" />
   </main>
   <main v-else id="main-content" class="sign-in-layout">
     <SignInPanel :busy="signingIn" :error="loginError" @submit="handleSignIn" />

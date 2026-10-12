@@ -1,10 +1,11 @@
+import { mockApi } from './helpers/mockApi.js'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { getFishCatch, getFishCatches, catchPhotoUrl } from '../src/api/fishCatch.js'
 
 test('loads one catch with authentication and cancellation', async (t) => {
   const signal = new AbortController().signal
-  t.mock.method(globalThis, 'fetch', async (url, options) => {
+  mockApi(t, async (url, options) => {
     assert.equal(url, '/api/fishcatch/42')
     assert.equal(options.headers.Authorization, 'Bearer session')
     assert.equal(options.signal, signal)
@@ -16,11 +17,7 @@ test('loads one catch with authentication and cancellation', async (t) => {
 })
 
 test('distinguishes a missing catch from a malformed successful response', async (t) => {
-  const mock = t.mock.method(
-    globalThis,
-    'fetch',
-    async () => new Response('{"error":"Not found"}', { status: 404 }),
-  )
+  const mock = mockApi(t, async () => new Response('{"error":"Not found"}', { status: 404 }))
   await assert.rejects(getFishCatch('42'), (error) => error.status === 404)
   mock.mock.mockImplementation(async () => new Response('{"error":"Invalid catch"}'))
   await assert.rejects(getFishCatch('42'), /unexpected catch/)
@@ -44,7 +41,7 @@ test('resolves API photos and excludes default or unsupported photo URLs', () =>
 
 test('loads only the requested user’s catches with authentication and cancellation', async (t) => {
   const signal = new AbortController().signal
-  t.mock.method(globalThis, 'fetch', async (url, options) => {
+  mockApi(t, async (url, options) => {
     const parsed = new URL(url, 'http://localhost')
     assert.equal(parsed.pathname, '/api/fishcatch')
     assert.equal(parsed.searchParams.get('user_id'), '7')
@@ -57,9 +54,8 @@ test('loads only the requested user’s catches with authentication and cancella
 })
 
 test('recognizes the API empty-list response without hiding other failures', async (t) => {
-  const mock = t.mock.method(
-    globalThis,
-    'fetch',
+  const mock = mockApi(
+    t,
     async () =>
       new Response('{"error":"No fish catches found matching criteria"}', { status: 404 }),
   )
@@ -75,7 +71,7 @@ test('recognizes the API empty-list response without hiding other failures', asy
 })
 
 test('does not send an unscoped catch-list request', async (t) => {
-  const mock = t.mock.method(globalThis, 'fetch', async () => {
+  const mock = mockApi(t, async () => {
     throw new Error('Must not fetch')
   })
   await assert.rejects(getFishCatches(null), /user is required/)
@@ -87,7 +83,7 @@ test('creates a catch with decimal measurements, local date/time, and an absolut
   const signal = new AbortController().signal
   const datetime = localDateTime(new Date(2026, 8, 29, 10, 30))
   assert.equal(datetime, '2026-09-29T10:30')
-  t.mock.method(globalThis, 'fetch', async (url, options) => {
+  mockApi(t, async (url, options) => {
     assert.equal(url, '/api/fishcatch')
     assert.equal(options.method, 'POST')
     assert.equal(options.headers.Authorization, 'Bearer session')
@@ -134,7 +130,7 @@ test('invalid catch data never submits and failed saves preserve HTTP status', a
     weight: 0,
     datetime: '2026-09-29T10:30',
   }
-  const mock = t.mock.method(globalThis, 'fetch', async () => Response.json({ id: 7 }))
+  const mock = mockApi(t, async () => Response.json({ id: 7 }))
   for (const patch of [
     { species_id: '' },
     { lure_id: -1 },
@@ -158,7 +154,7 @@ test('invalid catch data never submits and failed saves preserve HTTP status', a
 
 test('fish mode requests only the signed-in user’s selected day', async (t) => {
   const signal = new AbortController().signal
-  t.mock.method(globalThis, 'fetch', async (url, options) => {
+  mockApi(t, async (url, options) => {
     const query = new URL(url, 'http://localhost').searchParams
     assert.equal(query.get('user_id'), '42')
     assert.equal(query.get('date'), '2026-09-29')
@@ -172,9 +168,8 @@ test('fish mode requests only the signed-in user’s selected day', async (t) =>
 
 test('a successful catch preserves the weather warning for save confirmations', async (t) => {
   const { createFishCatch } = await import('../src/api/fishCatch.js')
-  t.mock.method(
-    globalThis,
-    'fetch',
+  mockApi(
+    t,
     async () =>
       new Response(
         JSON.stringify({

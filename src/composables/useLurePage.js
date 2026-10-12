@@ -4,12 +4,11 @@ import { getLure, getLures, getTackleIds, setTackleMembership } from '@/api/lure
 
 export function useLurePage(id = ref(null)) {
   const session = useSession()
-  const { token, user, signIn, signOut } = session
+  const { token, user, signIn, signOut, sessionError: loginError } = session
   const lures = ref([])
   const loading = ref(false)
   const error = ref('')
   const missing = ref(false)
-  const loginError = ref('')
   const attempt = ref(0)
   const tackleIds = ref(new Set())
   const tackleError = ref('')
@@ -19,10 +18,6 @@ export function useLurePage(id = ref(null)) {
   const actionError = ref('')
   const editor = ref(null)
   let currentController
-  function expired() {
-    loginError.value = 'Your session has expired. Please sign in again.'
-    signOut()
-  }
   watch(
     [token, id, attempt],
     async ([currentToken, lureId], _, onCleanup) => {
@@ -50,22 +45,13 @@ export function useLurePage(id = ref(null)) {
       ])
       if (controller.signal.aborted) return
       loading.value = false
-      if (
-        [catalog, tackle].some(
-          (result) => result.status === 'rejected' && result.reason.status === 401,
-        )
-      ) {
-        expired()
-        return
-      }
       if (catalog.status === 'fulfilled') lures.value = catalog.value
       else if (lureId && catalog.reason.status === 404) missing.value = true
-      else error.value = 'We couldn’t load the lures. Please try again.'
+      else error.value = catalog.reason.message
       if (tackle.status === 'fulfilled') {
         tackleIds.value = new Set(tackle.value)
         tackleReady.value = true
-      } else
-        tackleError.value = 'Your tackle box couldn’t load. Try again to enable tackle-box actions.'
+      } else tackleError.value = tackle.reason.message
     },
     { immediate: true },
   )
@@ -91,8 +77,7 @@ export function useLurePage(id = ref(null)) {
       notice.value = `${lure.name || 'Lure'} ${include ? 'added to' : 'removed from'} your tackle box.`
     } catch (failure) {
       if (controller.signal.aborted) return
-      if (failure.status === 401) expired()
-      else actionError.value = 'Unable to update your tackle box. Please try again.'
+      actionError.value = failure.message
     } finally {
       if (!controller.signal.aborted) pending.value.delete(key)
     }
@@ -110,11 +95,7 @@ export function useLurePage(id = ref(null)) {
     try {
       await signIn(credentials)
     } catch (failure) {
-      if (failure.name !== 'AbortError')
-        loginError.value =
-          failure.status === 401
-            ? 'Incorrect username or password.'
-            : 'Unable to sign in. Please try again.'
+      if (failure.name !== 'AbortError') loginError.value = failure.message
     }
   }
   function handleSignOut() {
@@ -139,7 +120,6 @@ export function useLurePage(id = ref(null)) {
     editor,
     toggle,
     saved,
-    expired,
     handleSignIn,
     handleSignOut,
   }

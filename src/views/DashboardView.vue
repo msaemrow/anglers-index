@@ -14,11 +14,10 @@ import FishCatchModal from '@/components/catches/FishCatchModal.vue'
 import { useSession } from '@/composables/useSession'
 import { getDashboard } from '@/api/dashboard'
 
-const { token, user, signingIn, signIn, signOut } = useSession()
+const { token, user, signingIn, signIn, signOut, sessionError: loginError } = useSession()
 const data = ref(null)
 const loading = ref(false)
 const error = ref('')
-const loginError = ref('')
 const attempt = ref(0)
 const catchModal = ref(false)
 const catchNotice = ref('')
@@ -31,10 +30,6 @@ function catchSaved(item) {
   catchModal.value = false
   catchNotice.value = item.weather_warning ? `Catch saved. ${item.weather_warning}` : 'Catch saved.'
   attempt.value++
-}
-function catchExpired() {
-  loginError.value = 'Your session has expired. Please sign in again.'
-  signOut()
 }
 
 watch(
@@ -52,10 +47,7 @@ watch(
       if (!controller.signal.aborted) data.value = response
     } catch (failure) {
       if (controller.signal.aborted) return
-      if (failure.status === 401) {
-        loginError.value = 'Your session has expired. Please sign in again.'
-        signOut()
-      } else error.value = 'We couldn’t load your dashboard. Please try again.'
+      error.value = failure.message
     } finally {
       if (!controller.signal.aborted) loading.value = false
     }
@@ -68,11 +60,7 @@ async function handleSignIn(credentials) {
   try {
     await signIn(credentials)
   } catch (failure) {
-    if (failure.name !== 'AbortError')
-      loginError.value =
-        failure.status === 401
-          ? 'Incorrect username or password.'
-          : 'Unable to sign in. Check your connection and try again.'
+    if (failure.name !== 'AbortError') loginError.value = failure.message
   }
 }
 function handleSignOut() {
@@ -148,12 +136,7 @@ function handleSignOut() {
           </template>
         </CatchSection>
         <CatchChart :user-id="user.user_id" :token="token" @expired="catchExpired" />
-        <AdminReviews
-          v-if="user.is_admin"
-          :token="token"
-          @expired="catchExpired"
-          :username="user.username"
-        />
+        <AdminReviews v-if="user.is_admin" :token="token" :username="user.username" />
       </template>
       <FishCatchModal
         v-if="catchModal"
@@ -161,7 +144,6 @@ function handleSignOut() {
         :token="token"
         @close="catchModal = false"
         @saved="catchSaved"
-        @expired="catchExpired"
       />
     </main>
   </div>

@@ -8,7 +8,7 @@ defineProps({
   initialValues: { type: Object, default: () => ({}) },
   choices: { type: Object, default: null },
 })
-const emit = defineEmits(['close', 'saved', 'expired'])
+const emit = defineEmits(['close', 'saved'])
 const busy = ref(false)
 </script>
 <template>
@@ -21,7 +21,6 @@ const busy = ref(false)
       @busy="busy = $event"
       @close="emit('close')"
       @saved="emit('saved', $event)"
-      @expired="emit('expired')"
     />
   </AppModal>
 </template>

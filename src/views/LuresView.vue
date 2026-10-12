@@ -31,7 +31,6 @@ const {
   editor,
   toggle,
   saved,
-  expired,
   handleSignIn,
   handleSignOut,
 } = useLurePage()
@@ -186,7 +185,6 @@ function clearFilters() {
       :token="token"
       @close="editor = null"
       @saved="saved"
-      @expired="expired"
     />
   </main>
   <main v-else id="main-content" class="sign-in-layout">

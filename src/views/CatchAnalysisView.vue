@@ -11,11 +11,10 @@ import AnalysisChart from '@/components/catches/AnalysisChart.vue'
 import { useSession } from '@/composables/useSession'
 import { getCatchAnalysis } from '@/api/catchAnalysis'
 import { catchGroup, groupCatches, dimensions, months } from '@/utils/catchAnalysis'
-const { user, token, signingIn, signIn, signOut } = useSession()
+const { user, token, signingIn, signIn, signOut, sessionError: loginError } = useSession()
 const catches = ref([]),
   loading = ref(false),
   error = ref(''),
-  loginError = ref(''),
   attempt = ref(0)
 const lake = ref(''),
   species = ref(''),
@@ -138,10 +137,7 @@ watch(
       if (!controller.signal.aborted) catches.value = data
     } catch (failure) {
       if (controller.signal.aborted) return
-      if (failure.status === 401) {
-        loginError.value = 'Your session has expired. Please sign in again.'
-        signOut()
-      } else error.value = 'We couldn’t load your catch analysis. Please try again.'
+      error.value = failure.message
     } finally {
       if (!controller.signal.aborted) loading.value = false
     }
@@ -153,11 +149,7 @@ async function handleSignIn(credentials) {
   try {
     await signIn(credentials)
   } catch (failure) {
-    if (failure.name !== 'AbortError')
-      loginError.value =
-        failure.status === 401
-          ? 'Incorrect username or password.'
-          : 'Unable to sign in. Please try again.'
+    if (failure.name !== 'AbortError') loginError.value = failure.message
   }
 }
 </script>

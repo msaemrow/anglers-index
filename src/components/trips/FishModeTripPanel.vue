@@ -17,7 +17,7 @@ const props = defineProps({
   catchTripId: { type: [String, Number], default: '' },
   day: { type: String, required: true },
 })
-const emit = defineEmits(['selected', 'expired', 'ready', 'toggle'])
+const emit = defineEmits(['selected', 'ready', 'toggle'])
 const route = useRoute()
 const trips = ref([]),
   selected = ref(''),
@@ -80,8 +80,7 @@ watch(
       emit('selected', data.find((trip) => String(trip.id) === selected.value) || null)
     } catch (failure) {
       if (!controller.signal.aborted) {
-        if (failure.status === 401) emit('expired')
-        else error.value = 'Unable to load active trips. Retry before logging catches for a trip.'
+        error.value = failure.message
       }
     } finally {
       if (!controller.signal.aborted) loading.value = false
@@ -129,7 +128,6 @@ function saved(trip) {
       :lakes="lakes"
       @saved="saved"
       @close="editorOpen = false"
-      @expired="emit('expired')"
     />
   </CollapsiblePanel>
 </template>

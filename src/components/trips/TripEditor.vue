@@ -11,7 +11,7 @@ const props = defineProps({
   lakeId: { type: [String, Number], default: '' },
   lakes: { type: Array, default: null },
 })
-const emit = defineEmits(['saved', 'close', 'expired'])
+const emit = defineEmits(['saved', 'close'])
 const busy = ref(false),
   error = ref(''),
   loading = ref(false),
@@ -63,8 +63,7 @@ async function save() {
     if (!controller.signal.aborted) emit('saved', result)
   } catch (failure) {
     if (!controller.signal.aborted) {
-      if (failure.status === 401) emit('expired')
-      else error.value = failure.message
+      error.value = failure.message
     }
   } finally {
     if (!controller.signal.aborted) busy.value = false

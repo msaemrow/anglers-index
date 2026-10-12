@@ -1,12 +1,13 @@
 import { computed, onScopeDispose, ref } from 'vue'
-import { request } from '@/api/client'
-import { decodeSession } from './session'
+import { request, onSessionExpired } from '../api/client.js'
+import { decodeSession } from './session.js'
 
 const storageKey = 'anglers-index.session'
 
 export function useSession() {
   const token = ref('')
   const signingIn = ref(false)
+  const sessionError = ref('')
   let loginController
   try {
     const stored = localStorage.getItem(storageKey)
@@ -30,6 +31,7 @@ export function useSession() {
       })
       if (!decodeSession(response.token))
         throw new Error('The API returned an invalid session. Please sign in again.')
+      sessionError.value = ''
       token.value = response.token
       try {
         localStorage.setItem(storageKey, response.token)
@@ -59,6 +61,7 @@ export function useSession() {
   }
 
   function signOut() {
+    sessionError.value = ''
     loginController?.abort()
     token.value = ''
     try {
@@ -68,6 +71,14 @@ export function useSession() {
     }
   }
 
-  onScopeDispose(() => loginController?.abort())
-  return { token, user, signingIn, signIn, signUp, signOut }
+  const unsubscribe = onSessionExpired((failedToken) => {
+    if (!token.value || failedToken !== token.value) return
+    signOut()
+    sessionError.value = 'Your session has expired. Please sign in again.'
+  })
+  onScopeDispose(() => {
+    unsubscribe()
+    loginController?.abort()
+  })
+  return { token, user, signingIn, signIn, signUp, signOut, sessionError }
 }

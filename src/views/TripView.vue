@@ -25,7 +25,6 @@ const {
   error,
   loginError,
   attempt,
-  expired,
   handleSignIn,
 } = useTripPage((token, signal) => getTrip(route.params.id, token, signal), [() => route.params.id])
 const editor = ref(''),
@@ -176,7 +175,6 @@ function saved(item) {
         :token="token"
         @close="editor = ''"
         @deleted="deleted"
-        @expired="expired"
       />
       <FishCatchModal
         v-if="editor === 'catch' && trip.status === 'active'"
@@ -185,7 +183,6 @@ function saved(item) {
         :initial-values="initialCatch"
         @close="editor = ''"
         @saved="saved"
-        @expired="expired"
       />
       <AttachCatchModal
         v-if="editor === 'attach'"
@@ -194,7 +191,6 @@ function saved(item) {
         :trip="trip"
         @close="editor = ''"
         @saved="saved"
-        @expired="expired"
       />
     </template>
   </main>

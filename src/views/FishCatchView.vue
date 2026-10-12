@@ -13,12 +13,11 @@ import { getFishCatch, catchPhotoUrl } from '@/api/fishCatch'
 import { getMasterAnglerCertificate } from '@/api/masterAngler'
 
 const route = useRoute()
-const { token, user, signingIn, signIn, signOut } = useSession()
+const { token, user, signingIn, signIn, signOut, sessionError: loginError } = useSession()
 const fish = ref(null)
 const loading = ref(false)
 const error = ref('')
 const missing = ref(false)
-const loginError = ref('')
 const attempt = ref(0)
 const imageFailed = ref(false)
 const certificateBusy = ref(false)
@@ -59,14 +58,7 @@ async function downloadCertificate() {
     certificateNotice.value = 'Your certificate download has started.'
   } catch (failure) {
     if (controller.signal.aborted) return
-    if (failure.status === 401) {
-      loginError.value = 'Your session has expired. Please sign in again.'
-      signOut()
-    } else
-      certificateError.value =
-        failure.status === 403 || failure.status === 404
-          ? failure.message
-          : 'Unable to generate your certificate. Please try again.'
+    certificateError.value = failure.message
   } finally {
     if (!controller.signal.aborted) certificateBusy.value = false
   }
@@ -80,10 +72,6 @@ function reviewSaved(review) {
     approved_master_angler: review.status === 'approved',
     eligible_master_angler: false,
   }
-}
-function reviewExpired() {
-  loginError.value = 'Your session has expired. Please sign in again.'
-  signOut()
 }
 const species = computed(() => fish.value?.species?.name || 'Unknown species')
 const photo = computed(() => catchPhotoUrl(fish.value?.fish_image))
@@ -162,11 +150,8 @@ watch(
       if (!controller.signal.aborted) fish.value = response
     } catch (failure) {
       if (controller.signal.aborted) return
-      if (failure.status === 401) {
-        loginError.value = 'Your session has expired. Please sign in again.'
-        signOut()
-      } else if (failure.status === 404) missing.value = true
-      else error.value = 'We couldn’t load this catch. Please try again.'
+      if (failure.status === 404) missing.value = true
+      else error.value = failure.message
     } finally {
       if (!controller.signal.aborted) loading.value = false
     }
@@ -179,11 +164,7 @@ async function handleSignIn(credentials) {
   try {
     await signIn(credentials)
   } catch (failure) {
-    if (failure.name !== 'AbortError')
-      loginError.value =
-        failure.status === 401
-          ? 'Incorrect username or password.'
-          : 'Unable to sign in. Check your connection and try again.'
+    if (failure.name !== 'AbortError') loginError.value = failure.message
   }
 }
 function handleSignOut() {
@@ -236,7 +217,6 @@ function handleSignOut() {
           :token="token"
           :reasons="fish.master_angler_denial_reasons || []"
           @reviewed="reviewSaved"
-          @expired="reviewExpired"
           @refresh="attempt++"
         />
         <span v-if="fish.master_angler_status === 'denied'" class="denial-notice" role="status"

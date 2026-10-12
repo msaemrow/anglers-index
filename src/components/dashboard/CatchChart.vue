@@ -42,8 +42,7 @@ watch(
       if (!controller.signal.aborted) catches.value = data
     } catch (failure) {
       if (controller.signal.aborted) return
-      if (failure.status === 401) emit('expired')
-      else error.value = 'We couldn’t load your catch chart. Please try again.'
+      error.value = failure.message
     } finally {
       if (!controller.signal.aborted) loading.value = false
     }

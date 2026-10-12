@@ -1,10 +1,11 @@
+import { mockApi } from './helpers/mockApi.js'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { getLakes, getLake, lakeCoordinates } from '../src/api/lakes.js'
 
 test('loads lakes with cancellation and accepts an empty directory', async (t) => {
   const signal = new AbortController().signal
-  const mock = t.mock.method(globalThis, 'fetch', async (url, options) => {
+  const mock = mockApi(t, async (url, options) => {
     assert.equal(url, '/api/lakes')
     assert.equal(options.signal, signal)
     return new Response('[{"id":1,"name":"Test Lake"}]')
@@ -17,7 +18,7 @@ test('loads lakes with cancellation and accepts an empty directory', async (t) =
 })
 
 test('loads an individual lake and distinguishes missing, failed, and malformed responses', async (t) => {
-  const mock = t.mock.method(globalThis, 'fetch', async (url) => {
+  const mock = mockApi(t, async (url) => {
     assert.equal(url, '/api/lakes/7')
     return new Response('{"id":7,"name":"Test Lake"}')
   })
@@ -56,7 +57,7 @@ test('creates and updates lakes with exact selected coordinates', async (t) => {
     latitude: '0',
     longitude: '-92.1',
   }
-  const mock = t.mock.method(globalThis, 'fetch', async (url, options) => {
+  const mock = mockApi(t, async (url, options) => {
     assert.equal(options.headers.Authorization, 'Bearer admin')
     assert.equal(options.signal, signal)
     const body = JSON.parse(options.body)
@@ -90,7 +91,7 @@ test('rejects invalid lake edits before sending a request and preserves API fail
     latitude: 46,
     longitude: -92,
   }
-  const mock = t.mock.method(globalThis, 'fetch', async () => Response.json({ id: 7 }))
+  const mock = mockApi(t, async () => Response.json({ id: 7 }))
   for (const field of ['name', 'nearest_town', 'state', 'county'])
     await assert.rejects(
       saveLake({ ...fields, [field]: ' ' }, 'admin'),
@@ -120,7 +121,7 @@ test('new lakes use town fallback only when both coordinate fields are blank', a
     latitude: '',
     longitude: '',
   }
-  const mock = t.mock.method(globalThis, 'fetch', async (_, options) => {
+  const mock = mockApi(t, async (_, options) => {
     const body = JSON.parse(options.body)
     assert.equal('latitude' in body, false)
     assert.equal('longitude' in body, false)

@@ -1,10 +1,11 @@
+import { mockApi } from './helpers/mockApi.js'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { getMasterAnglerCertificate } from '../src/api/masterAngler.js'
 
 test('requests a PDF for the catch using the mounted API route and bearer token', async (t) => {
   const signal = new AbortController().signal
-  t.mock.method(globalThis, 'fetch', async (url, options) => {
+  mockApi(t, async (url, options) => {
     assert.equal(url, '/api/masterangler/42/certificate')
     assert.equal(options.method, 'POST')
     assert.equal(options.headers.Authorization, 'Bearer session')
@@ -18,9 +19,8 @@ test('requests a PDF for the catch using the mounted API route and bearer token'
 })
 
 test('preserves certificate errors instead of downloading them as PDFs', async (t) => {
-  const mock = t.mock.method(
-    globalThis,
-    'fetch',
+  const mock = mockApi(
+    t,
     async () => new Response('{"error":"Awaiting approval"}', { status: 403 }),
   )
   await assert.rejects(
@@ -44,7 +44,7 @@ test('preserves certificate errors instead of downloading them as PDFs', async (
 test('review API loads the admin queue and sends explicit denial decisions', async (t) => {
   const { getMasterAnglerReviews, reviewMasterAngler } = await import('../src/api/masterAngler.js')
   const calls = []
-  t.mock.method(globalThis, 'fetch', async (url, options) => {
+  mockApi(t, async (url, options) => {
     calls.push({ url, options })
     return new Response(JSON.stringify({ items: [], denialReasons: ['Photo appears modified'] }))
   })

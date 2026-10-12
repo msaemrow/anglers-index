@@ -60,12 +60,7 @@ async function submit() {
     await router.push('/dashboard')
   } catch (failure) {
     if (failure.name === 'AbortError') return
-    error.value =
-      failure.status === 401
-        ? 'Incorrect username or password.'
-        : failure.status === 400
-          ? failure.message
-          : 'Unable to connect. Please try again.'
+    error.value = failure.message
   }
 }
 onMounted(() => {

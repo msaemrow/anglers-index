@@ -43,8 +43,7 @@ watch(
       }
     } catch (failure) {
       if (current.signal.aborted) return
-      if (failure.status === 401) emit('expired')
-      else error.value = failure.message
+      error.value = failure.message
     } finally {
       if (!current.signal.aborted) loading.value = false
     }
@@ -74,8 +73,7 @@ watch(
             class="review-link"
             :to="{ name: 'fish-catch', params: { username: props.username, id: row.catch_id } }"
             >Review catch <ArrowUpRight :size="16" aria-hidden="true" /></RouterLink
-          ></template
-        >
+        ></template>
       </DataTable>
       <p v-else class="empty-message">No catches are waiting for review.</p>
     </template>

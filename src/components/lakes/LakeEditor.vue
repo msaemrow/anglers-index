@@ -9,7 +9,7 @@ const props = defineProps({
   lake: { type: Object, default: null },
   token: { type: String, required: true },
 })
-const emit = defineEmits(['close', 'saved', 'expired'])
+const emit = defineEmits(['close', 'saved'])
 const states =
   'AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY'
     .split(' ')
@@ -40,16 +40,7 @@ async function submit() {
     if (!controller.signal.aborted) emit('saved', lake)
   } catch (failure) {
     if (controller.signal.aborted) return
-    if (failure.status === 401) emit('expired')
-    else
-      error.value =
-        failure.status === 400
-          ? failure.message
-          : failure.status === 403
-            ? 'You don’t have permission to save lakes.'
-            : failure.status === 404
-              ? 'This lake no longer exists. Close this form and refresh the page.'
-              : 'Unable to save this lake. Please try again.'
+    error.value = failure.message
   } finally {
     if (!controller.signal.aborted) busy.value = false
   }
