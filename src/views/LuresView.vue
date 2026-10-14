@@ -1,4 +1,7 @@
 <script setup>
+import PageLayout from '@/components/ui/PageLayout.vue'
+import StatusMessage from '@/components/ui/StatusMessage.vue'
+
 import { LABELS, EVENTS } from '@/constants'
 
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -74,7 +77,7 @@ function clearFilters() {
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a
   ><AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
-  <main v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
+  <PageLayout v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
     <PageHeader
       title="Lure database"
       :count-text="
@@ -91,10 +94,10 @@ function clearFilters() {
         ><Plus :size="16" aria-hidden="true" />{{ LABELS.ADD_LURE }}</AppButton
       >
     </PageHeader>
-    <div v-if="loading" class="loading-state" role="status">
+    <StatusMessage as="div" variant="loading" v-if="loading" class="loading-state" role="status">
       <span class="loading-line" aria-hidden="true" />
       <p>Loading lures…</p>
-    </div>
+    </StatusMessage>
     <ContentPanel v-else-if="error" title="Lures couldn’t load"
       ><p class="error-message" role="alert">{{ error }}</p>
       <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
@@ -176,10 +179,10 @@ function clearFilters() {
             </div>
           </template>
         </DataTable>
-        <div v-else class="empty-message" role="status">
+        <StatusMessage as="div" variant="empty" v-else class="empty-message" role="status">
           <h3>No matching lures</h3>
           <p>Try another search or clear your filters.</p>
-        </div>
+        </StatusMessage>
       </ContentPanel>
     </template>
     <LureEditor
@@ -190,10 +193,10 @@ function clearFilters() {
       @[EVENTS.CLOSE]="editor = null"
       @[EVENTS.SAVED]="saved"
     />
-  </main>
-  <main v-else id="main-content" class="sign-in-layout">
+  </PageLayout>
+  <PageLayout variant="sign-in" v-else id="main-content" class="sign-in-layout">
     <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
-  </main>
+  </PageLayout>
 </template>
 <style scoped>
 .actions {
@@ -226,9 +229,9 @@ function clearFilters() {
   min-height: 42px;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   color: var(--navy);
-  background: white;
+  background: var(--surface);
   font-size: 13px;
   max-width: 100%;
 }
@@ -241,7 +244,7 @@ function clearFilters() {
 .notice {
   color: #32634d;
   background: #edf7f0;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   padding: 14px;
   font-size: 13px;
 }

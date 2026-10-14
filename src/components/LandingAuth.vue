@@ -24,7 +24,7 @@ const fields = reactive({
 let opener
 async function open(nextMode, trigger) {
   if (signingIn.value) return
-  opener = trigger || (nextMode === 'login' ? loginButton.value : registerButton.value)
+  opener = trigger || (nextMode === 'login' ? loginButton.value : registerButton.value?.$el)
   mode.value = mode.value === nextMode ? '' : nextMode
   error.value = ''
   fields.password = ''
@@ -175,9 +175,8 @@ defineExpose({ open })
           </section>
         </Transition>
       </div>
-      <button
+      <AppButton
         ref="registerButton"
-        class="button button--primary"
         type="button"
         :aria-expanded="mode === 'register'"
         aria-controls="landing-auth-panel"
@@ -185,7 +184,7 @@ defineExpose({ open })
         @click="open('register')"
       >
         Register
-      </button>
+      </AppButton>
     </template>
   </div>
 </template>
@@ -206,8 +205,8 @@ defineExpose({ open })
   min-height: 39px;
   padding: 9px 14px;
   border: 1px solid #c4d0da;
-  border-radius: 8px;
-  color: #253549;
+  border-radius: var(--radius-control);
+  color: var(--text);
   background: transparent;
   font-size: 12px;
   font-weight: 600;
@@ -229,8 +228,8 @@ defineExpose({ open })
   padding: 26px;
   border: 1px solid #d3dce4;
   border-radius: 12px;
-  background: #fff;
-  color: #253549;
+  background: var(--surface);
+  color: var(--text);
   box-shadow: 0 20px 60px #162b4333;
   transform-origin: top right;
 }

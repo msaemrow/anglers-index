@@ -53,7 +53,7 @@ button {
   gap: 12px;
   text-align: left;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   padding: 10px;
   background: transparent;
   color: var(--navy);

@@ -1,4 +1,6 @@
 <script setup>
+import StatusMessage from '@/components/ui/StatusMessage.vue'
+
 import ContentPanel from '@/components/ui/ContentPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import CatchCard from './CatchCard.vue'
@@ -29,11 +31,19 @@ defineProps({
         :to="{ name: 'fish-catch', params: { username, id: fish.id } }"
       />
     </div>
-    <p v-else class="empty-message">{{ emptyMessage }}</p>
+    <StatusMessage as="p" variant="empty" v-else class="empty-message">{{
+      emptyMessage
+    }}</StatusMessage>
   </ContentPanel>
 </template>
 
 <style scoped>
+.catch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 13px;
+}
+
 .catch-section {
   padding-top: 16px;
 }

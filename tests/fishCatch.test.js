@@ -186,3 +186,118 @@ test('a successful catch preserves the weather warning for save confirmations', 
   assert.equal(result.id, 42)
   assert.equal(result.weather_warning, 'Weather could not be recorded for this catch.')
 })
+
+test('uploads the catch and photo together as multipart data, including inline trip fields', async (t) => {
+  const { createFishCatch } = await import('../src/api/fishCatch.js')
+  const photo = new File(['photo'], 'fish.jpg', { type: 'image/jpeg' })
+  mockApi(t, async (url, options) => {
+    assert.equal(url, '/api/fishcatch')
+    assert.ok(options.body instanceof FormData)
+    assert.equal(options.body.get('photo').name, 'fish.jpg')
+    assert.equal(options.body.get('witness'), 'Jane')
+    assert.deepEqual(JSON.parse(options.body.get('new_trip')), {
+      start_date: '2026-09-29',
+      end_date: '2026-09-29',
+      single_day: true,
+    })
+    assert.equal(options.body.has('fish_image'), false)
+    return Response.json({ id: 42 })
+  })
+  await createFishCatch(
+    {
+      species_id: 1,
+      lake_id: 2,
+      lure_id: 3,
+      length: 20,
+      weight: 1,
+      datetime: '2026-09-29T10:30',
+      witness: 'Jane',
+      photo,
+      new_trip: { start_date: '2026-09-29', single_day: true },
+    },
+    'session',
+  )
+})
+
+test('invalid photo selection does not send a catch request', async (t) => {
+  const { createFishCatch } = await import('../src/api/fishCatch.js')
+  const mock = mockApi(t, async () => {
+    throw Error('Must not send')
+  })
+  for (const photo of [
+    new File(['svg'], 'fish.svg', { type: 'image/svg+xml' }),
+    new File([], 'fish.jpg', { type: 'image/jpeg' }),
+    new File([new Uint8Array(10 * 1024 * 1024 + 1)], 'fish.jpg', { type: 'image/jpeg' }),
+  ])
+    await assert.rejects(
+      createFishCatch(
+        {
+          species_id: 1,
+          lake_id: 2,
+          lure_id: 3,
+          length: 20,
+          weight: 1,
+          datetime: '2026-09-29T10:30',
+          photo,
+        },
+        'session',
+      ),
+      (error) => error.status === 400,
+    )
+  assert.equal(mock.mock.callCount(), 0)
+})
+
+test('retrieves private images using bearer authentication and allows replacement and removal', async (t) => {
+  const { getCatchPhoto, saveCatchPhoto, removeCatchPhoto } =
+    await import('../src/api/fishCatch.js')
+  const signal = new AbortController().signal
+  mockApi(t, async (url, options) => {
+    assert.equal(url, '/api/fishcatch/42/photo')
+    assert.equal(options.headers.Authorization, 'Bearer session')
+    assert.equal(options.signal, signal)
+    if (options.method === 'GET')
+      return new Response('photo', { headers: { 'Content-Type': 'image/jpeg' } })
+    if (options.method === 'POST') assert.ok(options.body instanceof FormData)
+    return Response.json({
+      id: 42,
+      fish_image: options.method === 'DELETE' ? '' : 'catches/photo.jpg',
+    })
+  })
+  assert.equal((await getCatchPhoto(42, 'session', signal)).type, 'image/jpeg')
+  await saveCatchPhoto(
+    42,
+    new File(['photo'], 'fish.jpg', { type: 'image/jpeg' }),
+    'session',
+    signal,
+  )
+  assert.equal((await removeCatchPhoto(42, 'session', signal)).fish_image, '')
+})
+
+test('accepts phone HEIC MIME types and unnamed MIME types using HEIC extensions', async () => {
+  const { validateCatchPhoto, isHeicPhoto } = await import('../src/api/fishCatch.js')
+  for (const [name, type] of [
+    ['fish.heic', 'image/heic'],
+    ['fish.heif', 'image/heif'],
+    ['fish.HEIC', ''],
+    ['fish.heic', 'application/octet-stream'],
+  ]) {
+    const file = new File(['photo'], name, { type })
+    assert.equal(isHeicPhoto(file), true)
+    assert.doesNotThrow(() => validateCatchPhoto(file))
+  }
+  assert.throws(
+    () => validateCatchPhoto(new File(['photo'], 'fish.svg', { type: '' })),
+    (error) => error.status === 400,
+  )
+  assert.throws(
+    () => validateCatchPhoto(new File(['photo'], 'fish.heic', { type: 'image/svg+xml' })),
+    (error) => error.status === 400,
+  )
+  assert.throws(
+    () =>
+      validateCatchPhoto(
+        new File([new Uint8Array(10 * 1024 * 1024 + 1)], 'fish.heic', { type: 'image/heic' }),
+      ),
+    (error) => error.status === 400,
+  )
+})

@@ -61,8 +61,88 @@ function measurement(value, unit) {
 </template>
 
 <style scoped>
+.catch-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background: #fafbfd;
+  border: 1px solid #e3e8ef;
+  border-radius: 10px;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.catch-card:hover {
+  background: var(--surface-hover);
+  border-color: #95abc5;
+}
+.catch-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 21px;
+  margin-bottom: 15px;
+  color: #748398;
+  font-size: 11px;
+}
+.catch-card h3 {
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.trophy {
+  color: #a67c26;
+}
+.catch-card__lake {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 7px;
+  margin-bottom: 22px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.catch-card__lake svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.catch-card__measurements {
+  display: flex;
+  gap: 27px;
+  margin-top: auto;
+}
+.catch-card__measurements dt {
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #738096;
+}
+.catch-card__measurements dd {
+  margin: 5px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.catch-card__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #e3e8ef;
+  margin-top: 18px;
+  padding-top: 11px;
+  color: var(--text-accent);
+  font-size: 10px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .catch-card {
+    transition: none;
+  }
+}
+
 .eligible {
-  color: #577394;
+  color: var(--text-accent);
   display: inline-flex;
 }
 </style>

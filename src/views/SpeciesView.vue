@@ -1,4 +1,8 @@
 <script setup>
+import PageHeader from '@/components/ui/PageHeader.vue'
+import PageLayout from '@/components/ui/PageLayout.vue'
+import StatusMessage from '@/components/ui/StatusMessage.vue'
+
 import { STATUS, LABELS, EVENTS } from '@/constants'
 
 import { computed, ref, watch } from 'vue'
@@ -102,22 +106,24 @@ function handleSignOut() {
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
   <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
-  <main v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
-    <header class="page-header">
-      <div>
-        <h1>Species &amp; personal bests</h1>
-      </div>
+  <PageLayout v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
+    <PageHeader :compact="false" class="page-header"
+      ><template #heading
+        ><div>
+          <h1>Species &amp; personal bests</h1>
+        </div></template
+      >
       <div class="page-actions">
         <AppButton v-if="user.is_admin" @click="editor = true"
           ><Plus :size="16" aria-hidden="true" />{{ LABELS.ADD_SPECIES }}</AppButton
         >
       </div>
-    </header>
+    </PageHeader>
     <p v-if="notice" class="notice" role="status">{{ notice }}</p>
-    <div v-if="loading" class="loading-state" role="status">
+    <StatusMessage as="div" variant="loading" v-if="loading" class="loading-state" role="status">
       <span class="loading-line" aria-hidden="true" />
       <p>Loading species and personal bests…</p>
-    </div>
+    </StatusMessage>
     <ContentPanel v-else-if="error" title="Species couldn’t load"
       ><p class="error-message" role="alert">{{ error }}</p>
       <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
@@ -178,7 +184,7 @@ function handleSignOut() {
           >
           <template #cell-bestDate="{ value }">{{ formatDate(value) }}</template>
         </DataTable>
-        <div v-else class="empty-message" role="status">
+        <StatusMessage as="div" variant="empty" v-else class="empty-message" role="status">
           <h3>No matching species</h3>
           <p>
             {{
@@ -187,7 +193,7 @@ function handleSignOut() {
                 : 'Try another species name or clear your search.'
             }}
           </p>
-        </div>
+        </StatusMessage>
       </ContentPanel>
     </template>
     <SpeciesEditor
@@ -196,10 +202,10 @@ function handleSignOut() {
       @[EVENTS.CLOSE]="editor = false"
       @[EVENTS.SAVED]="saved"
     />
-  </main>
-  <main v-else id="main-content" class="sign-in-layout">
+  </PageLayout>
+  <PageLayout variant="sign-in" v-else id="main-content" class="sign-in-layout">
     <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
-  </main>
+  </PageLayout>
 </template>
 <style scoped>
 .page-actions {
@@ -232,16 +238,16 @@ function handleSignOut() {
   min-height: 42px;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   color: var(--navy);
-  background: white;
+  background: var(--surface);
   font-size: 13px;
 }
 .lake-link {
   font-weight: 600;
 }
 .detail-link {
-  color: #577394;
+  color: var(--text-accent);
   font-size: 12px;
 }
 .lake-link:hover,
@@ -274,7 +280,7 @@ function handleSignOut() {
   padding: 20px 24px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: white;
+  background: var(--surface);
   font-size: 14px;
 }
 .summary strong {
@@ -306,7 +312,7 @@ function handleSignOut() {
 .notice {
   color: #32634d;
   background: #edf7f0;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   padding: 14px;
   font-size: 13px;
 }

@@ -45,7 +45,7 @@ dialog {
   margin: auto;
   padding: 26px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-panel);
   color: var(--navy);
   overflow-y: auto;
 }

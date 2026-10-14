@@ -18,3 +18,31 @@ defineProps({
     <slot />
   </section>
 </template>
+
+<style scoped>
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  padding: var(--panel-padding);
+  min-width: 0;
+}
+.panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.panel__description {
+  font-size: 12px;
+  margin-top: 7px;
+  line-height: 1.7;
+}
+@media (max-width: 480px) {
+  .panel {
+    padding: 18px;
+  }
+}
+</style>

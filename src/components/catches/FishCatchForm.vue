@@ -1,4 +1,6 @@
 <script setup>
+import StatusMessage from '@/components/ui/StatusMessage.vue'
+
 import { STATUS, LABELS, EVENTS } from '@/constants'
 
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -6,6 +8,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import SearchSelect from '@/components/ui/SearchSelect.vue'
 import { getTrips } from '@/api/trips'
+import CatchPhotoPicker from '@/components/catches/CatchPhotoPicker.vue'
 import { tripLabel } from '@/utils/dateTime'
 import { getLakes } from '@/api/lakes'
 import { getLures, getTackleBox } from '@/api/lures'
@@ -26,7 +29,7 @@ const form = reactive({
   trip_id: props.initialValues.trip_id ?? '',
   datetime: props.initialValues.datetime ?? localDateTime(),
   witness: '',
-  fish_image: '',
+  photo: null,
 })
 const loading = ref(true)
 const busy = ref(false)
@@ -215,7 +218,9 @@ async function submit() {
 }
 </script>
 <template>
-  <div v-if="loading" role="status" class="loading-state">Loading species, lakes, and lures…</div>
+  <StatusMessage as="div" variant="loading" v-if="loading" role="status" class="loading-state"
+    >Loading species, lakes, and lures…</StatusMessage
+  >
   <div v-else-if="loadError">
     <p class="error-message" role="alert">{{ loadError }}</p>
     <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton>
@@ -276,10 +281,7 @@ async function submit() {
           >Witness (for Master Angler review)
           <input v-model="form.witness" maxlength="75" placeholder="Witness name" />
         </label>
-        <label class="field"
-          >Catch photo URL (for Master Angler review)
-          <input v-model="form.fish_image" type="url" placeholder="https://…" />
-        </label>
+        <CatchPhotoPicker v-model="form.photo" :disabled="busy" />
       </div>
       <p class="hint">
         Catches meeting the species length requirement with a witness and catch photo are
@@ -378,7 +380,7 @@ fieldset {
   padding: 12px;
   margin: 12px 0;
   background: #eef4fa;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
 }
 .form-grid {
   display: grid;
@@ -398,8 +400,8 @@ fieldset {
   min-height: 48px;
   padding: 8px 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: white;
+  border-radius: var(--radius-control);
+  background: var(--surface);
   color: var(--navy);
   font: inherit;
 }

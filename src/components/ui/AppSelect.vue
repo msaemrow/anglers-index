@@ -36,8 +36,8 @@ const model = defineModel({ type: [String, Number], default: '' })
   min-height: 40px;
   padding: 8px 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: white;
+  border-radius: var(--radius-control);
+  background: var(--surface);
   color: var(--navy);
   font: inherit;
   font-size: 14px;

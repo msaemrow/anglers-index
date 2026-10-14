@@ -120,7 +120,7 @@ textarea {
   width: 100%;
   padding: 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font: inherit;
 }
 .checkbox {

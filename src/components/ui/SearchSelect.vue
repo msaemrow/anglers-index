@@ -169,8 +169,8 @@ input {
   min-height: 40px;
   padding: 8px 30px 8px 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: white;
+  border-radius: var(--radius-control);
+  background: var(--surface);
   color: var(--navy);
   font: inherit;
   text-overflow: ellipsis;
@@ -197,9 +197,9 @@ input:disabled {
   left: 0;
   right: 0;
   z-index: 10;
-  background: white;
+  background: var(--surface);
   border: 1px solid #8ea7be;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   box-shadow: 0 6px 18px #192b4326;
   overflow: hidden;
 }
@@ -221,7 +221,7 @@ li {
 li[aria-selected='true'] {
   font-weight: 600;
   color: var(--blue);
-  background: #f0f5fa;
+  background: var(--surface-hover);
 }
 li.active {
   background: #dceaf6;

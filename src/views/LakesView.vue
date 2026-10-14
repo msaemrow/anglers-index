@@ -1,4 +1,7 @@
 <script setup>
+import PageLayout from '@/components/ui/PageLayout.vue'
+import StatusMessage from '@/components/ui/StatusMessage.vue'
+
 import { LABELS, EVENTS } from '@/constants'
 
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -83,7 +86,7 @@ watch(
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
   <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
-  <main id="main-content" class="list-page compact-list" :aria-busy="loading">
+  <PageLayout id="main-content" class="list-page compact-list" :aria-busy="loading">
     <p v-if="notice" class="save-notice" role="status">{{ notice }}</p>
     <p v-if="sessionError" class="error-message" role="alert">
       {{ sessionError }} <RouterLink to="/dashboard">Go to dashboard</RouterLink>
@@ -100,13 +103,13 @@ watch(
         ><Plus :size="16" aria-hidden="true" />{{ LABELS.ADD_LAKE }}</AppButton
       >
     </PageHeader>
-    <div v-if="loading" class="loading-state" role="status">
+    <StatusMessage as="div" variant="loading" v-if="loading" class="loading-state" role="status">
       <span class="loading-line" aria-hidden="true" />
       <p>Loading lakes…</p>
       <div class="skeleton-grid" aria-hidden="true">
         <div v-for="i in 3" :key="i" class="skeleton" />
       </div>
-    </div>
+    </StatusMessage>
     <ContentPanel v-else-if="error" title="The lake directory couldn’t load"
       ><p role="alert" class="error-message">{{ error }}</p>
       <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
@@ -164,10 +167,10 @@ watch(
           </AppButton>
         </template>
       </DataTable>
-      <div v-else class="empty-message" role="status">
+      <StatusMessage as="div" variant="empty" v-else class="empty-message" role="status">
         <h3>No matching lakes</h3>
         <p>Try another search or clear your filters.</p>
-      </div>
+      </StatusMessage>
     </ContentPanel>
     <LakeEditor
       v-if="editor && user?.is_admin"
@@ -176,15 +179,15 @@ watch(
       @[EVENTS.CLOSE]="editor = null"
       @[EVENTS.SAVED]="saved"
     />
-  </main>
+  </PageLayout>
 </template>
 
 <style scoped>
 .save-notice {
-  color: #28543f;
-  background: #e3f1e8;
-  border: 1px solid #a8cbb6;
-  border-radius: 8px;
+  color: var(--success-text);
+  background: var(--success-background);
+  border: 1px solid var(--success-border);
+  border-radius: var(--radius-control);
   padding: 14px;
   font-size: 13px;
 }
@@ -217,9 +220,9 @@ watch(
   min-height: 42px;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   color: var(--navy);
-  background: white;
+  background: var(--surface);
   font-size: 13px;
 }
 .lake-link {

@@ -112,9 +112,9 @@ onBeforeUnmount(() => {
   z-index: 2000;
   max-width: min(320px, calc(100vw - 16px));
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: #122c4d;
-  color: #fff;
+  color: var(--surface);
   box-shadow: 0 4px 16px #122c4d33;
   font-size: 12px;
   line-height: 1.5;

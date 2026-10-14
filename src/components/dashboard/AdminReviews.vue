@@ -1,4 +1,6 @@
 <script setup>
+import StatusMessage from '@/components/ui/StatusMessage.vue'
+
 import { LABELS } from '@/constants'
 
 import { computed, ref, watch } from 'vue'
@@ -77,7 +79,9 @@ watch(
           ></template
         >
       </DataTable>
-      <p v-else class="empty-message">No catches are waiting for review.</p>
+      <StatusMessage as="p" variant="empty" v-else class="empty-message"
+        >No catches are waiting for review.</StatusMessage
+      >
     </template>
   </ContentPanel>
 </template>

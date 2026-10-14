@@ -61,6 +61,136 @@ const statsList = computed(() => [
 </template>
 
 <style scoped>
+.sidebar {
+  position: sticky;
+  top: var(--navbar-height);
+  align-self: start;
+  height: calc(100dvh - var(--navbar-height));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 32px 22px 24px;
+}
+.profile {
+  text-align: center;
+}
+.profile .eyebrow {
+  margin-bottom: 20px;
+}
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 70px;
+  height: 70px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #eaf0f7;
+  border: 5px solid #f5f7fa;
+  color: #426080;
+  font-size: 23px;
+  font-weight: 600;
+}
+.profile h2 {
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.profile__username {
+  margin-top: 5px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.profile-stats {
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  gap: 16px;
+}
+.profile-stats > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.profile-stats dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.profile-stats dd {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.quick-actions .eyebrow {
+  margin-bottom: 3px;
+}
+.quick-actions :deep(.button) {
+  justify-content: flex-start;
+  min-height: 42px;
+}
+.sidebar__note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #7f8da0;
+  font-size: 10px;
+  margin-top: auto;
+  padding-top: 28px;
+}
+@media (max-width: 800px) {
+  .sidebar {
+    position: static;
+    height: auto;
+    overflow: visible;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 24px;
+    gap: 22px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .profile-stats {
+    align-self: center;
+  }
+  .quick-actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .quick-actions .eyebrow {
+    grid-column: 1 / -1;
+  }
+  .quick-actions :deep(.button) {
+    justify-content: center;
+  }
+  .sidebar__note {
+    display: none;
+  }
+}
+@media (max-width: 480px) {
+  .sidebar {
+    padding: 22px 20px;
+  }
+  .profile h2 {
+    font-size: 15px;
+  }
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+  .quick-actions :deep(.button) {
+    justify-content: flex-start;
+  }
+}
+
 @media (min-width: 801px) {
   .sidebar {
     padding: 20px 18px 16px;

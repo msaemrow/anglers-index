@@ -1,4 +1,7 @@
 <script setup>
+import PageLayout from '@/components/ui/PageLayout.vue'
+import StatusMessage from '@/components/ui/StatusMessage.vue'
+
 import { STATUS, LABELS, EVENTS } from '@/constants'
 
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -151,20 +154,22 @@ function handleSignOut() {
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
   <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
-  <main v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
-    <p v-if="catchNotice" role="status" class="catch-notice">{{ catchNotice }}</p>
+  <PageLayout v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
+    <StatusMessage as="p" variant="success" v-if="catchNotice" role="status" class="catch-notice">{{
+      catchNotice
+    }}</StatusMessage>
     <PageHeader title="All fish catches">
       <AppButton @click="catchModal = true"
         ><Plus :size="16" aria-hidden="true" />{{ LABELS.LOG_CATCH }}</AppButton
       >
     </PageHeader>
-    <div v-if="loading" class="loading-state" role="status">
+    <StatusMessage as="div" variant="loading" v-if="loading" class="loading-state" role="status">
       <span class="loading-line" aria-hidden="true" />
       <p>Loading your catches…</p>
       <div class="skeleton-grid" aria-hidden="true">
         <div v-for="i in 3" :key="i" class="skeleton" />
       </div>
-    </div>
+    </StatusMessage>
     <ContentPanel v-else-if="error" title="Your catches couldn’t load"
       ><p role="alert" class="error-message">{{ error }}</p>
       <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
@@ -251,10 +256,10 @@ function handleSignOut() {
             ></template
           >
         </DataTable>
-        <div v-else class="empty-message" role="status">
+        <StatusMessage as="div" variant="empty" v-else class="empty-message" role="status">
           <h3>No matching catches</h3>
           <p>Try another search or clear your filters to see all catches.</p>
-        </div>
+        </StatusMessage>
       </ContentPanel>
     </template>
     <FishCatchModal
@@ -264,10 +269,10 @@ function handleSignOut() {
       @[EVENTS.CLOSE]="catchModal = false"
       @[EVENTS.SAVED]="catchSaved"
     />
-  </main>
-  <main v-else id="main-content" class="sign-in-layout">
+  </PageLayout>
+  <PageLayout variant="sign-in" v-else id="main-content" class="sign-in-layout">
     <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
-  </main>
+  </PageLayout>
 </template>
 
 <style scoped>
@@ -278,7 +283,7 @@ function handleSignOut() {
   font-weight: 600;
 }
 .eligible-icon {
-  color: #577394;
+  color: var(--text-accent);
   margin-left: 8px;
   vertical-align: middle;
 }
@@ -294,7 +299,7 @@ function handleSignOut() {
   gap: 18px;
 }
 .summary > div {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px 24px;
@@ -330,9 +335,9 @@ function handleSignOut() {
   width: 100%;
   padding: 11px 13px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   color: var(--navy);
-  background: white;
+  background: var(--surface);
   font-size: 13px;
 }
 .checkbox {

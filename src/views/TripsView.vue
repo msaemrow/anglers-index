@@ -1,4 +1,7 @@
 <script setup>
+import PageLayout from '@/components/ui/PageLayout.vue'
+import StatusMessage from '@/components/ui/StatusMessage.vue'
+
 import { STATUS, LABELS, EVENTS } from '@/constants'
 
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -55,13 +58,24 @@ function saved(trip) {
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a
   ><AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
-  <main v-if="user" id="main-content" class="list-page trips-page header-page" :aria-busy="loading">
+  <PageLayout
+    v-if="user"
+    id="main-content"
+    class="list-page trips-page header-page"
+    :aria-busy="loading"
+  >
     <PageHeader title="Fishing trips">
       <AppButton @click="editor = true">{{ LABELS.ADD_TRIP }}</AppButton>
     </PageHeader>
-    <p v-if="route.query.deleted === '1'" role="status" class="catch-notice">
+    <StatusMessage
+      as="p"
+      variant="success"
+      v-if="route.query.deleted === '1'"
+      role="status"
+      class="catch-notice"
+    >
       Trip deleted. All catches have been kept.
-    </p>
+    </StatusMessage>
     <p v-if="loading" role="status">Loading fishing trips…</p>
     <ContentPanel v-else-if="error" title="Trips couldn’t load"
       ><p role="alert">{{ error }}</p>
@@ -121,10 +135,10 @@ function saved(trip) {
       @[EVENTS.CLOSE]="editor = false"
       @[EVENTS.SAVED]="saved"
     />
-  </main>
-  <main v-else id="main-content" class="sign-in-layout">
+  </PageLayout>
+  <PageLayout variant="sign-in" v-else id="main-content" class="sign-in-layout">
     <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
-  </main>
+  </PageLayout>
 </template>
 <style scoped>
 .trips-page {
@@ -146,9 +160,9 @@ label {
 input {
   padding: 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   color: var(--navy);
-  background: white;
+  background: var(--surface);
 }
 a {
   color: var(--blue);

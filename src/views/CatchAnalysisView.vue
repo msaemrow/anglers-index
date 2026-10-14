@@ -1,4 +1,6 @@
 <script setup>
+import PageLayout from '@/components/ui/PageLayout.vue'
+
 import { LABELS, EVENTS } from '@/constants'
 
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -158,7 +160,7 @@ async function handleSignIn(credentials) {
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
   <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
-  <main v-if="user" id="main-content" class="list-page header-page" :aria-busy="loading">
+  <PageLayout v-if="user" id="main-content" class="list-page header-page" :aria-busy="loading">
     <PageHeader title="Catch analysis" />
     <ContentPanel
       title="Reading your results"
@@ -286,10 +288,10 @@ async function handleSignIn(credentials) {
         <p v-else role="status">No catches match these filters.</p>
       </ContentPanel>
     </template>
-  </main>
-  <main v-else id="main-content" class="sign-in-layout">
+  </PageLayout>
+  <PageLayout variant="sign-in" v-else id="main-content" class="sign-in-layout">
     <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
-  </main>
+  </PageLayout>
 </template>
 <style scoped>
 .list-page {
@@ -313,9 +315,9 @@ input {
   min-height: 41px;
   max-width: 100%;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   color: var(--navy);
-  background: white;
+  background: var(--surface);
 }
 .summary {
   margin-top: 20px;

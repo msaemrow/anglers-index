@@ -1,4 +1,8 @@
 <script setup>
+import PageHeader from '@/components/ui/PageHeader.vue'
+import PageLayout from '@/components/ui/PageLayout.vue'
+import StatusMessage from '@/components/ui/StatusMessage.vue'
+
 import { LABELS, EVENTS } from '@/constants'
 
 import { computed } from 'vue'
@@ -49,10 +53,10 @@ const details = computed(() =>
     <RouterLink to="/lure/all" class="back-link"
       ><ArrowLeft :size="16" aria-hidden="true" />All lures</RouterLink
     >
-    <div v-if="loading" class="loading-state" role="status">
+    <StatusMessage as="div" variant="loading" v-if="loading" class="loading-state" role="status">
       <span class="loading-line" aria-hidden="true" />
       <p>Loading lure details…</p>
-    </div>
+    </StatusMessage>
     <ContentPanel
       v-else-if="missing"
       title="Lure not found"
@@ -63,13 +67,15 @@ const details = computed(() =>
       <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
     >
     <template v-else-if="lure">
-      <header class="page-header">
-        <div>
-          <p class="eyebrow">{{ lure.brand || 'Lure collection' }}</p>
-          <h1>{{ lure.name || 'Unnamed lure' }}</h1>
-          <p class="muted">{{ [lure.color, lure.size].filter(Boolean).join(' · ') }}</p>
-        </div>
-      </header>
+      <PageHeader :compact="false" class="page-header"
+        ><template #heading
+          ><div>
+            <p class="eyebrow">{{ lure.brand || 'Lure collection' }}</p>
+            <h1>{{ lure.name || 'Unnamed lure' }}</h1>
+            <p class="muted">{{ [lure.color, lure.size].filter(Boolean).join(' · ') }}</p>
+          </div></template
+        >
+      </PageHeader>
       <p v-if="notice" class="notice" role="status">{{ notice }}</p>
       <p v-if="actionError" class="error-message" role="alert">{{ actionError }}</p>
       <div class="detail-grid">
@@ -106,9 +112,9 @@ const details = computed(() =>
       @[EVENTS.SAVED]="saved"
     />
   </main>
-  <main v-else id="main-content" class="sign-in-layout">
+  <PageLayout variant="sign-in" v-else id="main-content" class="sign-in-layout">
     <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
-  </main>
+  </PageLayout>
 </template>
 <style scoped>
 .lure-page {
@@ -126,7 +132,7 @@ const details = computed(() =>
   align-self: flex-start;
   font-size: 12px;
   font-weight: 600;
-  color: #577394;
+  color: var(--text-accent);
 }
 .back-link:hover {
   text-decoration: underline;
@@ -149,7 +155,7 @@ h1 {
   color: #32634d;
   background: #edf7f0;
   padding: 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 13px;
 }
 @media (max-width: 700px) {

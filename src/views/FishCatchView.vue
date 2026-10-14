@@ -1,4 +1,8 @@
 <script setup>
+import PageHeader from '@/components/ui/PageHeader.vue'
+import PageLayout from '@/components/ui/PageLayout.vue'
+import StatusMessage from '@/components/ui/StatusMessage.vue'
+
 import { STATUS, LABELS, EVENTS } from '@/constants'
 
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
@@ -9,9 +13,11 @@ import SignInPanel from '@/components/SignInPanel.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import DetailList from '@/components/ui/DetailList.vue'
+import CatchPhoto from '@/components/catches/CatchPhoto.vue'
+import CatchPhotoPicker from '@/components/catches/CatchPhotoPicker.vue'
 import MasterAnglerReviewControls from '@/components/catches/MasterAnglerReviewControls.vue'
 import { useSession } from '@/composables/useSession'
-import { getFishCatch, catchPhotoUrl } from '@/api/fishCatch'
+import { getFishCatch, saveCatchPhoto, removeCatchPhoto } from '@/api/fishCatch'
 import { getMasterAnglerCertificate } from '@/api/masterAngler'
 
 const route = useRoute()
@@ -21,7 +27,38 @@ const loading = ref(false)
 const error = ref('')
 const missing = ref(false)
 const attempt = ref(0)
-const imageFailed = ref(false)
+const photoFile = ref(null)
+const photoBusy = ref(false)
+const photoError = ref('')
+const photoVersion = ref(0)
+const canEditPhoto = computed(
+  () =>
+    fish.value &&
+    (String(fish.value.user_id) === String(user.value?.user_id) || user.value?.is_admin),
+)
+let photoController
+onBeforeUnmount(() => photoController?.abort())
+async function updatePhoto(remove = false) {
+  if (photoBusy.value || !canEditPhoto.value || (!remove && !photoFile.value)) return
+  const controller = new AbortController()
+  photoController = controller
+  photoBusy.value = true
+  photoError.value = ''
+  try {
+    const saved = remove
+      ? await removeCatchPhoto(fish.value.id, token.value, controller.signal)
+      : await saveCatchPhoto(fish.value.id, photoFile.value, token.value, controller.signal)
+    if (controller.signal.aborted) return
+    fish.value = { ...fish.value, ...saved }
+    photoFile.value = null
+    photoVersion.value++
+    resetCertificate()
+  } catch (failure) {
+    if (!controller.signal.aborted) photoError.value = failure.message
+  } finally {
+    if (!controller.signal.aborted) photoBusy.value = false
+  }
+}
 const certificateBusy = ref(false)
 const certificateError = ref('')
 const certificateNotice = ref('')
@@ -76,7 +113,6 @@ function reviewSaved(review) {
   }
 }
 const species = computed(() => fish.value?.species?.name || 'Unknown species')
-const photo = computed(() => catchPhotoUrl(fish.value?.fish_image))
 const date = computed(() => {
   if (!fish.value?.date) return 'Date not recorded'
   const parsed = new Date(`${fish.value.date.slice(0, 10)}T12:00:00`)
@@ -141,7 +177,10 @@ watch(
     fish.value = null
     error.value = ''
     missing.value = false
-    imageFailed.value = false
+    photoController?.abort()
+    photoBusy.value = false
+    photoFile.value = null
+    photoError.value = ''
     loading.value = false
     if (!currentToken) return
     const controller = new AbortController()
@@ -182,13 +221,13 @@ function handleSignOut() {
     <RouterLink :to="{ name: 'dashboard' }" class="back-link"
       ><ArrowLeft :size="16" aria-hidden="true" />Back to dashboard</RouterLink
     >
-    <div v-if="loading" class="loading-state" role="status">
+    <StatusMessage as="div" variant="loading" v-if="loading" class="loading-state" role="status">
       <span class="loading-line" aria-hidden="true" />
       <p>Loading catch details…</p>
       <div class="skeleton-grid" aria-hidden="true">
         <div v-for="i in 3" :key="i" class="skeleton" />
       </div>
-    </div>
+    </StatusMessage>
     <ContentPanel
       v-else-if="missing"
       title="Catch not found"
@@ -199,19 +238,21 @@ function handleSignOut() {
       <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton>
     </ContentPanel>
     <template v-else-if="fish">
-      <header class="page-header catch-header">
-        <div class="catch-heading">
-          <h1>{{ species }}</h1>
-          <p class="muted">{{ date }} <span aria-hidden="true">·</span> {{ time }}</p>
-          <p class="catch-location">
-            <MapPin :size="15" aria-hidden="true" />{{ fish.lake?.name || 'Lake not recorded' }}
-          </p>
-          <RouterLink
-            v-if="fish.trip_id && String(fish.user_id) === String(user.user_id)"
-            :to="{ name: 'trip', params: { username: user.username, id: fish.trip_id } }"
-            >View fishing trip →</RouterLink
-          >
-        </div>
+      <PageHeader :compact="false" class="page-header catch-header"
+        ><template #heading
+          ><div class="catch-heading">
+            <h1>{{ species }}</h1>
+            <p class="muted">{{ date }} <span aria-hidden="true">·</span> {{ time }}</p>
+            <p class="catch-location">
+              <MapPin :size="15" aria-hidden="true" />{{ fish.lake?.name || 'Lake not recorded' }}
+            </p>
+            <RouterLink
+              v-if="fish.trip_id && String(fish.user_id) === String(user.user_id)"
+              :to="{ name: 'trip', params: { username: user.username, id: fish.trip_id } }"
+              >View fishing trip →</RouterLink
+            >
+          </div></template
+        >
         <MasterAnglerReviewControls
           v-if="user.is_admin && fish.master_angler_status === STATUS.PENDING"
           :key="fish.master_angler_review.id"
@@ -238,7 +279,7 @@ function handleSignOut() {
             }}
           </AppButton>
         </div>
-      </header>
+      </PageHeader>
       <p v-if="fish.master_angler_status === STATUS.PENDING" role="status" class="eligibility">
         <Clock :size="16" aria-hidden="true" />Catch is under review for Master Angler award.
       </p>
@@ -246,14 +287,11 @@ function handleSignOut() {
       <p v-if="certificateNotice" role="status" class="muted">{{ certificateNotice }}</p>
       <div class="catch-overview">
         <section class="catch-photo" aria-label="Catch photo">
-          <img
-            :src="photo && !imageFailed ? photo : '/images/stock-fish.jpg'"
-            :alt="
-              photo && !imageFailed
-                ? `${species} caught on ${date}`
-                : 'Default fish image — no catch photo available'
-            "
-            @error="imageFailed = true"
+          <CatchPhoto
+            :catch-id="fish.id"
+            :photo-key="fish.fish_image"
+            :token="token"
+            :alt="`${species} caught on ${date}`"
           />
         </section>
         <ContentPanel title="Catch details">
@@ -270,6 +308,26 @@ function handleSignOut() {
           <DetailList :items="catchDetails" />
         </ContentPanel>
       </div>
+      <ContentPanel v-if="canEditPhoto" title="Catch photo">
+        <CatchPhotoPicker :key="photoVersion" v-model="photoFile" :disabled="photoBusy" />
+        <p class="muted">
+          A photo is required for Master Angler eligibility. Changing an approved catch’s photo
+          requires another review.
+        </p>
+        <div class="certificate-actions">
+          <AppButton :disabled="photoBusy || !photoFile" @click="updatePhoto()">{{
+            photoBusy ? 'Saving…' : 'Save photo'
+          }}</AppButton>
+          <AppButton
+            v-if="fish.fish_image && !fish.fish_image.includes('stock-fish.jpg')"
+            variant="secondary"
+            :disabled="photoBusy"
+            @click="updatePhoto(true)"
+            >Remove photo</AppButton
+          >
+        </div>
+        <p v-if="photoError" role="alert" class="error-message">{{ photoError }}</p>
+      </ContentPanel>
       <div class="catch-info-grid">
         <ContentPanel title="Location">
           <h3>{{ fish.lake?.name || 'Lake not recorded' }}</h3>
@@ -295,9 +353,9 @@ function handleSignOut() {
       </div>
     </template>
   </main>
-  <main v-else id="main-content" class="sign-in-layout">
+  <PageLayout variant="sign-in" v-else id="main-content" class="sign-in-layout">
     <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
-  </main>
+  </PageLayout>
 </template>
 
 <style scoped>
@@ -350,7 +408,7 @@ function handleSignOut() {
   align-self: flex-start;
   font-size: 12px;
   font-weight: 600;
-  color: #577394;
+  color: var(--text-accent);
 }
 .back-link:hover,
 .detail-link:hover {
@@ -403,7 +461,7 @@ function handleSignOut() {
   justify-content: center;
   border: 1px solid var(--border);
   background: #eaf0f6;
-  border-radius: 14px;
+  border-radius: var(--radius-panel);
 }
 .catch-photo img {
   display: block;
@@ -448,7 +506,7 @@ function handleSignOut() {
   display: inline-block;
   font-size: 12px;
   font-weight: 600;
-  color: #577394;
+  color: var(--text-accent);
   margin-top: 20px;
 }
 @media (max-width: 900px) {

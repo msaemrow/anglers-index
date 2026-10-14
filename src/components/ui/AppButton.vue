@@ -24,6 +24,36 @@ defineProps({
 </template>
 
 <style scoped>
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 39px;
+  padding: 9px 13px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.button--primary {
+  color: var(--surface);
+  background: var(--blue);
+  border-color: var(--blue);
+}
+.button--primary:hover {
+  background: var(--primary-hover);
+}
+.button--secondary {
+  color: var(--blue);
+  background: var(--secondary-background);
+  border-color: var(--secondary-border);
+}
+.button--secondary:hover {
+  background: var(--secondary-hover);
+}
+
 .button:not(:disabled) {
   cursor: pointer;
 }
@@ -45,23 +75,23 @@ defineProps({
   outline-offset: 2px;
 }
 .button--danger {
-  background: #a62936;
-  border-color: #a62936;
-  color: white;
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--surface);
 }
 .button--danger:not(:disabled):hover {
-  background: #86212c;
-  border-color: #86212c;
+  background: var(--danger-hover);
+  border-color: var(--danger-hover);
 }
 .button--navy {
   background: #082f6b;
   border-color: #082f6b;
-  color: #fff;
+  color: var(--surface);
 }
 .button--navy:disabled {
   background: #163b68;
   border-color: #163b68;
-  color: #fff;
+  color: var(--surface);
   opacity: 1;
   cursor: not-allowed;
 }

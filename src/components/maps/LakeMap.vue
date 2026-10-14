@@ -138,9 +138,9 @@ watch(
   top: 16px;
   left: 16px;
   right: 56px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   padding: 14px;
   font-size: 13px;
   box-shadow: 0 3px 12px #192b431a;

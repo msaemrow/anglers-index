@@ -147,7 +147,7 @@ table {
 }
 th {
   background: var(--blue);
-  color: #fff;
+  color: var(--surface);
   font-weight: 600;
 }
 th,
@@ -172,10 +172,10 @@ th + th {
   border-left: 1px solid #ffffff26;
 }
 th button:focus-visible {
-  outline-color: #fff;
+  outline-color: var(--surface);
 }
 tbody tr:nth-child(even) {
-  background: #f0f5fa;
+  background: var(--surface-hover);
 }
 tbody tr:hover,
 tbody tr:focus-within {

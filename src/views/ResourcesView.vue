@@ -1,4 +1,7 @@
 <script setup>
+import PageHeader from '@/components/ui/PageHeader.vue'
+import PageLayout from '@/components/ui/PageLayout.vue'
+
 import { EVENTS } from '@/constants'
 import { computed, ref, watch } from 'vue'
 import { Headphones, Video, BookOpen, ArrowRight } from '@lucide/vue'
@@ -56,19 +59,21 @@ const rows = computed(() =>
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
   <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
-  <main id="main-content" class="list-page">
-    <header class="page-header">
-      <div>
-        <p class="eyebrow">Learn &amp; explore</p>
-        <h1>{{ category?.title ?? 'Resources' }}</h1>
-        <p class="muted">
-          {{
-            category?.description ?? 'Podcasts, videos, and channels from the fishing community.'
-          }}
-        </p>
-      </div>
+  <PageLayout id="main-content" class="list-page">
+    <PageHeader :compact="false" class="page-header"
+      ><template #heading
+        ><div>
+          <p class="eyebrow">Learn &amp; explore</p>
+          <h1>{{ category?.title ?? 'Resources' }}</h1>
+          <p class="muted">
+            {{
+              category?.description ?? 'Podcasts, videos, and channels from the fishing community.'
+            }}
+          </p>
+        </div></template
+      >
       <AppButton v-if="kind" to="/resources" variant="secondary">All resources</AppButton>
-    </header>
+    </PageHeader>
     <div v-if="!kind" class="resource-grid">
       <RouterLink
         v-for="item in categories"
@@ -101,7 +106,7 @@ const rows = computed(() =>
         ><AppButton variant="secondary" @click="search = ''">Clear search</AppButton></ContentPanel
       >
     </template>
-  </main>
+  </PageLayout>
 </template>
 <style scoped>
 .resource-grid {
@@ -118,10 +123,10 @@ const rows = computed(() =>
   border: 1px solid var(--border);
   border-top: 3px solid var(--blue);
   border-radius: 12px;
-  background: white;
+  background: var(--surface);
 }
 .category-card:hover {
-  background: #f0f5fa;
+  background: var(--surface-hover);
   border-color: #8ea7be;
 }
 .category-card > svg {
@@ -152,9 +157,9 @@ const rows = computed(() =>
 .resource-search input {
   padding: 11px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   color: var(--navy);
-  background: white;
+  background: var(--surface);
   font: inherit;
 }
 @media (max-width: 650px) {

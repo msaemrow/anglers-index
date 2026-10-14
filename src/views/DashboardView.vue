@@ -1,4 +1,7 @@
 <script setup>
+import PageLayout from '@/components/ui/PageLayout.vue'
+import StatusMessage from '@/components/ui/StatusMessage.vue'
+
 import { STATUS, LABELS, EVENTS } from '@/constants'
 
 import AppSelect from '@/components/ui/AppSelect.vue'
@@ -77,15 +80,22 @@ function handleSignOut() {
   <div v-if="user" class="dashboard-layout">
     <ProfileSidebar :user="user" :stats="data?.stats" @[EVENTS.ADD_CATCH]="catchModal = true" />
     <main id="main-content" class="dashboard" :aria-busy="loading">
-      <p v-if="catchNotice" role="status" class="catch-notice">{{ catchNotice }}</p>
+      <StatusMessage
+        as="p"
+        variant="success"
+        v-if="catchNotice"
+        role="status"
+        class="catch-notice"
+        >{{ catchNotice }}</StatusMessage
+      >
       <h1 class="sr-only">Dashboard</h1>
-      <div v-if="loading" role="status" class="loading-state">
+      <StatusMessage as="div" variant="loading" v-if="loading" role="status" class="loading-state">
         <span class="loading-line" aria-hidden="true" />
         <p>Loading your fishing journal…</p>
         <div class="skeleton-grid" aria-hidden="true">
           <div v-for="i in 3" :key="i" class="skeleton" />
         </div>
-      </div>
+      </StatusMessage>
       <ContentPanel v-else-if="error" title="Your dashboard couldn’t load"
         ><p role="alert" class="error-message">{{ error }}</p>
         <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
@@ -149,12 +159,74 @@ function handleSignOut() {
       />
     </main>
   </div>
-  <main v-else id="main-content" class="sign-in-layout">
+  <PageLayout variant="sign-in" v-else id="main-content" class="sign-in-layout">
     <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
-  </main>
+  </PageLayout>
 </template>
 
 <style scoped>
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 235px minmax(0, 1fr);
+  min-height: calc(100dvh - var(--navbar-height));
+}
+.dashboard {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 36px clamp(20px, 3vw, 48px) 48px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--page-gap);
+  min-width: 0;
+}
+.loading-line {
+  display: block;
+  height: 3px;
+  border-radius: 4px;
+  background: #6687ae;
+  margin-bottom: 18px;
+}
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 20px;
+}
+.skeleton {
+  height: 180px;
+  border-radius: 9px;
+  background: linear-gradient(90deg, #f1f4f8, #e7edf4, #f1f4f8);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (max-width: 800px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+  .dashboard {
+    padding-top: 28px;
+  }
+}
+@media (max-width: 480px) {
+  .skeleton-grid {
+    grid-template-columns: 1fr;
+  }
+  .skeleton:not(:first-child) {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
 .catch-filter {
   display: flex;
   align-items: center;

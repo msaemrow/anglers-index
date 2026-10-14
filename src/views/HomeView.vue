@@ -129,8 +129,8 @@ const features = [
   height: 34px;
   display: grid;
   place-items: center;
-  background: #28496d;
-  color: white;
+  background: var(--blue);
+  color: var(--surface);
   border-radius: 10px;
 }
 .landing-brand img {
@@ -148,7 +148,7 @@ const features = [
   background:
     linear-gradient(90deg, #102b35e8, #102b3599 60%, #102b3533),
     url('/images/homepage-background.jpg') center / cover;
-  color: white;
+  color: var(--surface);
 }
 .hero-content {
   max-width: 840px;

@@ -23,7 +23,7 @@ defineProps({ resource: { type: Object, required: true }, kind: { type: String, 
   border: 1px solid var(--border);
   border-top: 3px solid var(--blue);
   border-radius: 12px;
-  background: white;
+  background: var(--surface);
   gap: 12px;
 }
 .eyebrow {

@@ -179,7 +179,7 @@ watch(
 .map-frame {
   position: relative;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   overflow: hidden;
 }
 .map-canvas {
@@ -188,7 +188,7 @@ watch(
 }
 .map-message {
   padding: 12px;
-  background: #fff;
+  background: var(--surface);
   color: var(--muted);
   font-size: 13px;
 }

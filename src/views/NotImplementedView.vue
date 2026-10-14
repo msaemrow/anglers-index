@@ -1,4 +1,6 @@
 <script setup>
+import PageLayout from '@/components/ui/PageLayout.vue'
+
 import { EVENTS } from '@/constants'
 import { useRoute } from 'vue-router'
 import AppNavbar from '@/components/AppNavbar.vue'
@@ -13,7 +15,7 @@ const { user, signOut } = useSession()
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
   <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
-  <main id="main-content" class="list-page">
+  <PageLayout id="main-content" class="list-page">
     <ContentPanel
       title="Route has not been implemented"
       description="This page is still being built."
@@ -21,7 +23,7 @@ const { user, signOut } = useSession()
       <p class="route-path">{{ route.path }}</p>
       <AppButton to="/dashboard" variant="secondary">Back to dashboard</AppButton>
     </ContentPanel>
-  </main>
+  </PageLayout>
 </template>
 
 <style scoped>

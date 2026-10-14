@@ -130,7 +130,7 @@ async function submit() {
   border: 1px solid var(--border);
   border-radius: 7px;
   color: var(--navy);
-  background: white;
+  background: var(--surface);
   font: inherit;
 }
 .coordinates {

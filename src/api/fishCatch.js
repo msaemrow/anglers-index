@@ -1,4 +1,4 @@
-import { ApiError, request } from './client.js'
+import { apiClient, ApiError, request } from './client.js'
 
 export async function getFishCatch(id, token, signal) {
   const catchData = await request(`/fishcatch/${encodeURIComponent(id)}`, { token, signal })
@@ -63,7 +63,6 @@ export async function createFishCatch(fields, token, signal) {
   )
     throw new ApiError('Enter a valid catch date and time.', 400)
   if (fields.witness !== undefined) body.witness = String(fields.witness || '').trim()
-  if (fields.fish_image !== undefined) body.fish_image = String(fields.fish_image || '').trim()
   if (fields.trip_id !== undefined && fields.trip_id !== null && fields.trip_id !== '') {
     const tripId = Number(fields.trip_id)
     if (!Number.isSafeInteger(tripId) || tripId <= 0)
@@ -91,7 +90,15 @@ export async function createFishCatch(fields, token, signal) {
   body.date = local.slice(0, 10)
   body.time = `${local.slice(11)}:00`
   body.timestamp = Math.floor(date.getTime() / 1000)
-  const data = await request('/fishcatch', { method: 'POST', body, token, signal })
+  let payload = body
+  if (fields.photo) {
+    validateCatchPhoto(fields.photo)
+    payload = new FormData()
+    for (const [key, value] of Object.entries(body))
+      payload.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value))
+    payload.append('photo', fields.photo)
+  }
+  const data = await request('/fishcatch', { method: 'POST', body: payload, token, signal })
   if (!data.id) throw new ApiError('The API returned an unexpected catch.', 200)
   return data
 }
@@ -99,4 +106,49 @@ export async function createFishCatch(fields, token, signal) {
 export function localDateTime(date = new Date()) {
   const pad = (value) => String(value).padStart(2, '0')
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+export function isHeicPhoto(file) {
+  return (
+    ['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'].includes(
+      file?.type,
+    ) ||
+    ((!file?.type || file.type === 'application/octet-stream') &&
+      /\.hei[cf]$/i.test(file?.name || ''))
+  )
+}
+
+export function validateCatchPhoto(file) {
+  const heic = isHeicPhoto(file)
+  if (!heic && !['image/jpeg', 'image/png', 'image/webp'].includes(file.type))
+    throw new ApiError('Choose a JPEG, PNG, WebP, or HEIC photo.', 400)
+  if (!file.size || file.size > 10 * 1024 * 1024)
+    throw new ApiError('Choose a photo smaller than 10 MB.', 400)
+}
+
+export function saveCatchPhoto(id, file, token, signal) {
+  validateCatchPhoto(file)
+  const body = new FormData()
+  body.append('photo', file)
+  return request(`/fishcatch/${encodeURIComponent(id)}/photo`, {
+    method: 'POST',
+    body,
+    token,
+    signal,
+  })
+}
+
+export function removeCatchPhoto(id, token, signal) {
+  return request(`/fishcatch/${encodeURIComponent(id)}/photo`, { method: 'DELETE', token, signal })
+}
+
+export async function getCatchPhoto(id, token, signal) {
+  const response = await apiClient.get(`/fishcatch/${encodeURIComponent(id)}/photo`, {
+    responseType: 'blob',
+    signal,
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.headers['content-type']?.startsWith('image/'))
+    throw new ApiError('The catch photo could not load.', response.status)
+  return response.data
 }

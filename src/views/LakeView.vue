@@ -1,4 +1,7 @@
 <script setup>
+import PageHeader from '@/components/ui/PageHeader.vue'
+import StatusMessage from '@/components/ui/StatusMessage.vue'
+
 import { LABELS, EVENTS } from '@/constants'
 
 import { computed, ref, watch } from 'vue'
@@ -91,13 +94,13 @@ watch(
     <RouterLink to="/lakes/all" class="back-link"
       ><ArrowLeft :size="16" aria-hidden="true" />All lakes</RouterLink
     >
-    <div v-if="loading" class="loading-state" role="status">
+    <StatusMessage as="div" variant="loading" v-if="loading" class="loading-state" role="status">
       <span class="loading-line" aria-hidden="true" />
       <p>Loading lake details…</p>
       <div class="skeleton-grid" aria-hidden="true">
         <div v-for="i in 3" :key="i" class="skeleton" />
       </div>
-    </div>
+    </StatusMessage>
     <ContentPanel
       v-else-if="missing"
       title="Lake not found"
@@ -108,16 +111,18 @@ watch(
       <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
     >
     <template v-else-if="lake">
-      <header class="page-header">
-        <div>
-          <p class="eyebrow">Explore the water</p>
-          <h1>{{ lake.name || 'Unnamed lake' }}</h1>
-          <p class="location"><MapPin :size="16" aria-hidden="true" />{{ location }}</p>
-        </div>
+      <PageHeader :compact="false" class="page-header"
+        ><template #heading
+          ><div>
+            <p class="eyebrow">Explore the water</p>
+            <h1>{{ lake.name || 'Unnamed lake' }}</h1>
+            <p class="location"><MapPin :size="16" aria-hidden="true" />{{ location }}</p>
+          </div></template
+        >
         <AppButton v-if="user?.is_admin" @click="editor = { lake }" variant="secondary"
           ><Pencil :size="15" aria-hidden="true" />Edit lake</AppButton
         >
-      </header>
+      </PageHeader>
       <div class="lake-grid">
         <ContentPanel title="Lake details"><DetailList :items="details" /></ContentPanel>
         <ContentPanel
@@ -147,10 +152,10 @@ watch(
 
 <style scoped>
 .save-notice {
-  color: #28543f;
-  background: #e3f1e8;
-  border: 1px solid #a8cbb6;
-  border-radius: 8px;
+  color: var(--success-text);
+  background: var(--success-background);
+  border: 1px solid var(--success-border);
+  border-radius: var(--radius-control);
   padding: 14px;
   font-size: 13px;
 }
@@ -170,7 +175,7 @@ watch(
   align-self: flex-start;
   font-size: 12px;
   font-weight: 600;
-  color: #577394;
+  color: var(--text-accent);
 }
 .back-link:hover,
 .map-link:hover {

@@ -1,4 +1,8 @@
 <script setup>
+import PageHeader from '@/components/ui/PageHeader.vue'
+import PageLayout from '@/components/ui/PageLayout.vue'
+import StatusMessage from '@/components/ui/StatusMessage.vue'
+
 import { LABELS, EVENTS } from '@/constants'
 
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
@@ -263,12 +267,16 @@ onBeforeUnmount(() => {
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a
   ><AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
-  <main v-if="user" id="main-content" class="list-page fishing-page">
-    <header class="page-header">
-      <h1>Fishing mode</h1>
-    </header>
-    <p v-if="notice" class="catch-notice" role="status">{{ notice }}</p>
-    <div v-if="loading" class="loading-state" role="status">Loading fishing mode…</div>
+  <PageLayout v-if="user" id="main-content" class="list-page fishing-page">
+    <PageHeader :compact="false" class="page-header"
+      ><template #heading><h1>Fishing mode</h1></template>
+    </PageHeader>
+    <StatusMessage as="p" variant="success" v-if="notice" class="catch-notice" role="status">{{
+      notice
+    }}</StatusMessage>
+    <StatusMessage as="div" variant="loading" v-if="loading" class="loading-state" role="status"
+      >Loading fishing mode…</StatusMessage
+    >
     <ContentPanel v-else-if="error" title="Fishing mode couldn’t load"
       ><p class="error-message" role="alert">{{ error }}</p>
       <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
@@ -316,7 +324,7 @@ onBeforeUnmount(() => {
           <p v-if="tackleError" class="muted" role="status">{{ tackleError }}</p>
         </CollapsiblePanel>
       </div>
-      <section class="panel catch-controls" aria-label="Quick catch entry">
+      <ContentPanel class="catch-controls" title="Quick catch entry" hide-header>
         <p
           v-if="!catalog.lakes.length || !catalog.lures.length || !catalog.species.length"
           class="error-message"
@@ -341,7 +349,7 @@ onBeforeUnmount(() => {
             ><Plus :size="18" aria-hidden="true" />Other species</AppButton
           >
         </div>
-      </section>
+      </ContentPanel>
     </template>
     <ContentPanel
       :title="`Today’s catches${catchesLoading || catchesError ? '' : ` (${rows.length})`}`"
@@ -378,10 +386,10 @@ onBeforeUnmount(() => {
       @[EVENTS.CLOSE]="editor = null"
       @[EVENTS.SAVED]="saved"
     />
-  </main>
-  <main v-else id="main-content" class="sign-in-layout">
+  </PageLayout>
+  <PageLayout variant="sign-in" v-else id="main-content" class="sign-in-layout">
     <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
-  </main>
+  </PageLayout>
 </template>
 <style scoped>
 .fishing-page {

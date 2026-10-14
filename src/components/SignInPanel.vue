@@ -44,3 +44,61 @@ function submit() {
     </form>
   </section>
 </template>
+
+<style scoped>
+.sign-in {
+  width: 100%;
+  max-width: 440px;
+  padding: 36px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.sign-in__icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 25px;
+  border-radius: 15px;
+  background: var(--surface-muted);
+  color: #426080;
+}
+.sign-in h1 {
+  font-size: 30px;
+  line-height: 1.25;
+}
+.sign-in > .muted {
+  font-size: 14px;
+  line-height: 1.7;
+  margin-top: 15px;
+}
+.sign-in__form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 28px;
+}
+.sign-in__form label {
+  font-size: 12px;
+  font-weight: 600;
+}
+.sign-in__form input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #ced9e6;
+  border-radius: var(--radius-control);
+  color: var(--text);
+  background: var(--surface);
+  margin-bottom: 8px;
+}
+.sign-in__form :deep(.button) {
+  min-height: 44px;
+}
+@media (max-width: 480px) {
+  .sign-in {
+    padding: 26px;
+  }
+}
+</style>

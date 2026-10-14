@@ -1,4 +1,7 @@
 <script setup>
+import PageLayout from '@/components/ui/PageLayout.vue'
+import StatusMessage from '@/components/ui/StatusMessage.vue'
+
 import { LABELS, EVENTS } from '@/constants'
 
 import PageHeader from '@/components/ui/PageHeader.vue'
@@ -111,7 +114,7 @@ function handleSignOut() {
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
   <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
-  <main v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
+  <PageLayout v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
     <PageHeader
       title="My tackle box"
       :count-text="
@@ -124,10 +127,10 @@ function handleSignOut() {
     </PageHeader>
     <p v-if="notice" class="notice" role="status">{{ notice }}</p>
     <p v-if="actionError" class="error-message" role="alert">{{ actionError }}</p>
-    <div v-if="loading" class="loading-state" role="status">
+    <StatusMessage as="div" variant="loading" v-if="loading" class="loading-state" role="status">
       <span class="loading-line" aria-hidden="true" />
       <p>Loading your tackle box…</p>
-    </div>
+    </StatusMessage>
     <ContentPanel v-else-if="error" title="We couldn’t load your tackle box">
       <p class="error-message" role="alert">{{ error }}</p>
       <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton>
@@ -194,10 +197,10 @@ function handleSignOut() {
         <p>Try another search or clear your filters.</p>
       </div>
     </ContentPanel>
-  </main>
-  <main v-else id="main-content" class="sign-in-layout">
+  </PageLayout>
+  <PageLayout variant="sign-in" v-else id="main-content" class="sign-in-layout">
     <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
-  </main>
+  </PageLayout>
 </template>
 
 <style scoped>
@@ -225,15 +228,15 @@ function handleSignOut() {
   min-height: 42px;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   color: var(--navy);
-  background: white;
+  background: var(--surface);
   font-size: 13px;
 }
 .notice {
   color: #32634d;
   background: #edf7f0;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   padding: 14px;
   font-size: 13px;
 }

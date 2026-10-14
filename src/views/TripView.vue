@@ -1,4 +1,8 @@
 <script setup>
+import PageHeader from '@/components/ui/PageHeader.vue'
+import PageLayout from '@/components/ui/PageLayout.vue'
+import StatusMessage from '@/components/ui/StatusMessage.vue'
+
 import { STATUS, LABELS, EVENTS } from '@/constants'
 
 import { computed, ref, watch } from 'vue'
@@ -83,25 +87,29 @@ function saved(item) {
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a
   ><AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
-  <main v-if="user" id="main-content" class="list-page trip-page" :aria-busy="loading">
+  <PageLayout v-if="user" id="main-content" class="list-page trip-page" :aria-busy="loading">
     <RouterLink :to="{ name: 'trips', params: { username: user.username } }"
       >← Fishing trips</RouterLink
     >
-    <p v-if="notice" role="status" class="catch-notice">{{ notice }}</p>
+    <StatusMessage as="p" variant="success" v-if="notice" role="status" class="catch-notice">{{
+      notice
+    }}</StatusMessage>
     <p v-if="loading" role="status">Loading fishing trip…</p>
     <ContentPanel v-else-if="error" title="Trip couldn’t load"
       ><p role="alert">{{ error }}</p>
       <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton></ContentPanel
     >
     <template v-else-if="trip">
-      <header class="page-header">
-        <div>
-          <h1>{{ trip.lake?.name || 'Fishing trip' }}</h1>
-          <p class="muted">
-            {{ trip.status === STATUS.ACTIVE ? LABELS.ACTIVE_TRIP : LABELS.COMPLETED_TRIP }} ·
-            {{ formatDate(trip.start_date) }}
-          </p>
-        </div>
+      <PageHeader :compact="false" class="page-header"
+        ><template #heading
+          ><div>
+            <h1>{{ trip.lake?.name || 'Fishing trip' }}</h1>
+            <p class="muted">
+              {{ trip.status === STATUS.ACTIVE ? LABELS.ACTIVE_TRIP : LABELS.COMPLETED_TRIP }} ·
+              {{ formatDate(trip.start_date) }}
+            </p>
+          </div></template
+        >
         <div class="actions">
           <AppButton v-if="trip.status === STATUS.ACTIVE" @click="editor = 'catch'">{{
             LABELS.LOG_CATCH
@@ -110,7 +118,7 @@ function saved(item) {
             LABELS.DELETE_TRIP
           }}</AppButton>
         </div>
-      </header>
+      </PageHeader>
       <ContentPanel title="Trip summary">
         <dl class="summary">
           <div>
@@ -198,10 +206,10 @@ function saved(item) {
         @[EVENTS.SAVED]="saved"
       />
     </template>
-  </main>
-  <main v-else id="main-content" class="sign-in-layout">
+  </PageLayout>
+  <PageLayout variant="sign-in" v-else id="main-content" class="sign-in-layout">
     <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
-  </main>
+  </PageLayout>
 </template>
 <style scoped>
 .trip-page {

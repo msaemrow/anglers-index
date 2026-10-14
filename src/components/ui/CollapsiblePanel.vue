@@ -35,6 +35,15 @@ const bodyId = useId()
   </ContentPanel>
 </template>
 <style scoped>
+.panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
 .collapse-header {
   display: flex;
   align-items: center;

@@ -59,7 +59,7 @@ defineEmits([EVENTS.CLICK])
   justify-content: center;
   width: 34px;
   height: 34px;
-  color: #28543f;
+  color: var(--success-text);
   vertical-align: middle;
 }
 </style>
