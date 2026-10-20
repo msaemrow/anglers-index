@@ -10,6 +10,8 @@ defineProps({ title: { type: String, required: true } })
 
 <style scoped>
 .catch-grid {
+  /* Keep absolute screen-reader labels inside this row's scroll area. */
+  position: relative;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
   gap: 13px;

@@ -207,7 +207,7 @@ function handleSignOut() {
 }
 @media (max-width: 800px) {
   .dashboard-layout {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 1fr;
   }
   .dashboard {
     padding-top: 28px;
@@ -229,8 +229,6 @@ function handleSignOut() {
 
 .catch-filter {
   display: flex;
-  min-width: 0;
-  max-width: 100%;
   align-items: center;
   gap: 6px;
   margin: 0;

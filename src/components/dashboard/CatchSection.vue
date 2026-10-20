@@ -48,8 +48,6 @@ defineProps({
 }
 .catch-controls {
   display: flex;
-  min-width: 0;
-  max-width: 100%;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
