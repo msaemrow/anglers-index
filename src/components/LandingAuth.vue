@@ -3,6 +3,7 @@ import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ChevronDown } from '@lucide/vue'
 import AppButton from '@/components/ui/AppButton.vue'
+import FormField from '@/components/ui/FormField.vue'
 import { useSession } from '@/composables/useSession'
 
 const { user, signingIn, signIn, signUp } = useSession()
@@ -107,38 +108,38 @@ defineExpose({ open })
               {{ mode === 'login' ? 'Welcome back.' : 'Create your account.' }}
             </h2>
             <form class="sign-in__form" @submit.prevent="submit">
-              <label for="landing-username">Username</label
-              ><input
+              <FormField
                 id="landing-username"
                 v-model="fields.username"
+                label="Username"
                 name="username"
                 autocomplete="username"
                 required
                 :disabled="signingIn"
               />
               <template v-if="mode === 'register'">
-                <label for="landing-first-name">First name</label
-                ><input
+                <FormField
                   id="landing-first-name"
                   v-model="fields.first_name"
+                  label="First name"
                   name="first_name"
                   autocomplete="given-name"
                   required
                   :disabled="signingIn"
                 />
-                <label for="landing-last-name">Last name</label
-                ><input
+                <FormField
                   id="landing-last-name"
                   v-model="fields.last_name"
+                  label="Last name"
                   name="last_name"
                   autocomplete="family-name"
                   required
                   :disabled="signingIn"
                 />
-                <label for="landing-email">Email</label
-                ><input
+                <FormField
                   id="landing-email"
                   v-model="fields.email"
+                  label="Email"
                   name="email"
                   type="email"
                   autocomplete="email"
@@ -146,27 +147,28 @@ defineExpose({ open })
                   :disabled="signingIn"
                 />
               </template>
-              <label for="landing-password">Password</label
-              ><input
+              <FormField
                 id="landing-password"
                 v-model="fields.password"
+                label="Password"
                 name="password"
                 type="password"
                 :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
                 required
                 :disabled="signingIn"
               />
-              <template v-if="mode === 'register'"
-                ><label for="landing-confirm">Confirm password</label
-                ><input
+              <template v-if="mode === 'register'">
+                <FormField
                   id="landing-confirm"
                   v-model="fields.confirm"
+                  label="Confirm password"
                   name="confirmPassword"
                   type="password"
                   autocomplete="new-password"
                   required
                   :disabled="signingIn"
-              /></template>
+                />
+              </template>
               <p v-if="error" role="alert" class="error-message">{{ error }}</p>
               <AppButton type="submit" :disabled="signingIn">{{
                 signingIn ? 'Please wait…' : mode === 'login' ? 'Login' : 'Create account'
@@ -240,8 +242,10 @@ defineExpose({ open })
   font-size: 25px;
 }
 .sign-in__form {
+  display: flex;
+  flex-direction: column;
   margin-top: 22px;
-  gap: 8px;
+  gap: 14px;
 }
 .expand-enter-active,
 .expand-leave-active {

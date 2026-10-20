@@ -6,6 +6,8 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 const props = defineProps({
   catchData: { type: Object, required: true },
+  angler: { type: String, default: '' },
+  linkLabel: { type: String, default: 'View catch' },
   to: { type: [String, Object], required: true },
 })
 const date = computed(() => {
@@ -42,6 +44,7 @@ function measurement(value, unit) {
         >
       </span>
     </div>
+    <p v-if="angler" class="catch-card__angler">Angler: {{ angler }}</p>
     <h3>{{ catchData.species?.name || 'Unknown species' }}</h3>
     <p class="catch-card__lake">
       <MapPin :size="14" aria-hidden="true" />{{ catchData.lake?.name || 'Unknown lake' }}
@@ -56,7 +59,9 @@ function measurement(value, unit) {
         <dd>{{ measurement(catchData.weight, 'lb') }}</dd>
       </div>
     </dl>
-    <span class="catch-card__link">View catch <ArrowUpRight :size="14" aria-hidden="true" /></span>
+    <span class="catch-card__link"
+      >{{ linkLabel }} <ArrowUpRight :size="14" aria-hidden="true"
+    /></span>
   </RouterLink>
 </template>
 
@@ -86,6 +91,12 @@ function measurement(value, unit) {
   margin-bottom: 15px;
   color: #748398;
   font-size: 11px;
+}
+.catch-card__angler {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
 }
 .catch-card h3 {
   line-height: 1.4;

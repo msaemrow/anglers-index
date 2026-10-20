@@ -3,10 +3,12 @@ import { APP_NAME, LABELS, EVENTS } from '@/constants'
 
 import logo from '@/assets/logo.png'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { LogOut, Menu, X } from '@lucide/vue'
 
 defineProps({ user: { type: Object, default: null } })
 const emit = defineEmits([EVENTS.SIGN_OUT])
+const router = useRouter()
 const menuOpen = ref(false)
 const navbar = ref(null)
 const menuButton = ref(null)
@@ -31,6 +33,7 @@ onBeforeUnmount(() => {
 function signOut() {
   menuOpen.value = false
   emit(EVENTS.SIGN_OUT)
+  router.push('/')
 }
 </script>
 

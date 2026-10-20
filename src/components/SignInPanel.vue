@@ -4,6 +4,7 @@ import { APP_NAME, LABELS, EVENTS } from '@/constants'
 import { ref } from 'vue'
 import { Fish } from '@lucide/vue'
 import AppButton from './ui/AppButton.vue'
+import FormField from './ui/FormField.vue'
 
 defineProps({ busy: Boolean, error: { type: String, default: '' } })
 const emit = defineEmits([EVENTS.SUBMIT])
@@ -21,17 +22,18 @@ function submit() {
     <h1 id="sign-in-title">Your next chapter starts here.</h1>
     <p class="muted">Sign in with your {{ APP_NAME }} account to see your fishing journal.</p>
     <form class="sign-in__form" @submit.prevent="submit">
-      <label for="username">Username</label
-      ><input
+      <FormField
         id="username"
         v-model="username"
+        label="Username"
         autocomplete="username"
         required
         :disabled="busy"
-      /><label for="password">Password</label
-      ><input
+      />
+      <FormField
         id="password"
         v-model="password"
+        label="Password"
         type="password"
         autocomplete="current-password"
         required
@@ -76,22 +78,8 @@ function submit() {
 .sign-in__form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
   margin-top: 28px;
-}
-.sign-in__form label {
-  font-size: 12px;
-  font-weight: 600;
-}
-.sign-in__form input {
-  width: 100%;
-  min-height: 44px;
-  padding: 10px 12px;
-  border: 1px solid #ced9e6;
-  border-radius: var(--radius-control);
-  color: var(--text);
-  background: var(--surface);
-  margin-bottom: 8px;
 }
 .sign-in__form :deep(.button) {
   min-height: 44px;

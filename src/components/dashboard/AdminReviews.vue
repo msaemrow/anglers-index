@@ -3,10 +3,11 @@ import StatusMessage from '@/components/ui/StatusMessage.vue'
 
 import { LABELS } from '@/constants'
 
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
-import DataTable from '@/components/ui/DataTable.vue'
+import CatchCard from './CatchCard.vue'
+import CatchCardRow from './CatchCardRow.vue'
 import { getMasterAnglerReviews } from '@/api/masterAngler'
 const props = defineProps({
   token: { type: String, required: true },
@@ -16,20 +17,6 @@ const items = ref([])
 const error = ref('')
 const loading = ref(false)
 const attempt = ref(0)
-const columns = [
-  { key: 'angler', label: 'Angler' },
-  { key: 'species', label: 'Species' },
-  { key: 'length', label: 'Length (in)', numeric: true, hideOnMobile: true },
-  { key: 'action', label: '', sortable: false },
-]
-const rows = computed(() =>
-  items.value.map((item) => ({
-    ...item,
-    angler: item.user?.username || `User #${item.user_id}`,
-    species: item.catch?.species?.name,
-    length: item.catch?.length,
-  })),
-)
 watch(
   [() => props.token, attempt],
   async (_, __, onCleanup) => {
@@ -64,21 +51,17 @@ watch(
       }}</AppButton>
     </div>
     <p v-if="loading" role="status">Loading reviews…</p>
-    <template v-else>
-      <DataTable
-        v-if="rows.length"
-        :rows="rows"
-        :columns="columns"
-        caption="Master Angler catches awaiting review"
-      >
-        <template #cell-action="{ row }"
-          ><AppButton
-            variant="link"
-            :to="{ name: 'fish-catch', params: { username: props.username, id: row.catch_id } }"
-            >{{ LABELS.REVIEW }}</AppButton
-          ></template
-        >
-      </DataTable>
+    <template v-else-if="!error">
+      <CatchCardRow v-if="items.length" title="Master Angler catches awaiting review">
+        <CatchCard
+          v-for="item in items"
+          :key="item.id"
+          :catch-data="{ ...item.catch, master_angler_status: item.status }"
+          :angler="item.user?.username || `User #${item.user_id}`"
+          :link-label="LABELS.REVIEW"
+          :to="{ name: 'fish-catch', params: { username: props.username, id: item.catch_id } }"
+        />
+      </CatchCardRow>
       <StatusMessage as="p" variant="empty" v-else class="empty-message"
         >No catches are waiting for review.</StatusMessage
       >
