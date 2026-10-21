@@ -86,7 +86,7 @@ function saved(item) {
 </script>
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a
-  ><AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
+  ><AppNavbar :user="user" :session-error="loginError" @[EVENTS.SIGN_OUT]="signOut" />
   <PageLayout v-if="user" id="main-content" class="list-page trip-page" :aria-busy="loading">
     <RouterLink :to="{ name: 'trips', params: { username: user.username } }"
       >← Fishing trips</RouterLink

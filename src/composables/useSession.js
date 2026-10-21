@@ -9,6 +9,7 @@ export function useSession() {
   const token = ref('')
   const signingIn = ref(false)
   const sessionError = ref('')
+  const signingOut = ref(false)
   let loginController
   try {
     const stored = localStorage.getItem(storageKey)
@@ -60,7 +61,7 @@ export function useSession() {
     })
   }
 
-  function signOut() {
+  function clearSession() {
     sessionError.value = ''
     loginController?.abort()
     token.value = ''
@@ -71,14 +72,46 @@ export function useSession() {
     }
   }
 
+  async function signOut() {
+    if (signingOut.value) return false
+    sessionError.value = ''
+    loginController?.abort()
+    const currentToken = token.value
+    if (!currentToken) {
+      clearSession()
+      return true
+    }
+    signingOut.value = true
+    try {
+      await request('/users/logout', {
+        method: 'POST',
+        token: currentToken,
+        signal: AbortSignal.timeout(10000),
+      })
+      if (token.value === currentToken) clearSession()
+      return true
+    } catch (failure) {
+      if (token.value !== currentToken) return false
+      if (failure.status === 401) {
+        clearSession()
+        return true
+      }
+      sessionError.value =
+        'Logout could not be confirmed. You are still signed in. Please try again.'
+      return false
+    } finally {
+      signingOut.value = false
+    }
+  }
+
   const unsubscribe = onSessionExpired((failedToken) => {
     if (!token.value || failedToken !== token.value) return
-    signOut()
+    clearSession()
     sessionError.value = MESSAGES.SESSION_EXPIRED
   })
   onScopeDispose(() => {
     unsubscribe()
     loginController?.abort()
   })
-  return { token, user, signingIn, signIn, signUp, signOut, sessionError }
+  return { token, user, signingIn, signingOut, signIn, signUp, signOut, sessionError }
 }

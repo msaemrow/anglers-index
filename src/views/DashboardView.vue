@@ -76,7 +76,7 @@ function handleSignOut() {
 
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
+  <AppNavbar :user="user" :session-error="loginError" @[EVENTS.SIGN_OUT]="handleSignOut" />
   <div v-if="user" class="dashboard-layout">
     <ProfileSidebar :user="user" :stats="data?.stats" @[EVENTS.ADD_CATCH]="catchModal = true" />
     <main id="main-content" class="dashboard" :aria-busy="loading">

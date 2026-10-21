@@ -2,11 +2,20 @@
 import { APP_NAME, LABELS, EVENTS } from '@/constants'
 
 import logo from '@/assets/logo.png'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { LogOut, Menu, X } from '@lucide/vue'
 
-defineProps({ user: { type: Object, default: null } })
+const props = defineProps({
+  user: { type: Object, default: null },
+  sessionError: { type: String, default: '' },
+})
+watch(
+  () => props.user,
+  (user, previous) => {
+    if (previous && !user) router.push('/')
+  },
+)
 const emit = defineEmits([EVENTS.SIGN_OUT])
 const router = useRouter()
 const menuOpen = ref(false)
@@ -33,7 +42,6 @@ onBeforeUnmount(() => {
 function signOut() {
   menuOpen.value = false
   emit(EVENTS.SIGN_OUT)
-  router.push('/')
 }
 </script>
 
@@ -125,10 +133,23 @@ function signOut() {
       </nav>
     </template>
     <span v-else class="navbar__caption">Your fishing journal</span>
+    <p v-if="user && sessionError" class="logout-error" role="alert">{{ sessionError }}</p>
   </header>
 </template>
 
 <style scoped>
+.logout-error {
+  position: absolute;
+  top: 100%;
+  right: 16px;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 12px;
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+  color: var(--danger);
+  background: var(--surface);
+}
+
 .navbar {
   position: sticky;
   top: 0;

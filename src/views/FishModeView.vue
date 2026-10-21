@@ -266,7 +266,7 @@ onBeforeUnmount(() => {
 </script>
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a
-  ><AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
+  ><AppNavbar :user="user" :session-error="loginError" @[EVENTS.SIGN_OUT]="handleSignOut" />
   <PageLayout v-if="user" id="main-content" class="list-page fishing-page">
     <PageHeader :compact="false" class="page-header"
       ><template #heading><h1>Fishing mode</h1></template>

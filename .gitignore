@@ -37,3 +37,7 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Private environment configuration; keep the shareable template.
+.env*
+!.env.example

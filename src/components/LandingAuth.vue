@@ -6,6 +6,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import FormField from '@/components/ui/FormField.vue'
 import { useSession } from '@/composables/useSession'
 
+const props = defineProps({ registrationEnabled: { type: Boolean, default: false } })
 const { user, signingIn, signIn, signUp } = useSession()
 const router = useRouter()
 const mode = ref('')
@@ -24,7 +25,7 @@ const fields = reactive({
 })
 let opener
 async function open(nextMode, trigger) {
-  if (signingIn.value) return
+  if (signingIn.value || (nextMode === 'register' && !props.registrationEnabled)) return
   opener = trigger || (nextMode === 'login' ? loginButton.value : registerButton.value?.$el)
   mode.value = mode.value === nextMode ? '' : nextMode
   error.value = ''
@@ -49,7 +50,7 @@ function blur(event) {
   if (event.relatedTarget && !root.value?.contains(event.relatedTarget)) close()
 }
 async function submit() {
-  if (signingIn.value) return
+  if (signingIn.value || (mode.value === 'register' && !props.registrationEnabled)) return
   error.value = ''
   if (mode.value === 'register' && fields.password !== fields.confirm) {
     error.value = 'Passwords do not match.'
@@ -177,16 +178,29 @@ defineExpose({ open })
           </section>
         </Transition>
       </div>
-      <AppButton
-        ref="registerButton"
-        type="button"
-        :aria-expanded="mode === 'register'"
-        aria-controls="landing-auth-panel"
-        :disabled="signingIn"
-        @click="open('register')"
+      <span
+        class="registration-control"
+        :tabindex="registrationEnabled ? undefined : 0"
+        :aria-describedby="registrationEnabled ? undefined : 'registration-disabled-message'"
       >
-        Register
-      </AppButton>
+        <AppButton
+          ref="registerButton"
+          type="button"
+          :aria-expanded="mode === 'register'"
+          aria-controls="landing-auth-panel"
+          :disabled="signingIn || !registrationEnabled"
+          @click="open('register')"
+        >
+          Sign up
+        </AppButton>
+        <span
+          v-if="!registrationEnabled"
+          id="registration-disabled-message"
+          class="registration-tooltip"
+          role="tooltip"
+          >Sign up is disabled at this time.</span
+        >
+      </span>
     </template>
   </div>
 </template>
@@ -196,6 +210,32 @@ defineExpose({ open })
   display: flex;
   align-items: center;
   gap: 12px;
+}
+.registration-control {
+  position: relative;
+  display: inline-flex;
+}
+.registration-control :deep(button:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.registration-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 10;
+  width: max-content;
+  max-width: 240px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--text);
+  color: var(--surface);
+  font-size: 12px;
+  visibility: hidden;
+}
+.registration-control:hover .registration-tooltip,
+.registration-control:focus .registration-tooltip {
+  visibility: visible;
 }
 .login-anchor {
   position: relative;

@@ -85,7 +85,7 @@ watch(
 
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
+  <AppNavbar :user="user" :session-error="sessionError" @[EVENTS.SIGN_OUT]="signOut" />
   <PageLayout id="main-content" class="list-page compact-list" :aria-busy="loading">
     <p v-if="notice" class="save-notice" role="status">{{ notice }}</p>
     <p v-if="sessionError" class="error-message" role="alert">

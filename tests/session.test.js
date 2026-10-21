@@ -81,3 +81,46 @@ test('centralizes authenticated expiration without affecting login failures or n
   await assert.rejects(request('/dashboard', { token: newToken }))
   assert.equal(session.token.value, newToken)
 })
+
+test('logout waits for API revocation, keeps the session on failure, and clears it on success', async (t) => {
+  const { effectScope } = await import('vue')
+  const { useSession } = await import('../src/composables/useSession.js')
+  const { mockApi } = await import('./helpers/mockApi.js')
+  const currentToken = token(user)
+  const storage = new Map([['anglers-index.session', currentToken]])
+  const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
+    getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key),
+  } })
+  t.after(() => {
+    if (originalStorage) Object.defineProperty(globalThis, 'localStorage', originalStorage)
+    else delete globalThis.localStorage
+  })
+  const scope = effectScope()
+  const session = scope.run(() => useSession())
+  t.after(() => scope.stop())
+  let release
+  mockApi(t, async (url, options) => {
+    assert.match(url, /\/users\/logout$/)
+    assert.equal(options.method, 'POST')
+    assert.equal(options.headers.Authorization, `Bearer ${currentToken}`)
+    return new Promise(resolve => { release = resolve })
+  })
+  const failed = session.signOut()
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(session.signingOut.value, true)
+  assert.equal(await session.signOut(), false, 'duplicate logout does not issue another request')
+  assert.equal(session.token.value, currentToken)
+  assert.equal(storage.get('anglers-index.session'), currentToken)
+  release(Response.json({ error: 'Unavailable' }, { status: 503 }))
+  assert.equal(await failed, false)
+  assert.equal(session.token.value, currentToken)
+  assert.match(session.sessionError.value, /still signed in/)
+  const succeeded = session.signOut()
+  await new Promise(resolve => setImmediate(resolve))
+  release(Response.json({ message: 'Logout successful' }))
+  assert.equal(await succeeded, true)
+  assert.equal(session.token.value, '')
+  assert.equal(storage.has('anglers-index.session'), false)
+  assert.equal(session.sessionError.value, '')
+})

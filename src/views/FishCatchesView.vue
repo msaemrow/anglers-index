@@ -153,7 +153,7 @@ function handleSignOut() {
 
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
+  <AppNavbar :user="user" :session-error="loginError" @[EVENTS.SIGN_OUT]="handleSignOut" />
   <PageLayout v-if="user" id="main-content" class="list-page compact-list" :aria-busy="loading">
     <StatusMessage as="p" variant="success" v-if="catchNotice" role="status" class="catch-notice">{{
       catchNotice

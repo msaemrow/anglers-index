@@ -216,7 +216,7 @@ function handleSignOut() {
 
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="handleSignOut" />
+  <AppNavbar :user="user" :session-error="loginError" @[EVENTS.SIGN_OUT]="handleSignOut" />
   <main v-if="user" id="main-content" class="catch-page" :aria-busy="loading">
     <RouterLink :to="{ name: 'dashboard' }" class="back-link"
       ><ArrowLeft :size="16" aria-hidden="true" />Back to dashboard</RouterLink

@@ -13,7 +13,7 @@ import ResourceCard from '@/components/resources/ResourceCard.vue'
 import { useSession } from '@/composables/useSession'
 import { resources } from '@/data/resources'
 const props = defineProps({ kind: { type: String, default: '' } })
-const { user, signOut } = useSession()
+const { user, signOut, sessionError } = useSession()
 const search = ref('')
 watch(
   () => props.kind,
@@ -58,7 +58,7 @@ const rows = computed(() =>
 </script>
 <template>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <AppNavbar :user="user" @[EVENTS.SIGN_OUT]="signOut" />
+  <AppNavbar :user="user" :session-error="sessionError" @[EVENTS.SIGN_OUT]="signOut" />
   <PageLayout id="main-content" class="list-page">
     <PageHeader :compact="false" class="page-header"
       ><template #heading

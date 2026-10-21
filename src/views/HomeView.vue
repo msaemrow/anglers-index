@@ -10,6 +10,7 @@ import { useSession } from '@/composables/useSession'
 
 const { user } = useSession()
 const auth = ref(null)
+const registrationEnabled = import.meta.env.VITE_ALLOW_PUBLIC_SIGNUP === 'true'
 const features = [
   {
     icon: NotebookPen,
@@ -42,7 +43,9 @@ const features = [
       <RouterLink to="/" class="landing-brand"
         ><span><img :src="logo" alt="" width="34" height="34" /></span>{{ APP_NAME }}</RouterLink
       >
-      <nav aria-label="Account navigation"><LandingAuth ref="auth" /></nav>
+      <nav aria-label="Account navigation">
+        <LandingAuth ref="auth" :registration-enabled="registrationEnabled" />
+      </nav>
     </header>
     <main id="home-content">
       <section class="hero" aria-labelledby="home-title">
@@ -57,8 +60,12 @@ const features = [
             <AppButton v-if="user" to="/dashboard" class="hero-cta"
               >Open your dashboard <ArrowUpRight :size="18" aria-hidden="true"
             /></AppButton>
-            <AppButton v-else class="hero-cta" @click="auth.open('register', $event.currentTarget)"
-              >Start your fishing journal <ArrowUpRight :size="18" aria-hidden="true"
+            <AppButton
+              v-else
+              class="hero-cta"
+              @click="auth.open(registrationEnabled ? 'register' : 'login', $event.currentTarget)"
+              >{{ registrationEnabled ? 'Start your fishing journal' : 'Sign in to your journal' }}
+              <ArrowUpRight :size="18" aria-hidden="true"
             /></AppButton>
             <a href="#features" class="explore"
               >Explore the features <ArrowDown :size="16" aria-hidden="true"
