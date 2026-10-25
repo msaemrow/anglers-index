@@ -142,6 +142,7 @@ watch(
         :rows="rows"
         :columns="columns"
         caption="Lake directory"
+        mobile-title-key="name"
         initial-sort="name"
       >
         <template #cell-name="{ row }"

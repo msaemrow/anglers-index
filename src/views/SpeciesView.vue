@@ -157,6 +157,7 @@ function handleSignOut() {
           :rows="rows"
           :columns="columns"
           caption="Species and personal bests"
+          mobile-title-key="name"
           initial-sort="name"
         >
           <template #cell-name="{ row }"

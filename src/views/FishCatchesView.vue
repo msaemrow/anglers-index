@@ -226,6 +226,7 @@ function handleSignOut() {
           :rows="rows"
           :columns="columns"
           caption="Your fish catches"
+          mobile-title-key="species"
           initial-sort="date"
           initial-direction="desc"
         >

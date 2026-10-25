@@ -166,6 +166,7 @@ function handleSignOut() {
         :rows="rows"
         :columns="columns"
         caption="Tackle box lures"
+        mobile-title-key="name"
         initial-sort="brand"
       >
         <template #cell-name="{ row }"
