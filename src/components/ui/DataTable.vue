@@ -2,6 +2,7 @@
 import { LABELS } from '@/constants'
 
 import AppSelect from '@/components/ui/AppSelect.vue'
+import DataCardList from './DataCardList.vue'
 import { computed, ref, watch } from 'vue'
 import { ArrowUp, ArrowDown, ArrowUpDown } from '@lucide/vue'
 import AppButton from './AppButton.vue'
@@ -10,6 +11,7 @@ const props = defineProps({
   rows: { type: Array, required: true },
   columns: { type: Array, required: true },
   caption: { type: String, required: true },
+  mobileTitleKey: { type: String, default: '' },
   initialSort: { type: String, default: '' },
   initialDirection: { type: String, default: 'asc' },
 })
@@ -49,7 +51,47 @@ function sort(column) {
 </script>
 
 <template>
-  <div class="table-scroll" role="region" :aria-label="caption" tabindex="0">
+  <div v-if="mobileTitleKey" class="mobile-cards">
+    <div class="mobile-sort">
+      <label
+        >Sort by
+        <AppSelect v-model="sortKey" size="compact">
+          <option
+            v-for="column in columns.filter((column) => column.sortable !== false)"
+            :key="column.key"
+            :value="column.key"
+          >
+            {{ column.label }}
+          </option>
+        </AppSelect>
+      </label>
+      <AppButton
+        variant="secondary"
+        :aria-label="direction === 'asc' ? 'Sort descending' : 'Sort ascending'"
+        @click="direction = direction === 'asc' ? 'desc' : 'asc'"
+      >
+        <component :is="direction === 'asc' ? ArrowUp : ArrowDown" :size="16" aria-hidden="true" />
+        {{ direction === 'asc' ? 'Ascending' : 'Descending' }}
+      </AppButton>
+    </div>
+    <DataCardList
+      :rows="visibleRows"
+      :columns="columns"
+      :title-key="mobileTitleKey"
+      :caption="caption"
+    >
+      <template v-for="(_, name) in $slots" #[name]="slotProps"
+        ><slot :name="name" v-bind="slotProps"
+      /></template>
+    </DataCardList>
+  </div>
+  <div
+    class="table-scroll"
+    :class="{ 'desktop-table': mobileTitleKey }"
+    role="region"
+    :aria-label="caption"
+    tabindex="0"
+  >
     <table>
       <caption class="sr-only">
         {{
@@ -102,7 +144,7 @@ function sort(column) {
       </tbody>
     </table>
   </div>
-  <div class="pagination">
+  <div class="pagination" :class="{ 'card-pagination': mobileTitleKey }">
     <p role="status">
       {{ rows.length ? (page - 1) * pageSize + 1 : 0 }}–{{
         Math.min(page * pageSize, rows.length)
@@ -128,6 +170,43 @@ function sort(column) {
 </template>
 
 <style scoped>
+.mobile-cards {
+  display: none;
+}
+.mobile-sort,
+.mobile-sort label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mobile-sort {
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.mobile-sort label {
+  min-width: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+@media (max-width: 800px) {
+  .mobile-cards {
+    display: block;
+  }
+  .desktop-table {
+    display: none;
+  }
+  .card-pagination {
+    gap: 12px;
+  }
+  .card-pagination nav {
+    width: 100%;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .card-pagination :deep(.button) {
+    min-height: 44px;
+  }
+}
 @media (max-width: 650px) {
   .hide-on-mobile {
     display: none;

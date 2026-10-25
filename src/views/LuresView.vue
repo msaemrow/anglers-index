@@ -136,6 +136,7 @@ function clearFilters() {
           :columns="columns"
           caption="Lure database"
           initial-sort="brand"
+          mobile-title-key="name"
         >
           <template #cell-name="{ row }"
             ><RouterLink class="lure-link" :to="{ name: 'lure', params: { id: row.id } }">{{
