@@ -65,6 +65,35 @@ label {
 input {
   max-width: 100%;
   font: inherit;
+  color: var(--muted);
+}
+input::file-selector-button {
+  min-height: 39px;
+  margin-right: 12px;
+  padding: 9px 13px;
+  border: 1px solid var(--secondary-border);
+  border-radius: var(--radius-control);
+  background: var(--secondary-background);
+  color: var(--blue);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+}
+input:not(:disabled)::file-selector-button:hover {
+  background: var(--secondary-hover);
+}
+input:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+  border-radius: var(--radius-control);
+}
+input:disabled {
+  opacity: 0.6;
+}
+input:disabled::file-selector-button {
+  cursor: not-allowed;
 }
 p {
   font-size: 12px;

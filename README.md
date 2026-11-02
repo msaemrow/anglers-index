@@ -67,3 +67,8 @@ The trip detail page includes Delete trip with a confirmation explaining that ca
 ## Shared dropdowns
 
 `src/components/ui/AppSelect.vue` wraps native dropdowns with consistent border, padding, arrow placement, and disabled styling. Use v-model and option slots; numeric option values stay numeric. Labels can wrap the component, or pass id and use a separate label with for. Attributes such as name, required, disabled, and aria-label forward to the native select. Sizes are compact, regular (default), and large. Searchable choices continue to use SearchSelect.vue.
+
+
+## Private catch locations
+
+Step one adds `/settings` with an opt-in location default, per-catch capture controls, manual coordinates/pin placement, and owner-only location editing/removal. Unavailable location never blocks an otherwise valid catch. Precise coordinates are separate from normal catch and admin review responses. Step two adds private catch maps with accuracy circles and owner-only lake markers, clustering, tap/click summaries, and species/date filters. Step three adds Settings → Export catch locations: GPX 1.1 waypoints for all catches or a lake/date range, optional catch details, and exported/skipped counts. No additional migration is needed for export. See [the implementation document](docs/catch-location-implementation.md) for behavior, validation, and rollout. Apply the API's `20261031000000-private-catch-locations.js` migration with `npm run migrate:up` before restarting the updated API. Mobile device capture requires HTTPS.

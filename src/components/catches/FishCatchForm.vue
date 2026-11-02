@@ -1,4 +1,6 @@
 <script setup>
+import CatchLocationInput from '@/components/catches/CatchLocationInput.vue'
+import { getLocationPreference } from '@/api/catchLocations'
 import StatusMessage from '@/components/ui/StatusMessage.vue'
 
 import { STATUS, LABELS, EVENTS } from '@/constants'
@@ -18,6 +20,7 @@ const props = defineProps({
   token: { type: String, required: true },
   initialValues: { type: Object, default: () => ({}) },
   choices: { type: Object, default: null },
+  quickEntry: { type: Boolean, default: false },
 })
 const emit = defineEmits([EVENTS.SAVED, EVENTS.BUSY, EVENTS.CLOSE])
 const form = reactive({
@@ -27,10 +30,32 @@ const form = reactive({
   length: props.initialValues.length ?? '',
   weight: props.initialValues.weight ?? '',
   trip_id: props.initialValues.trip_id ?? '',
-  datetime: props.initialValues.datetime ?? localDateTime(),
+  datetime: props.quickEntry ? localDateTime() : (props.initialValues.datetime ?? localDateTime()),
   witness: '',
   photo: null,
+  location: null,
 })
+const locationDefault = ref(false)
+const preferenceError = ref('')
+watch(
+  () => props.token,
+  async (token, _, onCleanup) => {
+    const current = new AbortController()
+    onCleanup(() => current.abort())
+    locationDefault.value = false
+    preferenceError.value = ''
+    try {
+      const preferences = await getLocationPreference(token, current.signal)
+      if (!current.signal.aborted)
+        locationDefault.value = preferences.capture_catch_location === true
+    } catch {
+      if (!current.signal.aborted)
+        preferenceError.value =
+          'Your location preference could not load. Capture is off; you can enable it for this catch.'
+    }
+  },
+  { immediate: true },
+)
 const loading = ref(true)
 const busy = ref(false)
 const error = ref('')
@@ -68,6 +93,7 @@ watch(
   async (_, __, onCleanup) => {
     const current = new AbortController()
     onCleanup(() => current.abort())
+    if (props.quickEntry) return
     tripsLoading.value = true
     tripsError.value = ''
     trips.value = []
@@ -132,6 +158,11 @@ watch(
     onCleanup(() => current.abort())
     loading.value = true
     loadError.value = tackleError.value = ''
+    if (props.quickEntry) {
+      species.value = props.choices?.species ?? []
+      loading.value = false
+      return
+    }
     if (props.choices) {
       species.value = props.choices.species
       lakes.value = props.choices.lakes
@@ -170,7 +201,10 @@ async function submit() {
     busy.value ||
     loading.value ||
     loadError.value ||
-    (form.trip_id && !startingTrip.value && (tripsLoading.value || !selectedTrip.value))
+    (!props.quickEntry &&
+      form.trip_id &&
+      !startingTrip.value &&
+      (tripsLoading.value || !selectedTrip.value))
   )
     return
   busy.value = true
@@ -225,7 +259,7 @@ async function submit() {
     <p class="error-message" role="alert">{{ loadError }}</p>
     <AppButton @click="attempt++">{{ LABELS.TRY_AGAIN }}</AppButton>
   </div>
-  <div v-else-if="!species.length || !lakes.length || !lures.length" role="status">
+  <div v-else-if="!quickEntry && (!species.length || !lakes.length || !lures.length)" role="status">
     <h3>The catch form isn’t ready yet</h3>
     <p>At least one species, lake, and lure must be added before you can log a catch.</p>
   </div>
@@ -233,6 +267,7 @@ async function submit() {
     <fieldset :disabled="busy">
       <div class="form-grid">
         <SearchSelect
+          v-if="!quickEntry || !initialValues.species_id"
           v-model="form.species_id"
           label="Species"
           :options="speciesOptions"
@@ -241,6 +276,7 @@ async function submit() {
           :disabled="busy"
         />
         <SearchSelect
+          v-if="!quickEntry"
           v-model="form.lake_id"
           label="Lake"
           :options="lakeOptions"
@@ -249,6 +285,7 @@ async function submit() {
           :disabled="busy || !!selectedTrip"
         />
         <SearchSelect
+          v-if="!quickEntry"
           v-model="form.lure_id"
           label="Lure"
           :options="lureOptions"
@@ -256,7 +293,7 @@ async function submit() {
           required
           :disabled="busy"
         />
-        <label class="field"
+        <label v-if="!quickEntry" class="field"
           >Date &amp; time<input v-model="form.datetime" type="datetime-local" required
         /></label>
         <label class="field"
@@ -277,71 +314,80 @@ async function submit() {
             required
             placeholder="0 if not weighed"
         /></label>
-        <label class="field"
+        <label v-if="!quickEntry" class="field"
           >Witness (for Master Angler review)
           <input v-model="form.witness" maxlength="75" placeholder="Witness name" />
         </label>
         <CatchPhotoPicker v-model="form.photo" :disabled="busy" />
       </div>
-      <p class="hint">
+      <p v-if="!quickEntry" class="hint">
         Catches meeting the species length requirement with a witness and catch photo are
         automatically submitted for review.
       </p>
-      <div class="options">
+      <CatchLocationInput
+        v-model="form.location"
+        :default-enabled="locationDefault"
+        :datetime="form.datetime"
+        :disabled="busy"
+      />
+      <p v-if="preferenceError" class="hint" role="status">{{ preferenceError }}</p>
+      <div v-if="!quickEntry" class="options">
         <label v-if="tackle.length" class="checkbox"
           ><input v-model="tackleOnly" type="checkbox" />My tackle box only</label
         >
       </div>
-      <p v-if="tackleError" class="hint" role="status">{{ tackleError }}</p>
-      <div class="trip-selection">
-        <label class="field"
-          >Fishing trip (optional)
-          <AppSelect size="large" v-model="form.trip_id" :disabled="busy || tripsLoading">
-            <option value="">No trip</option>
-            <option value="new">Start a trip with this catch</option>
-            <option v-for="trip in trips" :key="trip.id" :value="trip.id">
-              {{ tripLabel(trip) }}
-            </option>
-          </AppSelect>
-        </label>
-        <AppButton v-if="!form.trip_id" variant="secondary" @click="form.trip_id = 'new'"
-          >Start a trip with this catch</AppButton
+      <p v-if="!quickEntry && tackleError" class="hint" role="status">{{ tackleError }}</p>
+      <template v-if="!quickEntry">
+        <div class="trip-selection">
+          <label class="field"
+            >Fishing trip (optional)
+            <AppSelect size="large" v-model="form.trip_id" :disabled="busy || tripsLoading">
+              <option value="">No trip</option>
+              <option value="new">Start a trip with this catch</option>
+              <option v-for="trip in trips" :key="trip.id" :value="trip.id">
+                {{ tripLabel(trip) }}
+              </option>
+            </AppSelect>
+          </label>
+          <AppButton v-if="!form.trip_id" variant="secondary" @click="form.trip_id = 'new'"
+            >Start a trip with this catch</AppButton
+          >
+        </div>
+        <div v-if="startingTrip" class="trip-start">
+          <label class="field"
+            >Trip start date<input
+              v-model="tripStart"
+              type="date"
+              :max="form.datetime.slice(0, 10)"
+              required
+          /></label>
+          <label class="checkbox"
+            ><input v-model="multiDayTrip" type="checkbox" />Multi-day trip</label
+          >
+          <label v-if="multiDayTrip" class="field"
+            >Trip end date<input v-model="tripEnd" type="date" :min="tripStart" required
+          /></label>
+          <p class="hint">
+            Uses the catch’s lake. Choose the days you’re fishing; saving creates the trip and adds
+            this catch. The trip completes automatically after its end date.
+          </p>
+        </div>
+        <p v-if="tripsLoading" role="status" class="hint">Loading trips…</p>
+        <p v-if="tripsError" role="alert" class="error-message">{{ tripsError }}</p>
+        <AppButton v-if="tripsError" variant="secondary" @click="tripAttempt++"
+          >Reload trips</AppButton
         >
-      </div>
-      <div v-if="startingTrip" class="trip-start">
-        <label class="field"
-          >Trip start date<input
-            v-model="tripStart"
-            type="date"
-            :max="form.datetime.slice(0, 10)"
-            required
-        /></label>
-        <label class="checkbox"
-          ><input v-model="multiDayTrip" type="checkbox" />Multi-day trip</label
+        <p
+          v-if="form.trip_id && !startingTrip && !tripsLoading && !selectedTrip"
+          role="alert"
+          class="error-message"
         >
-        <label v-if="multiDayTrip" class="field"
-          >Trip end date<input v-model="tripEnd" type="date" :min="tripStart" required
-        /></label>
-        <p class="hint">
-          Uses the catch’s lake. Choose the days you’re fishing; saving creates the trip and adds
-          this catch. The trip completes automatically after its end date.
+          The selected trip isn’t available. Reload trips or select No trip.
         </p>
-      </div>
-      <p v-if="tripsLoading" role="status" class="hint">Loading trips…</p>
-      <p v-if="tripsError" role="alert" class="error-message">{{ tripsError }}</p>
-      <AppButton v-if="tripsError" variant="secondary" @click="tripAttempt++"
-        >Reload trips</AppButton
-      >
-      <p
-        v-if="form.trip_id && !startingTrip && !tripsLoading && !selectedTrip"
-        role="alert"
-        class="error-message"
-      >
-        The selected trip isn’t available. Reload trips or select No trip.
-      </p>
-      <p v-if="selectedTrip" class="hint">
-        The lake is set by your trip. Choose a catch date within the trip’s date range.
-      </p>
+        <p v-if="selectedTrip" class="hint">
+          The lake is set by your trip. Choose a catch date within the trip’s date range.
+        </p>
+      </template>
       <p v-if="error" class="error-message" role="alert">{{ error }}</p>
       <div class="actions">
         <AppButton variant="secondary" :disabled="busy" @click="emit(EVENTS.CLOSE)">{{
@@ -350,7 +396,10 @@ async function submit() {
         <AppButton
           variant="navy"
           type="submit"
-          :disabled="busy || (!!form.trip_id && !startingTrip && (tripsLoading || !selectedTrip))"
+          :disabled="
+            busy ||
+            (!quickEntry && !!form.trip_id && !startingTrip && (tripsLoading || !selectedTrip))
+          "
           >{{
             busy ? LABELS.SAVING : startingTrip ? LABELS.START_TRIP_SAVE_CATCH : LABELS.SAVE_CATCH
           }}</AppButton

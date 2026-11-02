@@ -124,6 +124,13 @@ function signOut() {
           @click="menuOpen = false"
           >Species</RouterLink
         >
+        <RouterLink
+          to="/settings"
+          class="nav-link"
+          active-class="nav-link--active"
+          @click="menuOpen = false"
+          >Settings</RouterLink
+        >
         <div class="nav-account">
           <span>{{ user.first_name || user.username }}</span
           ><button class="nav-link" @click="signOut">

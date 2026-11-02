@@ -13,6 +13,7 @@ import SignInPanel from '@/components/SignInPanel.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import DetailList from '@/components/ui/DetailList.vue'
+import CatchLocationEditor from '@/components/catches/CatchLocationEditor.vue'
 import CatchPhoto from '@/components/catches/CatchPhoto.vue'
 import CatchPhotoPicker from '@/components/catches/CatchPhotoPicker.vue'
 import MasterAnglerReviewControls from '@/components/catches/MasterAnglerReviewControls.vue'
@@ -327,6 +328,9 @@ function handleSignOut() {
           >
         </div>
         <p v-if="photoError" role="alert" class="error-message">{{ photoError }}</p>
+      </ContentPanel>
+      <ContentPanel v-if="String(fish.user_id) === String(user.user_id)" title="Catch Location">
+        <CatchLocationEditor :catch-id="fish.id" :token="token" :lake="fish.lake" />
       </ContentPanel>
       <div class="catch-info-grid">
         <ContentPanel title="Location">

@@ -41,6 +41,7 @@ export default createRouter({
       name: 'trip',
       component: () => import('@/views/TripView.vue'),
     },
+    { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
     { path: '/resources', name: 'resources', component: () => import('@/views/ResourcesView.vue') },
     ...['podcasts', 'channels', 'how-to-videos', 'blog'].map((kind) => ({
       path: `/resources/${kind}`,

@@ -11,6 +11,7 @@ import AppNavbar from '@/components/AppNavbar.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
 import DetailList from '@/components/ui/DetailList.vue'
+import LakeCatchMap from '@/components/maps/LakeCatchMap.vue'
 import LakeMap from '@/components/maps/LakeMap.vue'
 import LakeEditor from '@/components/lakes/LakeEditor.vue'
 import { useSession } from '@/composables/useSession'
@@ -126,10 +127,17 @@ watch(
       <div class="lake-grid">
         <ContentPanel title="Lake details"><DetailList :items="details" /></ContentPanel>
         <ContentPanel
-          title="Lake location"
+          :title="user ? 'Lake location and your catches' : 'Lake location'"
           description="Approximate location based on the saved coordinates. Some locations may mark the nearest town."
         >
-          <LakeMap :key="lake.id" :lake="lake" />
+          <LakeCatchMap
+            v-if="user"
+            :key="`${lake.id}:${user.user_id}`"
+            :lake="lake"
+            :token="token"
+            :username="user.username"
+          />
+          <LakeMap v-else :key="lake.id" :lake="lake" />
           <a v-if="mapUrl" :href="mapUrl" target="_blank" rel="noopener noreferrer" class="map-link"
             >Open location in Google Maps<ExternalLink :size="14" aria-hidden="true" /><span
               class="sr-only"

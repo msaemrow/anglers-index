@@ -87,6 +87,7 @@ export async function createFishCatch(fields, token, signal) {
     if (body.trip_id) throw new ApiError('Choose an existing trip or start a new one.', 400)
     body.new_trip = { start_date: range.start_date, end_date: end, single_day: !!range.single_day }
   }
+  if (fields.location) body.location = fields.location
   body.date = local.slice(0, 10)
   body.time = `${local.slice(11)}:00`
   body.timestamp = Math.floor(date.getTime() / 1000)

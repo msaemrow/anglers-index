@@ -378,6 +378,7 @@ onBeforeUnmount(() => {
       <p v-else class="muted">No catches yet today. Your next catch starts here.</p>
     </ContentPanel>
     <FishCatchModal
+      quick-entry
       v-if="editor && catalog"
       :user="user"
       :token="token"
