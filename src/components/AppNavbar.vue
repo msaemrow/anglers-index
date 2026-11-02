@@ -125,6 +125,13 @@ function signOut() {
           >Species</RouterLink
         >
         <RouterLink
+          to="/waypoints"
+          class="nav-link"
+          active-class="nav-link--active"
+          @click="menuOpen = false"
+          >Waypoints</RouterLink
+        >
+        <RouterLink
           to="/settings"
           class="nav-link"
           active-class="nav-link--active"
@@ -250,7 +257,7 @@ function signOut() {
   border-radius: var(--radius-control);
   color: var(--surface);
 }
-@media (max-width: 1100px) {
+@media (max-width: 1250px) {
   .menu-toggle {
     display: flex;
   }

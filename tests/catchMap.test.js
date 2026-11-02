@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { mockApi } from './helpers/mockApi.js'
-import { getLakeCatchLocations } from '../src/api/catchLocations.js'
+import { getLakeCatchLocations, getCatchLocations } from '../src/api/catchLocations.js'
 import {
   catchFeatures,
   accuracyFeature,
@@ -102,4 +102,41 @@ test('coincident catches remain individually selectable and bounds handle the da
   const bounds = catchBounds([fish(1, { longitude: 179.9 }), fish(2, { longitude: -179.9 })])
   assert.ok(bounds[1][0] - bounds[0][0] < 0.21)
   assert.equal(catchBounds([]), null)
+})
+
+test('waypoints load all lakes through cursor pages without per-catch requests', async (t) => {
+  let calls = 0
+  mockApi(t, async (url, options) => {
+    assert.equal(options.headers.Authorization, 'Bearer session')
+    assert.equal(
+      url,
+      calls++ === 0 ? '/api/fishcatch/locations?' : '/api/fishcatch/locations?after=17',
+    )
+    return Response.json(
+      calls === 1
+        ? { catches: [fish(17)], next_cursor: 17 }
+        : { catches: [fish(20)], next_cursor: null },
+    )
+  })
+  assert.deepEqual(
+    (await getCatchLocations('session')).map((item) => item.id),
+    [17, 20],
+  )
+})
+test('waypoint filters combine lake, species and inclusive dates', () => {
+  const records = [
+    fish(1, { lake_id: 2 }),
+    fish(2, { lake_id: 4 }),
+    fish(3, { lake_id: 2, species_id: 5 }),
+    fish(4, { lake_id: 2, date: null }),
+  ]
+  assert.deepEqual(
+    filterMapCatches(records, {
+      lake: '2',
+      species: '3',
+      from: '2026-10-31',
+      to: '2026-10-31',
+    }).map((item) => item.id),
+    [1],
+  )
 })

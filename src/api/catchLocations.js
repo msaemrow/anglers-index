@@ -54,7 +54,10 @@ export async function getLakeCatchLocations(lakeId, token, signal) {
   const catches = []
   let after = null
   do {
-    const query = new URLSearchParams({ lake_id: lakeId, ...(after ? { after } : {}) })
+    const query = new URLSearchParams({
+      ...(lakeId ? { lake_id: lakeId } : {}),
+      ...(after ? { after } : {}),
+    })
     const data = await request(`/fishcatch/locations?${query}`, { token, signal })
     if (
       !Array.isArray(data.catches) ||
@@ -77,4 +80,8 @@ export async function getLakeCatchLocations(lakeId, token, signal) {
     after = data.next_cursor
   } while (after !== null)
   return catches
+}
+
+export function getCatchLocations(token, signal) {
+  return getLakeCatchLocations(null, token, signal)
 }

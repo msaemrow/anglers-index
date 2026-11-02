@@ -3,6 +3,7 @@ import { apiClient, ApiError } from './client.js'
 export async function exportCatchGpx(filters, token, signal) {
   const query = new URLSearchParams({ details: String(filters.details !== false) })
   if (filters.lake_id) query.set('lake_id', String(filters.lake_id))
+  if (filters.species_id) query.set('species_id', String(filters.species_id))
   for (const field of ['from', 'to']) if (filters[field]) query.set(field, filters[field])
   if (filters.from && filters.to && filters.from > filters.to)
     throw new ApiError('The end date must be on or after the start date.', 400)

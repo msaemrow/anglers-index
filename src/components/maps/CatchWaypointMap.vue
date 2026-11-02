@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { getLakeCatchLocations } from '@/api/catchLocations'
-import { lakeCoordinates } from '@/api/lakes'
+import { lakeCoordinates, getLakes } from '@/api/lakes'
 import { filterMapCatches } from '@/utils/catchMap'
 import LocationMap from './LocationMap.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -9,11 +9,13 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import DataCardList from '@/components/ui/DataCardList.vue'
 
 const props = defineProps({
-  lake: { type: Object, required: true },
+  lake: { type: Object, default: null },
   token: { type: String, required: true },
   username: { type: String, required: true },
 })
 const catches = ref([])
+const lakes = ref([])
+const lakeId = ref('')
 const loading = ref(true)
 const error = ref('')
 const attempt = ref(0)
@@ -22,17 +24,28 @@ const from = ref('')
 const to = ref('')
 const selected = ref(null)
 const shown = ref(10)
-const reference = computed(() => lakeCoordinates(props.lake))
+const reference = computed(() => (props.lake ? lakeCoordinates(props.lake) : null))
 const invalidRange = computed(() => !!from.value && !!to.value && from.value > to.value)
 const speciesOptions = computed(() =>
   [...new Map(catches.value.map((fish) => [fish.species_id, fish.species_name])).entries()].sort(
     (a, b) => a[1].localeCompare(b[1]),
   ),
 )
+const exportFilters = computed(() => ({
+  lake_id: lakeId.value,
+  species_id: species.value,
+  from: from.value,
+  to: to.value,
+}))
 const filtered = computed(() =>
   invalidRange.value
     ? []
-    : filterMapCatches(catches.value, { species: species.value, from: from.value, to: to.value }),
+    : filterMapCatches(catches.value, {
+        species: species.value,
+        lake: lakeId.value,
+        from: from.value,
+        to: to.value,
+      }),
 )
 const details = computed(() => {
   const ids = selected.value === null ? null : new Set(selected.value)
@@ -61,7 +74,7 @@ const columns = [
   { key: 'measurement', label: 'Length / weight' },
   { key: 'lure', label: 'Lure' },
 ]
-watch([species, from, to], () => {
+watch([species, lakeId, from, to], () => {
   selected.value = null
   shown.value = 10
 })
@@ -74,12 +87,12 @@ function select(ids) {
   shown.value = 10
 }
 function resetFilters() {
-  species.value = from.value = to.value = ''
+  species.value = lakeId.value = from.value = to.value = ''
   selected.value = null
   shown.value = 10
 }
 watch(
-  [() => props.lake.id, () => props.token, attempt],
+  [() => props.lake?.id, () => props.token, attempt],
   async ([id, token], _, onCleanup) => {
     const controller = new AbortController()
     onCleanup(() => controller.abort())
@@ -88,8 +101,14 @@ watch(
     loading.value = true
     error.value = ''
     try {
-      const data = await getLakeCatchLocations(id, token, controller.signal)
-      if (!controller.signal.aborted) catches.value = data
+      const [data, lakeChoices] = await Promise.all([
+        getLakeCatchLocations(id, token, controller.signal),
+        props.lake ? Promise.resolve([]) : getLakes(controller.signal),
+      ])
+      if (!controller.signal.aborted) {
+        catches.value = data
+        lakes.value = lakeChoices.slice().sort((a, b) => a.name.localeCompare(b.name))
+      }
     } catch (failure) {
       if (!controller.signal.aborted) error.value = failure.message
     } finally {
@@ -101,16 +120,30 @@ watch(
 </script>
 
 <template>
-  <p class="hint">
+  <slot
+    name="header"
+    :filters="exportFilters"
+    :disabled="loading || !!error || !filtered.length || invalidRange"
+  />
+  <p v-if="lake" class="hint">
     Orange dots are your private catches. Numbered dots group nearby catches; tap or click to see
-    their details below and zoom in. The blue pin is the lake’s approximate reference point.
+    their details below and zoom in.
+    <template v-if="lake">The blue pin is the lake’s approximate reference point.</template>
   </p>
   <p v-if="loading" role="status" class="hint">Loading your catch locations…</p>
   <div v-if="error" role="alert">
     <p class="error-message">Your catch locations couldn’t load. {{ error }}</p>
     <AppButton variant="secondary" @click="attempt++">Retry catch locations</AppButton>
   </div>
-  <div v-if="!loading && !error && catches.length" class="filters">
+  <div class="filters">
+    <label v-if="!lake"
+      >Lake<AppSelect v-model="lakeId">
+        <option value="">All lakes</option>
+        <option v-for="item in lakes" :key="item.id" :value="item.id">
+          {{ [item.name, item.county, item.state].filter(Boolean).join(' · ') }}
+        </option>
+      </AppSelect></label
+    >
     <label
       >Species<AppSelect v-model="species"
         ><option value="">All species</option>
@@ -127,20 +160,20 @@ watch(
     Choose an end date on or after the start date.
   </p>
   <LocationMap
+    :large="!lake"
     :reference="reference"
     :points="filtered"
-    :label="`${lake.name} map with your private catch locations`"
-    :reference-label="`${lake.name} approximate lake location`"
+    :label="lake ? `${lake.name} map with your private catch locations` : `Your private waypoints`"
+    :reference-label="lake ? `${lake.name} approximate lake location` : ``"
     @select="select"
   />
   <p v-if="!loading && !error" class="hint" role="status">
-    {{ filtered.length }} of {{ catches.length }} located catches shown. Catches without saved
-    coordinates are not plotted.
+    {{ filtered.length }} of {{ catches.length }} waypoints shown.
   </p>
-  <p v-if="!loading && !error && !catches.length" class="hint">
-    You haven’t saved any catch locations for this lake yet.
+  <p v-if="lake && !loading && !error && !catches.length" class="hint">
+    You haven’t saved any catch locations{{ lake ? ' for this lake' : '' }} yet.
   </p>
-  <p v-else-if="!loading && !error && !filtered.length && !invalidRange" class="hint">
+  <p v-else-if="lake && !loading && !error && !filtered.length && !invalidRange" class="hint">
     No located catches match these filters.
   </p>
   <section v-if="details.length" aria-label="Catch map details" class="map-details">
@@ -190,7 +223,7 @@ watch(
   flex-wrap: wrap;
   gap: 12px;
   align-items: end;
-  margin: 16px 0;
+  margin: 0;
 }
 .filters label {
   display: grid;

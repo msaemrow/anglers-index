@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { parse, compileScript } from '@vue/compiler-sfc'
-import { createRenderer, computed, ref, watch, onBeforeUnmount, nextTick } from 'vue'
+import { createRenderer, computed, ref, watch, onBeforeUnmount, nextTick, h } from 'vue'
 const { descriptor } = parse(
   readFileSync(
     new URL('../src/components/catches/CatchLocationExport.vue', import.meta.url),
@@ -25,6 +25,7 @@ const renderer = createRenderer({
   nextSibling: () => null,
 })
 function mount(t) {
+  const filters = ref({ lake_id: '', species_id: '', from: '', to: '' })
   const requests = []
   const downloads = []
   const urls = []
@@ -80,10 +81,12 @@ function mount(t) {
     return state
   }
   component.render = () => null
-  const app = renderer.createApp(component, { token: 'session' })
+  const app = renderer.createApp({
+    render: () => h(component, { token: 'session', filters: filters.value }),
+  })
   app.mount({})
   t.after(() => app.unmount())
-  return { state, requests, downloads, urls }
+  return { state, requests, downloads, urls, filters }
 }
 test('export reports skipped catches and avoids downloading an empty file', async (t) => {
   const exportForm = mount(t)
@@ -99,11 +102,13 @@ test('export reports skipped catches and avoids downloading an empty file', asyn
 test('export downloads the file and reports export/skip counts with current filters', async (t) => {
   const exportForm = mount(t)
   await nextTick()
-  exportForm.state.lakeId.value = 2
-  exportForm.state.from.value = '2026-11-01'
+  exportForm.filters.value.lake_id = 2
+  exportForm.filters.value.species_id = 3
+  exportForm.filters.value.from = '2026-11-01'
   await nextTick()
   const pending = exportForm.state.download()
   assert.equal(exportForm.requests[0].filters.lake_id, 2)
+  assert.equal(exportForm.requests[0].filters.species_id, 3)
   assert.equal(exportForm.requests[0].filters.from, '2026-11-01')
   assert.equal(exportForm.requests[0].token, 'session')
   exportForm.requests[0].resolve({
@@ -120,16 +125,34 @@ test('export downloads the file and reports export/skip counts with current filt
 test('invalid date ranges do not submit and failed exports preserve filters for retry', async (t) => {
   const exportForm = mount(t)
   await nextTick()
-  exportForm.state.from.value = '2026-11-02'
-  exportForm.state.to.value = '2026-11-01'
+  exportForm.filters.value.from = '2026-11-02'
+  exportForm.filters.value.to = '2026-11-01'
   await exportForm.state.download()
   assert.equal(exportForm.requests.length, 0)
-  exportForm.state.to.value = ''
+  exportForm.filters.value.to = ''
   await nextTick()
   const pending = exportForm.state.download()
   exportForm.requests[0].reject(new Error('Please retry'))
   await pending
-  assert.equal(exportForm.state.from.value, '2026-11-02')
+  assert.equal(exportForm.filters.value.from, '2026-11-02')
   assert.equal(exportForm.state.error.value, 'Please retry')
   assert.equal(exportForm.downloads.length, 0)
+})
+
+test('filter changes cancel pending downloads and ignore their late results', async (t) => {
+  const form = mount(t)
+  await nextTick()
+  const pending = form.state.download()
+  form.filters.value = { ...form.filters.value, species_id: 5 }
+  await nextTick()
+  assert.equal(form.requests[0].signal.aborted, true)
+  form.requests[0].resolve({
+    exported: 2,
+    skipped: 0,
+    blob: new Blob(['gpx']),
+    filename: 'stale.gpx',
+  })
+  await pending
+  assert.deepEqual(form.downloads, [])
+  assert.equal(form.state.notice.value, '')
 })

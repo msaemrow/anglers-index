@@ -11,7 +11,7 @@ import AppNavbar from '@/components/AppNavbar.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
 import DetailList from '@/components/ui/DetailList.vue'
-import LakeCatchMap from '@/components/maps/LakeCatchMap.vue'
+import CatchWaypointMap from '@/components/maps/CatchWaypointMap.vue'
 import LakeMap from '@/components/maps/LakeMap.vue'
 import LakeEditor from '@/components/lakes/LakeEditor.vue'
 import { useSession } from '@/composables/useSession'
@@ -130,7 +130,7 @@ watch(
           :title="user ? 'Lake location and your catches' : 'Lake location'"
           description="Approximate location based on the saved coordinates. Some locations may mark the nearest town."
         >
-          <LakeCatchMap
+          <CatchWaypointMap
             v-if="user"
             :key="`${lake.id}:${user.user_id}`"
             :lake="lake"

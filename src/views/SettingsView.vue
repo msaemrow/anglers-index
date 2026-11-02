@@ -1,6 +1,5 @@
 <script setup>
 import { ref, watch, onBeforeUnmount } from 'vue'
-import CatchLocationExport from '@/components/catches/CatchLocationExport.vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
@@ -110,12 +109,6 @@ async function handleSignIn(credentials) {
         >Try again</AppButton
       >
       <p v-if="notice" role="status">{{ notice }}</p>
-    </ContentPanel>
-    <ContentPanel
-      title="Export catch locations"
-      description="Download your saved catch locations for another mapping app or GPS."
-    >
-      <CatchLocationExport :token="token" />
     </ContentPanel>
   </PageLayout>
   <PageLayout v-else id="main-content" variant="sign-in">

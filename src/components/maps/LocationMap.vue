@@ -10,6 +10,7 @@ const props = defineProps({
   label: { type: String, default: 'Fishing location map' },
   referenceLabel: { type: String, default: 'Approximate lake location' },
   showAccuracy: Boolean,
+  large: Boolean,
 })
 const emit = defineEmits(['select'])
 const container = ref(null)
@@ -210,16 +211,12 @@ watch(
 </script>
 
 <template>
-  <div class="map-frame">
+  <div class="map-frame" :class="{ 'map-frame--large': large }">
     <div v-if="!hasPosition || !accessToken" class="map-message" role="status">
       <MapPin :size="36" aria-hidden="true" />
-      <h3>{{ !hasPosition ? 'Location not recorded' : 'Map unavailable' }}</h3>
-      <p>
-        {{
-          !hasPosition
-            ? 'No saved coordinates are available for this map.'
-            : 'The interactive map is not available. Saved catch details remain available below.'
-        }}
+      <h3>{{ !hasPosition ? 'No saved coordinates found' : 'Map unavailable' }}</h3>
+      <p v-if="hasPosition">
+        The interactive map is not available. Saved catch details remain available below.
       </p>
     </div>
     <template v-else>
@@ -245,6 +242,10 @@ watch(
 .map-message {
   width: 100%;
   height: 420px;
+}
+.map-frame--large .map-canvas,
+.map-frame--large .map-message {
+  height: clamp(420px, 65dvh, 800px);
 }
 .map-message {
   display: flex;

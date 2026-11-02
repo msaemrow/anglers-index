@@ -74,10 +74,11 @@ export function catchesAtPoint(catches, coordinates) {
   )
 }
 
-export function filterMapCatches(catches, { species = '', from = '', to = '' }) {
+export function filterMapCatches(catches, { species = '', lake = '', from = '', to = '' }) {
   return catches.filter(
     (fish) =>
       (!species || String(fish.species_id) === String(species)) &&
+      (!lake || String(fish.lake_id) === String(lake)) &&
       (!from || (fish.date && fish.date >= from)) &&
       (!to || (fish.date && fish.date <= to)),
   )

@@ -21,6 +21,8 @@ The development proxy forwards `/api/*` to the backend. It strips the browser Or
 
 ## Scope and data flow
 
+Account routes (dashboard/profile, catches, analysis, trips, settings, Fish Mode, and tackle box) redirect to `/` when the stored session is missing, invalid, or expired. Public catalog/resource routes remain accessible. The API continues to enforce authentication and ownership.
+
 - `/dashboard`, `/`, and `/:username/profile` display the signed-in user's dashboard. The API scopes data to the bearer token, not the route username.
 - `/:username/fishcatch/all` lists the signed-in user’s catches via `GET /fishcatch?user_id=…&orderBy=date:DESC`. Search, eligibility filtering, sorting, and pagination run locally on that response; the existing API has no server pagination. The URL username does not choose whose catches are requested. Empty, failed, and expired-session states are handled separately.
 - `/:username/fishcatch/:id` displays a single catch using one cancellable `GET /fishcatch/:id` request. Dashboard catch cards use this Vue route. The page includes measurements, location, lure, conditions, photo fallbacks, and Master Angler eligibility. Submission/review/certificate workflows are not migrated.

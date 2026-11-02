@@ -16,6 +16,7 @@ test('downloads a GPX blob with authenticated lake/date filters, optional detail
     const parsed = new URL(url, 'http://localhost')
     assert.equal(parsed.pathname, '/api/fishcatch/export/gpx')
     assert.equal(parsed.searchParams.get('lake_id'), '2')
+    assert.equal(parsed.searchParams.get('species_id'), '3')
     assert.equal(parsed.searchParams.get('from'), '2026-11-01')
     assert.equal(parsed.searchParams.get('to'), '2026-11-02')
     assert.equal(parsed.searchParams.get('details'), 'false')
@@ -25,7 +26,7 @@ test('downloads a GPX blob with authenticated lake/date filters, optional detail
     return new Response(gpx, { headers })
   })
   const result = await exportCatchGpx(
-    { lake_id: 2, from: '2026-11-01', to: '2026-11-02', details: false },
+    { lake_id: 2, species_id: 3, from: '2026-11-01', to: '2026-11-02', details: false },
     'session',
     signal,
   )
