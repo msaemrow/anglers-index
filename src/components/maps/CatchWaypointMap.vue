@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
+import CollapsibleFilters from '@/components/ui/CollapsibleFilters.vue'
 import { getLakeCatchLocations } from '@/api/catchLocations'
 import { lakeCoordinates, getLakes } from '@/api/lakes'
 import { filterMapCatches } from '@/utils/catchMap'
@@ -22,6 +23,9 @@ const attempt = ref(0)
 const species = ref('')
 const from = ref('')
 const to = ref('')
+const activeFilterCount = computed(
+  () => [lakeId.value, species.value, from.value, to.value].filter(Boolean).length,
+)
 const selected = ref(null)
 const shown = ref(10)
 const reference = computed(() => (props.lake ? lakeCoordinates(props.lake) : null))
@@ -125,37 +129,34 @@ watch(
     :filters="exportFilters"
     :disabled="loading || !!error || !filtered.length || invalidRange"
   />
-  <p v-if="lake" class="hint">
-    Orange dots are your private catches. Numbered dots group nearby catches; tap or click to see
-    their details below and zoom in.
-    <template v-if="lake">The blue pin is the lake’s approximate reference point.</template>
-  </p>
   <p v-if="loading" role="status" class="hint">Loading your catch locations…</p>
   <div v-if="error" role="alert">
     <p class="error-message">Your catch locations couldn’t load. {{ error }}</p>
     <AppButton variant="secondary" @click="attempt++">Retry catch locations</AppButton>
   </div>
-  <div class="filters">
-    <label v-if="!lake"
-      >Lake<AppSelect v-model="lakeId">
-        <option value="">All lakes</option>
-        <option v-for="item in lakes" :key="item.id" :value="item.id">
-          {{ [item.name, item.county, item.state].filter(Boolean).join(' · ') }}
-        </option>
-      </AppSelect></label
-    >
-    <label
-      >Species<AppSelect v-model="species"
-        ><option value="">All species</option>
-        <option v-for="[id, name] in speciesOptions" :key="id" :value="id">
-          {{ name }}
-        </option></AppSelect
-      ></label
-    >
-    <label>From<input v-model="from" type="date" /></label>
-    <label>Through<input v-model="to" type="date" /></label>
-    <AppButton variant="secondary" @click="resetFilters">Clear filters</AppButton>
-  </div>
+  <CollapsibleFilters :active-count="activeFilterCount" :class="{ 'lake-map-filters': lake }">
+    <div class="filters">
+      <label v-if="!lake"
+        >Lake<AppSelect v-model="lakeId">
+          <option value="">All lakes</option>
+          <option v-for="item in lakes" :key="item.id" :value="item.id">
+            {{ [item.name, item.county, item.state].filter(Boolean).join(' · ') }}
+          </option>
+        </AppSelect></label
+      >
+      <label
+        >Species<AppSelect v-model="species"
+          ><option value="">All species</option>
+          <option v-for="[id, name] in speciesOptions" :key="id" :value="id">
+            {{ name }}
+          </option></AppSelect
+        ></label
+      >
+      <label>From<input v-model="from" type="date" /></label>
+      <label>Through<input v-model="to" type="date" /></label>
+      <AppButton variant="secondary" @click="resetFilters">Clear filters</AppButton>
+    </div>
+  </CollapsibleFilters>
   <p v-if="invalidRange" class="error-message" role="status">
     Choose an end date on or after the start date.
   </p>
@@ -167,6 +168,11 @@ watch(
     :reference-label="lake ? `${lake.name} approximate lake location` : ``"
     @select="select"
   />
+  <p v-if="lake" class="hint">
+    Orange dots are your private catches. Numbered dots group nearby catches; tap or click to see
+    their details below and zoom in.
+    <template v-if="lake">The blue pin is the lake’s approximate reference point.</template>
+  </p>
   <p v-if="!loading && !error" class="hint" role="status">
     {{ filtered.length }} of {{ catches.length }} waypoints shown.
   </p>
@@ -225,6 +231,17 @@ watch(
   align-items: end;
   margin: 0;
 }
+.lake-map-filters {
+  display: block;
+  margin-bottom: 16px;
+}
+.lake-map-filters .filters {
+  justify-content: flex-start;
+}
+.lake-map-filters :deep(.filters-toggle) {
+  margin-left: 0;
+  margin-right: auto;
+}
 .filters label {
   display: grid;
   gap: 5px;
@@ -262,9 +279,13 @@ watch(
 }
 @media (max-width: 650px) {
   .filters label {
-    flex: 1 1 130px;
+    flex: 1 1 100%;
+    min-width: 0;
   }
   .filters input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
     font-size: 16px;
   }
 }

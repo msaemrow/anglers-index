@@ -11,6 +11,7 @@ const props = defineProps({
   rows: { type: Array, required: true },
   columns: { type: Array, required: true },
   caption: { type: String, required: true },
+  mobileRowTo: { type: Function, default: undefined },
   mobileTitleKey: { type: String, default: '' },
   initialSort: { type: String, default: '' },
   initialDirection: { type: String, default: 'asc' },
@@ -41,6 +42,11 @@ const visibleRows = computed(() =>
 watch([() => props.rows, pageSize, sortKey, direction], () => {
   page.value = 1
 })
+function setMobileSort(value) {
+  const separator = value.lastIndexOf(':')
+  sortKey.value = value.slice(0, separator)
+  direction.value = value.slice(separator + 1)
+}
 function sort(column) {
   if (sortKey.value === column.key) direction.value = direction.value === 'asc' ? 'desc' : 'asc'
   else {
@@ -51,33 +57,31 @@ function sort(column) {
 </script>
 
 <template>
-  <div v-if="mobileTitleKey" class="mobile-cards">
-    <div class="mobile-sort">
-      <label
-        >Sort by
-        <AppSelect v-model="sortKey" size="compact">
-          <option
-            v-for="column in columns.filter((column) => column.sortable !== false)"
-            :key="column.key"
-            :value="column.key"
-          >
-            {{ column.label }}
-          </option>
-        </AppSelect>
-      </label>
-      <AppButton
-        variant="secondary"
-        :aria-label="direction === 'asc' ? 'Sort descending' : 'Sort ascending'"
-        @click="direction = direction === 'asc' ? 'desc' : 'asc'"
+  <div class="table-controls">
+    <slot name="filters" />
+    <div v-if="mobileTitleKey && rows.length" class="mobile-sort">
+      <AppSelect
+        :model-value="`${sortKey}:${direction}`"
+        size="compact"
+        :aria-label="`Sort ${caption}`"
+        @update:model-value="setMobileSort"
       >
-        <component :is="direction === 'asc' ? ArrowUp : ArrowDown" :size="16" aria-hidden="true" />
-        {{ direction === 'asc' ? 'Ascending' : 'Descending' }}
-      </AppButton>
+        <template
+          v-for="column in columns.filter((column) => column.sortable !== false)"
+          :key="column.key"
+        >
+          <option :value="`${column.key}:asc`">{{ column.label }} ↑</option>
+          <option :value="`${column.key}:desc`">{{ column.label }} ↓</option>
+        </template>
+      </AppSelect>
     </div>
+  </div>
+  <div v-if="mobileTitleKey && rows.length" class="mobile-cards">
     <DataCardList
       :rows="visibleRows"
       :columns="columns"
       :title-key="mobileTitleKey"
+      :row-to="mobileRowTo"
       :caption="caption"
     >
       <template v-for="(_, name) in $slots" #[name]="slotProps"
@@ -86,6 +90,7 @@ function sort(column) {
     </DataCardList>
   </div>
   <div
+    v-if="rows.length"
     class="table-scroll"
     :class="{ 'desktop-table': mobileTitleKey }"
     role="region"
@@ -144,7 +149,7 @@ function sort(column) {
       </tbody>
     </table>
   </div>
-  <div class="pagination" :class="{ 'card-pagination': mobileTitleKey }">
+  <div v-if="rows.length" class="pagination" :class="{ 'card-pagination': mobileTitleKey }">
     <p role="status">
       {{ rows.length ? (page - 1) * pageSize + 1 : 0 }}–{{
         Math.min(page * pageSize, rows.length)
@@ -173,22 +178,41 @@ function sort(column) {
 .mobile-cards {
   display: none;
 }
-.mobile-sort,
-.mobile-sort label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.table-controls {
+  display: contents;
 }
 .mobile-sort {
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-.mobile-sort label {
-  min-width: 0;
-  font-size: 12px;
-  color: var(--muted);
+  display: none;
 }
 @media (max-width: 800px) {
+  .table-controls {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0 10px;
+  }
+  .table-controls :deep(.filters-toggle) {
+    margin: 0 0 14px;
+    grid-column: 1;
+  }
+  .table-controls :deep(.filters-body) {
+    display: block;
+    grid-column: 1 / -1;
+    order: 2;
+  }
+  .table-controls :deep(.filters-body:not(.filters-body--open)) {
+    display: none;
+  }
+  .mobile-sort {
+    display: flex;
+    justify-content: flex-end;
+    min-width: 0;
+    grid-column: 2;
+    margin-bottom: 14px;
+  }
+  .mobile-sort :deep(select) {
+    max-width: 100%;
+  }
   .mobile-cards {
     display: block;
   }

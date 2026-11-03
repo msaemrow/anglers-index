@@ -1,7 +1,9 @@
 <script setup>
 import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 
 const props = defineProps({
+  rowTo: { type: Function, default: undefined },
   rows: { type: Array, required: true },
   columns: { type: Array, required: true },
   titleKey: { type: String, required: true },
@@ -15,6 +17,12 @@ const fields = computed(() =>
 <template>
   <ul class="data-cards" :aria-label="caption">
     <li v-for="row in rows" :key="row.id" class="data-card">
+      <RouterLink
+        v-if="rowTo?.(row)"
+        :to="rowTo(row)"
+        class="card-link"
+        :aria-label="`View ${row[titleKey] || 'item'} details`"
+      />
       <h3 class="card-title">
         <slot :name="`cell-${titleKey}`" :row="row" :value="row[titleKey]">
           {{ row[titleKey] || 'Unnamed item' }}
@@ -46,11 +54,33 @@ const fields = computed(() =>
   list-style: none;
 }
 .data-card {
+  position: relative;
+  isolation: isolate;
   min-width: 0;
   border: 1px solid var(--border);
   border-radius: 9px;
   background: var(--surface);
   overflow-wrap: anywhere;
+}
+.card-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+.card-link:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+.data-card:has(.card-link):hover {
+  border-color: var(--blue);
+}
+.data-card :deep(a:not(.card-link)),
+.data-card :deep(button),
+.data-card :deep(input),
+.data-card :deep(select) {
+  position: relative;
+  z-index: 2;
 }
 .card-title {
   margin: 0;
@@ -88,6 +118,12 @@ dd {
 .card-actions {
   padding: 4px 10px;
   border-top: 1px solid var(--border);
+}
+.card-actions :deep(.card-view-action) {
+  display: none;
+}
+.card-actions:has(.card-view-action):not(:has(button, a:not(.card-view-action))) {
+  display: none;
 }
 .card-actions :deep(.actions) {
   gap: 6px;

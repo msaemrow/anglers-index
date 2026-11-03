@@ -115,21 +115,17 @@ watch(
       <PageHeader :compact="false" class="page-header"
         ><template #heading
           ><div>
-            <p class="eyebrow">Explore the water</p>
             <h1>{{ lake.name || 'Unnamed lake' }}</h1>
             <p class="location"><MapPin :size="16" aria-hidden="true" />{{ location }}</p>
           </div></template
         >
         <AppButton v-if="user?.is_admin" @click="editor = { lake }" variant="secondary"
-          ><Pencil :size="15" aria-hidden="true" />Edit lake</AppButton
+          ><Pencil :size="15" aria-hidden="true" />Edit</AppButton
         >
       </PageHeader>
       <div class="lake-grid">
         <ContentPanel title="Lake details"><DetailList :items="details" /></ContentPanel>
-        <ContentPanel
-          :title="user ? 'Lake location and your catches' : 'Lake location'"
-          description="Approximate location based on the saved coordinates. Some locations may mark the nearest town."
-        >
+        <ContentPanel :title="user ? 'Lake map and waypoints' : 'Lake map'">
           <CatchWaypointMap
             v-if="user"
             :key="`${lake.id}:${user.user_id}`"
@@ -170,10 +166,13 @@ watch(
 .lake-page {
   max-width: 1320px;
   margin: 0 auto;
-  padding: 30px clamp(20px, 4vw, 48px) 48px;
+  padding: 12px clamp(20px, 4vw, 48px) 48px;
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 12px;
+}
+.back-link {
+  margin-bottom: -8px;
 }
 .back-link,
 .map-link {
@@ -196,7 +195,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 12px;
+  margin-top: 8px;
   font-size: 14px;
   color: var(--muted);
 }

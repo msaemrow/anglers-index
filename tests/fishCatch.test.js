@@ -301,3 +301,34 @@ test('accepts phone HEIC MIME types and unnamed MIME types using HEIC extensions
     (error) => error.status === 400,
   )
 })
+
+test('edits catch fields without sending ownership, trip, or award changes', async (t) => {
+  const { updateFishCatch } = await import('../src/api/fishCatch.js')
+  const signal = new AbortController().signal
+  mockApi(t, async (url, options) => {
+    assert.equal(url, '/api/fishcatch/42')
+    assert.equal(options.method, 'PATCH')
+    assert.equal(options.headers.Authorization, 'Bearer session')
+    assert.equal(options.signal, signal)
+    const body = JSON.parse(options.body)
+    assert.equal(body.length, 19.5)
+    assert.equal(body.date, '2026-09-29')
+    assert.equal(body.time, '10:30:00')
+    for (const field of ['user_id', 'trip_id', 'master_angler', 'new_trip'])
+      assert.equal(Object.hasOwn(body, field), false)
+    return Response.json({ id: 42, ...body })
+  })
+  const fields = {
+    species_id: 1,
+    lake_id: 2,
+    lure_id: 3,
+    length: '19.5',
+    weight: 0,
+    datetime: '2026-09-29T10:30',
+    user_id: 999,
+    trip_id: 7,
+    master_angler: true,
+  }
+  assert.equal((await updateFishCatch(42, fields, 'session', signal)).id, 42)
+  await assert.rejects(updateFishCatch(42, { ...fields, length: -1 }, 'session'), /nonnegative/)
+})

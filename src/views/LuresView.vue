@@ -1,4 +1,5 @@
 <script setup>
+import CollapsibleFilters from '@/components/ui/CollapsibleFilters.vue'
 import PageLayout from '@/components/ui/PageLayout.vue'
 import StatusMessage from '@/components/ui/StatusMessage.vue'
 
@@ -112,32 +113,38 @@ function clearFilters() {
         description="Add a lure to start building the collection."
       />
       <ContentPanel v-else title="All lures" hide-header>
-        <div class="filters">
-          <label class="search"
-            >Search lures<input
-              v-model="search"
-              type="search"
-              placeholder="Name, brand, color, or size" /></label
-          ><label v-for="(_, field) in filters" :key="field"
-            >{{ field
-            }}<AppSelect size="compact" v-model="filters[field]">
-              <option value="">All {{ field === 'size' ? 'sizes' : field + 's' }}</option>
-              <option v-for="value in options[field]" :key="value" :value="value">
-                {{ value }}
-              </option>
-            </AppSelect></label
-          ><AppButton v-if="hasFilters" variant="secondary" @click="clearFilters"
-            >Clear filters</AppButton
-          >
-        </div>
         <DataTable
-          v-if="rows.length"
           :rows="rows"
           :columns="columns"
           caption="Lure database"
           initial-sort="brand"
+          :mobile-row-to="(row) => ({ name: 'lure', params: { id: row.id } })"
           mobile-title-key="name"
         >
+          <template #filters>
+            <CollapsibleFilters
+              :active-count="[search, ...Object.values(filters)].filter(Boolean).length"
+            >
+              <div class="filters">
+                <label class="search"
+                  >Search lures<input
+                    v-model="search"
+                    type="search"
+                    placeholder="Name, brand, color, or size" /></label
+                ><label v-for="(_, field) in filters" :key="field"
+                  >{{ field
+                  }}<AppSelect size="compact" v-model="filters[field]">
+                    <option value="">All {{ field === 'size' ? 'sizes' : field + 's' }}</option>
+                    <option v-for="value in options[field]" :key="value" :value="value">
+                      {{ value }}
+                    </option>
+                  </AppSelect></label
+                ><AppButton v-if="hasFilters" variant="secondary" @click="clearFilters"
+                  >Clear filters</AppButton
+                >
+              </div>
+            </CollapsibleFilters>
+          </template>
           <template #cell-name="{ row }"
             ><RouterLink class="lure-link" :to="{ name: 'lure', params: { id: row.id } }">{{
               row.name || 'Unnamed lure'
@@ -156,6 +163,7 @@ function clearFilters() {
           <template #cell-actions="{ row }">
             <div class="actions">
               <AppButton
+                class="card-view-action"
                 variant="link"
                 :to="{ name: 'lure', params: { id: row.id } }"
                 :aria-label="`View ${row.name || 'lure'} details`"
@@ -169,18 +177,16 @@ function clearFilters() {
               >
                 {{ LABELS.ADD_SIMILAR }}
               </AppButton>
-              <AppButton
-                variant="link"
-                v-if="user.is_admin"
-                :aria-label="`Edit ${row.name || 'lure'}`"
-                @click="editor = { lure: row, editing: true }"
-              >
-                {{ LABELS.EDIT }}
-              </AppButton>
             </div>
           </template>
         </DataTable>
-        <StatusMessage as="div" variant="empty" v-else class="empty-message" role="status">
+        <StatusMessage
+          as="div"
+          variant="empty"
+          v-if="!rows.length"
+          class="empty-message"
+          role="status"
+        >
           <h3>No matching lures</h3>
           <p>Try another search or clear your filters.</p>
         </StatusMessage>

@@ -4,7 +4,7 @@ defineOptions({ inheritAttrs: false })
 defineProps({
   id: { type: String, required: true },
   label: { type: String, required: true },
-  modelValue: { type: String, default: '' },
+  modelValue: { type: [String, Number], default: '' },
 })
 
 const emit = defineEmits(['update:modelValue'])

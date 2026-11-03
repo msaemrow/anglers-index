@@ -132,6 +132,13 @@ function signOut() {
           >Waypoints</RouterLink
         >
         <RouterLink
+          to="/resources"
+          class="nav-link"
+          active-class="nav-link--active"
+          @click="menuOpen = false"
+          >Resources</RouterLink
+        >
+        <RouterLink
           to="/settings"
           class="nav-link"
           active-class="nav-link--active"

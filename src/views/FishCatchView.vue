@@ -7,12 +7,13 @@ import { STATUS, LABELS, EVENTS } from '@/constants'
 
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { ArrowLeft, Download, MapPin, Trophy, Clock } from '@lucide/vue'
+import { ArrowLeft, Download, MapPin, Trophy, Clock, Pencil } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import DetailList from '@/components/ui/DetailList.vue'
+import FishCatchEditor from '@/components/catches/FishCatchEditor.vue'
 import CatchLocationEditor from '@/components/catches/CatchLocationEditor.vue'
 import CatchPhoto from '@/components/catches/CatchPhoto.vue'
 import CatchPhotoPicker from '@/components/catches/CatchPhotoPicker.vue'
@@ -24,6 +25,18 @@ import { getMasterAnglerCertificate } from '@/api/masterAngler'
 const route = useRoute()
 const { token, user, signingIn, signIn, signOut, sessionError: loginError } = useSession()
 const fish = ref(null)
+const editing = ref(false)
+const editNotice = ref('')
+watch([token, () => route.params.id], () => {
+  editing.value = false
+  editNotice.value = ''
+})
+function catchSaved() {
+  editing.value = false
+  editNotice.value = 'Catch updated.'
+  resetCertificate()
+  attempt.value++
+}
 const loading = ref(false)
 const error = ref('')
 const missing = ref(false)
@@ -219,8 +232,10 @@ function handleSignOut() {
   <a class="skip-link" href="#main-content">Skip to content</a>
   <AppNavbar :user="user" :session-error="loginError" @[EVENTS.SIGN_OUT]="handleSignOut" />
   <main v-if="user" id="main-content" class="catch-page" :aria-busy="loading">
-    <RouterLink :to="{ name: 'dashboard' }" class="back-link"
-      ><ArrowLeft :size="16" aria-hidden="true" />Back to dashboard</RouterLink
+    <RouterLink
+      :to="{ name: 'fish-catches', params: { username: route.params.username } }"
+      class="back-link"
+      ><ArrowLeft :size="16" aria-hidden="true" />Back to all catches</RouterLink
     >
     <StatusMessage as="div" variant="loading" v-if="loading" class="loading-state" role="status">
       <span class="loading-line" aria-hidden="true" />
@@ -266,8 +281,13 @@ function handleSignOut() {
         <span v-if="fish.master_angler_status === STATUS.DENIED" class="denial-notice" role="status"
           >Denied - {{ fish.master_angler_review.denial_reason }}</span
         >
-        <div v-if="fish.master_angler_status === STATUS.APPROVED" class="certificate-actions">
-          <span class="eligibility"><Trophy :size="16" aria-hidden="true" />Master Angler</span>
+        <div
+          v-if="fish.master_angler_status === STATUS.APPROVED || canEditPhoto"
+          class="certificate-actions"
+        >
+          <span v-if="fish.master_angler_status === STATUS.APPROVED" class="eligibility"
+            ><Trophy :size="16" aria-hidden="true" />Master Angler</span
+          >
           <AppButton
             v-if="canDownloadCertificate"
             variant="navy"
@@ -279,11 +299,15 @@ function handleSignOut() {
               certificateBusy ? 'Generating PDF…' : 'Generate certificate'
             }}
           </AppButton>
+          <AppButton v-if="canEditPhoto" variant="secondary" @click="editing = true">
+            <Pencil :size="15" aria-hidden="true" />Edit
+          </AppButton>
         </div>
       </PageHeader>
       <p v-if="fish.master_angler_status === STATUS.PENDING" role="status" class="eligibility">
         <Clock :size="16" aria-hidden="true" />Catch is under review for Master Angler award.
       </p>
+      <p v-if="editNotice" role="status">{{ editNotice }}</p>
       <p v-if="certificateError" role="alert" class="error-message">{{ certificateError }}</p>
       <p v-if="certificateNotice" role="status" class="muted">{{ certificateNotice }}</p>
       <div class="catch-overview">
@@ -356,6 +380,14 @@ function handleSignOut() {
         <ContentPanel title="Conditions"><DetailList :items="conditions" /></ContentPanel>
       </div>
     </template>
+    <FishCatchEditor
+      v-if="editing && canEditPhoto"
+      :key="fish.id"
+      :fish="fish"
+      :token="token"
+      @[EVENTS.CLOSE]="editing = false"
+      @[EVENTS.SAVED]="catchSaved"
+    />
   </main>
   <PageLayout variant="sign-in" v-else id="main-content" class="sign-in-layout">
     <SignInPanel :busy="signingIn" :error="loginError" @[EVENTS.SUBMIT]="handleSignIn" />
@@ -400,10 +432,13 @@ function handleSignOut() {
 .catch-page {
   max-width: 1250px;
   margin: 0 auto;
-  padding: 30px clamp(20px, 4vw, 48px) 48px;
+  padding: 12px clamp(20px, 4vw, 48px) 48px;
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 12px;
+}
+.back-link {
+  margin-bottom: -8px;
 }
 .back-link {
   display: inline-flex;

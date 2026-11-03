@@ -349,9 +349,6 @@ async function submit() {
               </option>
             </AppSelect>
           </label>
-          <AppButton v-if="!form.trip_id" variant="secondary" @click="form.trip_id = 'new'"
-            >Start a trip with this catch</AppButton
-          >
         </div>
         <div v-if="startingTrip" class="trip-start">
           <label class="field"
@@ -419,9 +416,6 @@ fieldset {
   display: grid;
   gap: 12px;
   margin: 16px 0;
-}
-.trip-selection > .button {
-  justify-self: start;
 }
 .trip-start {
   display: grid;

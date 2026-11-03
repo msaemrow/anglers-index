@@ -172,9 +172,7 @@ function handleSignOut() {
 }
 .dashboard {
   width: 100%;
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 36px clamp(20px, 3vw, 48px) 48px;
+  padding: 16px 12px 24px;
   display: flex;
   flex-direction: column;
   gap: var(--page-gap);
@@ -210,7 +208,7 @@ function handleSignOut() {
     grid-template-columns: 1fr;
   }
   .dashboard {
-    padding-top: 28px;
+    padding: 12px 8px 24px;
   }
 }
 @media (max-width: 480px) {

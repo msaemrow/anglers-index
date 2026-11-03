@@ -40,7 +40,7 @@ export async function getCatchSpecies(signal) {
   return data
 }
 
-export async function createFishCatch(fields, token, signal) {
+function catchFields(fields) {
   const body = {}
   for (const field of ['species_id', 'lake_id', 'lure_id']) {
     const value = Number(fields[field])
@@ -63,6 +63,24 @@ export async function createFishCatch(fields, token, signal) {
   )
     throw new ApiError('Enter a valid catch date and time.', 400)
   if (fields.witness !== undefined) body.witness = String(fields.witness || '').trim()
+  body.date = local.slice(0, 10)
+  body.time = `${local.slice(11)}:00`
+  body.timestamp = Math.floor(date.getTime() / 1000)
+  return body
+}
+
+export async function updateFishCatch(id, fields, token, signal) {
+  return request(`/fishcatch/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: catchFields(fields),
+    token,
+    signal,
+  })
+}
+
+export async function createFishCatch(fields, token, signal) {
+  const body = catchFields(fields)
+  const local = String(fields.datetime)
   if (fields.trip_id !== undefined && fields.trip_id !== null && fields.trip_id !== '') {
     const tripId = Number(fields.trip_id)
     if (!Number.isSafeInteger(tripId) || tripId <= 0)
@@ -90,7 +108,6 @@ export async function createFishCatch(fields, token, signal) {
   if (fields.location) body.location = fields.location
   body.date = local.slice(0, 10)
   body.time = `${local.slice(11)}:00`
-  body.timestamp = Math.floor(date.getTime() / 1000)
   let payload = body
   if (fields.photo) {
     validateCatchPhoto(fields.photo)

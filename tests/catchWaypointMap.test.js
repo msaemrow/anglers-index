@@ -44,6 +44,7 @@ test('shared waypoint filters update map points and export criteria without refe
     'AppButton',
     'AppSelect',
     'DataCardList',
+    'CollapsibleFilters',
     source,
   )(
     computed,
@@ -57,6 +58,7 @@ test('shared waypoint filters update map points and export criteria without refe
     () => null,
     async () => [],
     filterMapCatches,
+    {},
     {},
     {},
     {},

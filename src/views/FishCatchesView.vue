@@ -1,4 +1,5 @@
 <script setup>
+import CollapsibleFilters from '@/components/ui/CollapsibleFilters.vue'
 import PageLayout from '@/components/ui/PageLayout.vue'
 import StatusMessage from '@/components/ui/StatusMessage.vue'
 
@@ -199,37 +200,43 @@ function handleSignOut() {
         ></ContentPanel
       >
       <ContentPanel v-else title="Catch log" hide-header>
-        <div class="toolbar">
-          <label class="search"
-            >Search catches<input
-              v-model="search"
-              type="search"
-              placeholder="Species, lake, lure, or date"
-          /></label>
-          <label class="award-filter"
-            >Master Angler status
-            <AppSelect size="compact" v-model="awardFilter">
-              <option value="all">All catches</option>
-              <option value="eligible">Eligible · awaiting review</option>
-              <option :value="STATUS.APPROVED">Approved Master Angler</option>
-            </AppSelect>
-          </label>
-          <AppButton
-            v-if="search || awardFilter !== 'all'"
-            variant="secondary"
-            @click="clearFilters"
-            >Clear filters</AppButton
-          >
-        </div>
         <DataTable
-          v-if="rows.length"
           :rows="rows"
           :columns="columns"
           caption="Your fish catches"
+          :mobile-row-to="
+            (row) => ({ name: 'fish-catch', params: { username: user.username, id: row.id } })
+          "
           mobile-title-key="species"
           initial-sort="date"
           initial-direction="desc"
         >
+          <template #filters>
+            <CollapsibleFilters :active-count="Number(!!search) + Number(awardFilter !== 'all')">
+              <div class="toolbar">
+                <label class="search"
+                  >Search catches<input
+                    v-model="search"
+                    type="search"
+                    placeholder="Species, lake, lure, or date"
+                /></label>
+                <label class="award-filter"
+                  >Master Angler status
+                  <AppSelect size="compact" v-model="awardFilter">
+                    <option value="all">All catches</option>
+                    <option value="eligible">Eligible · awaiting review</option>
+                    <option :value="STATUS.APPROVED">Approved Master Angler</option>
+                  </AppSelect>
+                </label>
+                <AppButton
+                  v-if="search || awardFilter !== 'all'"
+                  variant="secondary"
+                  @click="clearFilters"
+                  >Clear filters</AppButton
+                >
+              </div>
+            </CollapsibleFilters>
+          </template>
           <template #cell-date="{ value }">{{ formatDate(value) }}</template>
           <template #cell-species="{ row }"
             ><RouterLink
@@ -250,6 +257,7 @@ function handleSignOut() {
           /></template>
           <template #cell-actions="{ row }"
             ><AppButton
+              class="card-view-action"
               variant="link"
               :to="{ name: 'fish-catch', params: { username: user.username, id: row.id } }"
               :aria-label="`View ${row.species} catch from ${formatDate(row.date)}`"
@@ -257,7 +265,13 @@ function handleSignOut() {
             ></template
           >
         </DataTable>
-        <StatusMessage as="div" variant="empty" v-else class="empty-message" role="status">
+        <StatusMessage
+          as="div"
+          variant="empty"
+          v-if="!rows.length"
+          class="empty-message"
+          role="status"
+        >
           <h3>No matching catches</h3>
           <p>Try another search or clear your filters to see all catches.</p>
         </StatusMessage>

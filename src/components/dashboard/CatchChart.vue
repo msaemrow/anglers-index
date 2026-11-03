@@ -96,11 +96,11 @@ watch(
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
+  gap: 12px;
 }
 .chart-card {
   min-width: 0;
-  padding: 20px 16px;
+  padding: 12px 8px;
 }
 .chart-state {
   color: var(--muted);
@@ -111,7 +111,7 @@ watch(
 @media (max-width: 700px) {
   .charts-grid {
     grid-template-columns: 1fr;
-    gap: 32px;
+    gap: 12px;
   }
 }
 </style>

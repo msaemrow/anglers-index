@@ -166,6 +166,7 @@ function handleSignOut() {
         :rows="rows"
         :columns="columns"
         caption="Tackle box lures"
+        :mobile-row-to="(row) => ({ name: 'lure', params: { id: row.id } })"
         mobile-title-key="name"
         initial-sort="brand"
       >
@@ -176,6 +177,7 @@ function handleSignOut() {
         >
         <template #cell-actions="{ row }">
           <AppButton
+            class="card-view-action"
             variant="link"
             :to="{ name: 'lure', params: { id: row.id } }"
             :aria-label="`View ${row.name || 'lure'} details`"

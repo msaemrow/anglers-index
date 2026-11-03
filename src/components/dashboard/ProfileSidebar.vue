@@ -2,7 +2,7 @@
 import { LABELS, EVENTS } from '@/constants'
 
 import { computed } from 'vue'
-import { Fish, Plus, BookOpen, Waves } from '@lucide/vue'
+import { Fish, Plus, MapPin, Waves } from '@lucide/vue'
 import AppButton from '@/components/ui/AppButton.vue'
 
 const emit = defineEmits([EVENTS.ADD_CATCH])
@@ -45,15 +45,14 @@ const statsList = computed(() => [
       </div>
     </dl>
     <div class="quick-actions">
-      <p class="eyebrow">Quick actions</p>
       <AppButton @click="emit(EVENTS.ADD_CATCH)"
         ><Plus :size="17" aria-hidden="true" />{{ LABELS.ADD_FISH_CATCH }}</AppButton
       >
       <AppButton :to="`${userPath}/fish-mode`" variant="secondary"
         ><Fish :size="17" aria-hidden="true" />Fishing mode</AppButton
       >
-      <AppButton :to="'/resources'" variant="secondary"
-        ><BookOpen :size="17" aria-hidden="true" />Resources</AppButton
+      <AppButton to="/waypoints" variant="secondary"
+        ><MapPin :size="17" aria-hidden="true" />Waypoints</AppButton
       >
     </div>
     <p class="sidebar__note"><Waves :size="18" aria-hidden="true" />Every catch tells a story.</p>
@@ -130,9 +129,6 @@ const statsList = computed(() => [
   flex-direction: column;
   gap: 9px;
 }
-.quick-actions .eyebrow {
-  margin-bottom: 3px;
-}
 .quick-actions :deep(.button) {
   justify-content: flex-start;
   min-height: 42px;
@@ -165,9 +161,6 @@ const statsList = computed(() => [
     grid-column: 1 / -1;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-  }
-  .quick-actions .eyebrow {
-    grid-column: 1 / -1;
   }
   .quick-actions :deep(.button) {
     justify-content: center;

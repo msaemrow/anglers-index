@@ -1,4 +1,5 @@
 <script setup>
+import CollapsibleFilters from '@/components/ui/CollapsibleFilters.vue'
 import PageLayout from '@/components/ui/PageLayout.vue'
 import StatusMessage from '@/components/ui/StatusMessage.vue'
 
@@ -120,31 +121,35 @@ watch(
       description="Lakes will appear here when added to the directory."
     />
     <ContentPanel v-else title="Lake directory" hide-header>
-      <div class="toolbar">
-        <label class="search"
-          >Search lakes<input
-            v-model="search"
-            type="search"
-            placeholder="Lake, town, county, or state"
-        /></label>
-        <label
-          >State<AppSelect size="compact" v-model="state">
-            <option value="">All states</option>
-            <option v-for="value in states" :key="value" :value="value">{{ value }}</option>
-          </AppSelect></label
-        >
-        <AppButton v-if="search || state" variant="secondary" @click="clearFilters"
-          >Clear filters</AppButton
-        >
-      </div>
       <DataTable
-        v-if="rows.length"
         :rows="rows"
         :columns="columns"
         caption="Lake directory"
+        :mobile-row-to="(row) => ({ name: 'lake', params: { id: row.id } })"
         mobile-title-key="name"
         initial-sort="name"
       >
+        <template #filters>
+          <CollapsibleFilters :active-count="[search, state].filter(Boolean).length">
+            <div class="toolbar">
+              <label class="search"
+                >Search lakes<input
+                  v-model="search"
+                  type="search"
+                  placeholder="Lake, town, county, or state"
+              /></label>
+              <label
+                >State<AppSelect size="compact" v-model="state">
+                  <option value="">All states</option>
+                  <option v-for="value in states" :key="value" :value="value">{{ value }}</option>
+                </AppSelect></label
+              >
+              <AppButton v-if="search || state" variant="secondary" @click="clearFilters"
+                >Clear filters</AppButton
+              >
+            </div>
+          </CollapsibleFilters>
+        </template>
         <template #cell-name="{ row }"
           ><RouterLink class="lake-link" :to="{ name: 'lake', params: { id: row.id } }">{{
             row.name || 'Unnamed lake'
@@ -152,23 +157,22 @@ watch(
         >
         <template #cell-actions="{ row }">
           <AppButton
+            class="card-view-action"
             variant="link"
             :to="{ name: 'lake', params: { id: row.id } }"
             :aria-label="`View ${row.name || 'lake'} details`"
           >
             {{ LABELS.VIEW }}
           </AppButton>
-          <AppButton
-            variant="link"
-            v-if="user?.is_admin"
-            :aria-label="`Edit ${row.name || 'lake'}`"
-            @click="editor = { lake: row }"
-          >
-            {{ LABELS.EDIT }}
-          </AppButton>
         </template>
       </DataTable>
-      <StatusMessage as="div" variant="empty" v-else class="empty-message" role="status">
+      <StatusMessage
+        as="div"
+        variant="empty"
+        v-if="!rows.length"
+        class="empty-message"
+        role="status"
+      >
         <h3>No matching lakes</h3>
         <p>Try another search or clear your filters.</p>
       </StatusMessage>

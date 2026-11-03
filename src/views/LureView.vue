@@ -70,11 +70,21 @@ const details = computed(() =>
       <PageHeader :compact="false" class="page-header"
         ><template #heading
           ><div>
-            <p class="eyebrow">{{ lure.brand || 'Lure collection' }}</p>
             <h1>{{ lure.name || 'Unnamed lure' }}</h1>
-            <p class="muted">{{ [lure.color, lure.size].filter(Boolean).join(' · ') }}</p>
+            <p class="muted">
+              {{
+                [lure.brand || 'Lure collection', lure.color, lure.size].filter(Boolean).join(' · ')
+              }}
+            </p>
           </div></template
         >
+        <AppButton
+          v-if="user.is_admin"
+          variant="secondary"
+          @click="editor = { lure, editing: true }"
+        >
+          <Pencil :size="15" aria-hidden="true" />Edit
+        </AppButton>
       </PageHeader>
       <p v-if="notice" class="notice" role="status">{{ notice }}</p>
       <p v-if="actionError" class="error-message" role="alert">{{ actionError }}</p>
@@ -94,11 +104,6 @@ const details = computed(() =>
               @click="toggle(lure)"
             /><AppButton variant="secondary" @click="editor = { lure, editing: false }"
               ><Copy :size="15" aria-hidden="true" />Create similar</AppButton
-            ><AppButton
-              v-if="user.is_admin"
-              variant="secondary"
-              @click="editor = { lure, editing: true }"
-              ><Pencil :size="15" aria-hidden="true" />Edit lure</AppButton
             >
           </div>
         </ContentPanel>
@@ -120,10 +125,13 @@ const details = computed(() =>
 .lure-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 32px clamp(20px, 4vw, 48px) 48px;
+  padding: 12px clamp(20px, 4vw, 48px) 48px;
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 12px;
+}
+.back-link {
+  margin-bottom: -8px;
 }
 .back-link {
   display: inline-flex;

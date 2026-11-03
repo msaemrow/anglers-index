@@ -1,4 +1,5 @@
 <script setup>
+import CollapsibleFilters from '@/components/ui/CollapsibleFilters.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import PageLayout from '@/components/ui/PageLayout.vue'
 import StatusMessage from '@/components/ui/StatusMessage.vue'
@@ -141,25 +142,37 @@ function handleSignOut() {
         <p class="legend"><Trophy :size="18" aria-hidden="true" />Approved Master Angler</p>
       </div>
       <ContentPanel title="Species directory" hide-header>
-        <div class="toolbar">
-          <label class="search"
-            >Search species<input v-model="search" type="search" placeholder="Species name"
-          /></label>
-          <label class="checkbox"
-            ><input v-model="caughtOnly" type="checkbox" />Caught species only</label
-          >
-          <AppButton v-if="search || caughtOnly" variant="secondary" @click="clearFilters"
-            >Clear filters</AppButton
-          >
-        </div>
         <DataTable
-          v-if="rows.length"
           :rows="rows"
           :columns="columns"
           caption="Species and personal bests"
+          :mobile-row-to="
+            (row) =>
+              row.personalBest?.catchId
+                ? {
+                    name: 'fish-catch',
+                    params: { username: user.username, id: row.personalBest.catchId },
+                  }
+                : undefined
+          "
           mobile-title-key="name"
           initial-sort="name"
         >
+          <template #filters>
+            <CollapsibleFilters :active-count="[search, caughtOnly].filter(Boolean).length">
+              <div class="toolbar">
+                <label class="search"
+                  >Search species<input v-model="search" type="search" placeholder="Species name"
+                /></label>
+                <label class="checkbox"
+                  ><input v-model="caughtOnly" type="checkbox" />Caught species only</label
+                >
+                <AppButton v-if="search || caughtOnly" variant="secondary" @click="clearFilters"
+                  >Clear filters</AppButton
+                >
+              </div>
+            </CollapsibleFilters>
+          </template>
           <template #cell-name="{ row }"
             ><span class="species-name"
               ><Trophy
@@ -185,7 +198,13 @@ function handleSignOut() {
           >
           <template #cell-bestDate="{ value }">{{ formatDate(value) }}</template>
         </DataTable>
-        <StatusMessage as="div" variant="empty" v-else class="empty-message" role="status">
+        <StatusMessage
+          as="div"
+          variant="empty"
+          v-if="!rows.length"
+          class="empty-message"
+          role="status"
+        >
           <h3>No matching species</h3>
           <p>
             {{

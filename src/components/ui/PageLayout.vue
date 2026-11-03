@@ -11,7 +11,7 @@ defineProps({ variant: { type: String, default: 'list' } })
   width: 100%;
   max-width: 1320px;
   margin: 0 auto;
-  padding: 36px clamp(20px, 5vw, 64px) 48px;
+  padding: 24px clamp(16px, 3vw, 40px) 32px;
   display: flex;
   flex-direction: column;
   gap: var(--page-gap);
