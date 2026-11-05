@@ -1,4 +1,5 @@
 <script setup>
+import PersonalBestBadge from '@/components/catches/PersonalBestBadge.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import PageLayout from '@/components/ui/PageLayout.vue'
 import StatusMessage from '@/components/ui/StatusMessage.vue'
@@ -281,6 +282,7 @@ function handleSignOut() {
         <span v-if="fish.master_angler_status === STATUS.DENIED" class="denial-notice" role="status"
           >Denied - {{ fish.master_angler_review.denial_reason }}</span
         >
+        <PersonalBestBadge :active="fish.personal_best" />
         <div
           v-if="fish.master_angler_status === STATUS.APPROVED || canEditPhoto"
           class="certificate-actions"

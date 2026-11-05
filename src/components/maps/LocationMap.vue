@@ -57,7 +57,7 @@ watch(
         style: 'mapbox://styles/mapbox/outdoors-v12',
         center: first ? [first.longitude, first.latitude] : props.reference,
         zoom: first ? 14 : 11,
-        cooperativeGestures: true,
+        cooperativeGestures: false,
       })
       map.addControl(new mapbox.NavigationControl(), 'top-right')
       function update() {

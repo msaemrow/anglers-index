@@ -1,4 +1,5 @@
 <script setup>
+import PersonalBestBadge from '@/components/catches/PersonalBestBadge.vue'
 import CollapsibleFilters from '@/components/ui/CollapsibleFilters.vue'
 import PageLayout from '@/components/ui/PageLayout.vue'
 import StatusMessage from '@/components/ui/StatusMessage.vue'
@@ -87,6 +88,7 @@ const rows = computed(() => {
     )
     .map((fish) => ({
       id: fish.id,
+      personal_best: fish.personal_best,
       date: fish.date,
       species: fish.species?.name || 'Unknown species',
       lake: fish.lake?.name || 'Unknown lake',
@@ -253,7 +255,8 @@ function handleSignOut() {
               class="eligible-icon"
               :size="14"
               role="img"
-              aria-label="Eligible · awaiting Master Angler review"
+              aria-label="Eligible · awaiting Master Angler review" /><PersonalBestBadge
+              :active="row.personal_best"
           /></template>
           <template #cell-actions="{ row }"
             ><AppButton

@@ -25,7 +25,7 @@ const error = ref('')
 const notice = ref('')
 const attempt = ref(0)
 const search = ref('')
-const caughtOnly = ref(false)
+const catchFilter = ref('caught')
 const editor = ref(false)
 const caughtCount = computed(() => species.value.filter((item) => item.caught).length)
 const rows = computed(() => {
@@ -33,7 +33,9 @@ const rows = computed(() => {
   return species.value
     .filter(
       (item) =>
-        (!caughtOnly.value || item.caught) && (!query || item.name?.toLowerCase().includes(query)),
+        (catchFilter.value === 'all' ||
+          (catchFilter.value === 'caught' ? item.caught : !item.caught)) &&
+        (!query || item.name?.toLowerCase().includes(query)),
     )
     .map((item) => ({
       ...item,
@@ -43,13 +45,14 @@ const rows = computed(() => {
 })
 const columns = [
   { key: 'name', label: 'Species' },
-  { key: 'master_angler_length', label: 'Master Angler length (in)', numeric: true },
-  { key: 'bestLength', label: 'Personal best (in)', numeric: true },
+  { key: 'bestLength', label: 'PB (in)', numeric: true },
   { key: 'bestDate', label: 'Date caught' },
+  { key: 'master_angler_count', label: 'MA catches', numeric: true },
+  { key: 'master_angler_length', label: 'MA length (in)', numeric: true },
 ]
 function clearFilters() {
   search.value = ''
-  caughtOnly.value = false
+  catchFilter.value = 'caught'
 }
 function formatDate(value) {
   if (!value) return '—'
@@ -139,11 +142,22 @@ function handleSignOut() {
         <p>
           <strong>{{ caughtCount }}</strong> of {{ species.length }} species caught
         </p>
-        <p class="legend"><Trophy :size="18" aria-hidden="true" />Approved Master Angler</p>
+        <p class="legend">
+          <Trophy :size="18" aria-hidden="true" />Gold border: Master Angler (MA) · Green border:
+          caught
+        </p>
       </div>
-      <ContentPanel title="Species directory" hide-header>
+      <ContentPanel class="species-table" title="Species directory" hide-header>
         <DataTable
           :rows="rows"
+          :mobile-row-class="
+            (row) =>
+              row.master_angler_count > 0
+                ? 'species-master'
+                : row.caught
+                  ? 'species-caught'
+                  : 'species-uncaught'
+          "
           :columns="columns"
           caption="Species and personal bests"
           :mobile-row-to="
@@ -159,15 +173,25 @@ function handleSignOut() {
           initial-sort="name"
         >
           <template #filters>
-            <CollapsibleFilters :active-count="[search, caughtOnly].filter(Boolean).length">
+            <CollapsibleFilters
+              :active-count="[search, catchFilter !== 'caught'].filter(Boolean).length"
+            >
               <div class="toolbar">
                 <label class="search"
                   >Search species<input v-model="search" type="search" placeholder="Species name"
                 /></label>
-                <label class="checkbox"
-                  ><input v-model="caughtOnly" type="checkbox" />Caught species only</label
-                >
-                <AppButton v-if="search || caughtOnly" variant="secondary" @click="clearFilters"
+                <label
+                  >Show species
+                  <select v-model="catchFilter">
+                    <option value="caught">Caught species</option>
+                    <option value="all">All species</option>
+                    <option value="uncaught">Uncaught species</option>
+                  </select>
+                </label>
+                <AppButton
+                  v-if="search || catchFilter !== 'caught'"
+                  variant="secondary"
+                  @click="clearFilters"
                   >Clear filters</AppButton
                 >
               </div>
@@ -208,7 +232,7 @@ function handleSignOut() {
           <h3>No matching species</h3>
           <p>
             {{
-              caughtOnly
+              catchFilter === 'caught'
                 ? 'No caught species match these filters. Clear the filters to explore the directory.'
                 : 'Try another species name or clear your search.'
             }}
@@ -228,6 +252,20 @@ function handleSignOut() {
   </PageLayout>
 </template>
 <style scoped>
+:deep(.species-table th button) {
+  white-space: normal;
+  text-align: left;
+}
+:deep(.species-table th:nth-child(2)),
+:deep(.species-table td:nth-child(2)),
+:deep(.species-table th:nth-child(5)),
+:deep(.species-table td:nth-child(5)) {
+  width: 110px;
+  max-width: 110px;
+  padding-inline: 10px;
+  white-space: normal;
+}
+
 .page-actions {
   display: flex;
   gap: 10px;
@@ -335,5 +373,16 @@ function handleSignOut() {
   border-radius: var(--radius-control);
   padding: 14px;
   font-size: 13px;
+}
+@media (max-width: 800px) {
+  :deep(.data-card.species-caught) {
+    border: 2px solid #39805a;
+  }
+  :deep(.data-card.species-master) {
+    border: 2px solid #b8860b;
+  }
+  :deep(.data-card.species-uncaught) {
+    border: 2px solid var(--border);
+  }
 }
 </style>

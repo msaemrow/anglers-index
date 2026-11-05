@@ -1,4 +1,5 @@
 <script setup>
+import PersonalBestBadge from '@/components/catches/PersonalBestBadge.vue'
 import { STATUS } from '@/constants'
 
 import { MapPin, Trophy, ArrowUpRight, Clock } from '@lucide/vue'
@@ -44,6 +45,7 @@ function measurement(value, unit) {
         >
       </span>
     </div>
+    <PersonalBestBadge :active="catchData.personal_best" />
     <p v-if="angler" class="catch-card__angler">Angler: {{ angler }}</p>
     <h3>{{ catchData.species?.name || 'Unknown species' }}</h3>
     <p class="catch-card__lake">

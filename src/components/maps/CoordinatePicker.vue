@@ -123,7 +123,7 @@ watch(
         style: 'mapbox://styles/mapbox/outdoors-v12',
         center: coordinates.value || center || [-96, 39],
         zoom: coordinates.value || center ? 12 : 3,
-        cooperativeGestures: true,
+        cooperativeGestures: false,
       })
       map = instance
       instance.addControl(new mapbox.NavigationControl(), 'top-right')

@@ -5,6 +5,7 @@ import { RouterLink } from 'vue-router'
 const props = defineProps({
   rowTo: { type: Function, default: undefined },
   rows: { type: Array, required: true },
+  rowClass: { type: Function, default: undefined },
   columns: { type: Array, required: true },
   titleKey: { type: String, required: true },
   caption: { type: String, required: true },
@@ -16,7 +17,7 @@ const fields = computed(() =>
 
 <template>
   <ul class="data-cards" :aria-label="caption">
-    <li v-for="row in rows" :key="row.id" class="data-card">
+    <li v-for="row in rows" :key="row.id" class="data-card" :class="rowClass?.(row)">
       <RouterLink
         v-if="rowTo?.(row)"
         :to="rowTo(row)"

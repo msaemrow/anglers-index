@@ -9,6 +9,7 @@ import AppButton from './AppButton.vue'
 
 const props = defineProps({
   rows: { type: Array, required: true },
+  mobileRowClass: { type: Function, default: undefined },
   columns: { type: Array, required: true },
   caption: { type: String, required: true },
   mobileRowTo: { type: Function, default: undefined },
@@ -82,6 +83,7 @@ function sort(column) {
       :columns="columns"
       :title-key="mobileTitleKey"
       :row-to="mobileRowTo"
+      :row-class="mobileRowClass"
       :caption="caption"
     >
       <template v-for="(_, name) in $slots" #[name]="slotProps"
