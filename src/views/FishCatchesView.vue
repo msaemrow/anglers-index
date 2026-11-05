@@ -1,5 +1,5 @@
 <script setup>
-import PersonalBestBadge from '@/components/catches/PersonalBestBadge.vue'
+import CatchBadges from '@/components/catches/CatchBadges.vue'
 import CollapsibleFilters from '@/components/ui/CollapsibleFilters.vue'
 import PageLayout from '@/components/ui/PageLayout.vue'
 import StatusMessage from '@/components/ui/StatusMessage.vue'
@@ -10,7 +10,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { Plus, Trophy, Fish, Clock } from '@lucide/vue'
+import { Plus, Fish } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -89,6 +89,7 @@ const rows = computed(() => {
     .map((fish) => ({
       id: fish.id,
       personal_best: fish.personal_best,
+      master_angler_status: fish.master_angler_status,
       date: fish.date,
       species: fish.species?.name || 'Unknown species',
       lake: fish.lake?.name || 'Unknown lake',
@@ -245,18 +246,9 @@ function handleSignOut() {
               class="catch-link"
               :to="{ name: 'fish-catch', params: { username: user.username, id: row.id } }"
               >{{ row.species }}</RouterLink
-            ><Trophy
-              v-if="row.approved"
-              class="trophy-icon"
-              :size="14"
-              role="img"
-              aria-label="Approved Master Angler" /><Clock
-              v-else-if="row.eligible"
-              class="eligible-icon"
-              :size="14"
-              role="img"
-              aria-label="Eligible · awaiting Master Angler review" /><PersonalBestBadge
-              :active="row.personal_best"
+            ><CatchBadges
+              :personal-best="row.personal_best"
+              :master-angler-status="row.master_angler_status"
           /></template>
           <template #cell-actions="{ row }"
             ><AppButton

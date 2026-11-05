@@ -1,8 +1,7 @@
 <script setup>
-import PersonalBestBadge from '@/components/catches/PersonalBestBadge.vue'
-import { STATUS } from '@/constants'
+import CatchBadges from '@/components/catches/CatchBadges.vue'
 
-import { MapPin, Trophy, ArrowUpRight, Clock } from '@lucide/vue'
+import { MapPin, ArrowUpRight } from '@lucide/vue'
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 const props = defineProps({
@@ -25,32 +24,21 @@ function measurement(value, unit) {
 
 <template>
   <RouterLink class="catch-card" :to="to">
-    <div class="catch-card__top">
-      <time :datetime="catchData.date || undefined">{{ date }}</time
-      ><span
-        v-if="catchData.master_angler_status === STATUS.APPROVED"
-        class="trophy"
-        title="Approved Master Angler catch"
-        ><Trophy :size="16" aria-hidden="true" /><span class="sr-only"
-          >Approved Master Angler catch</span
-        ></span
-      >
-      <span
-        v-else-if="catchData.master_angler_status === STATUS.PENDING"
-        class="eligible"
-        title="Eligible · awaiting review"
-      >
-        <Clock :size="16" aria-hidden="true" /><span class="sr-only"
-          >Eligible · awaiting Master Angler review</span
-        >
-      </span>
-    </div>
-    <PersonalBestBadge :active="catchData.personal_best" />
     <p v-if="angler" class="catch-card__angler">Angler: {{ angler }}</p>
     <h3>{{ catchData.species?.name || 'Unknown species' }}</h3>
-    <p class="catch-card__lake">
-      <MapPin :size="14" aria-hidden="true" />{{ catchData.lake?.name || 'Unknown lake' }}
-    </p>
+    <CatchBadges
+      :personal-best="catchData.personal_best"
+      :master-angler-status="catchData.master_angler_status"
+    />
+    <div class="catch-card__meta">
+      <p class="catch-card__lake">
+        <MapPin :size="14" aria-hidden="true" />{{ catchData.lake?.name || 'Unknown lake' }}
+      </p>
+      <time :datetime="catchData.date || undefined"
+        >{{ date
+        }}<template v-if="catchData.time"> · {{ catchData.time.slice(0, 5) }}</template></time
+      >
+    </div>
     <dl class="catch-card__measurements">
       <div>
         <dt>Length</dt>
@@ -84,16 +72,6 @@ function measurement(value, unit) {
   background: var(--surface-hover);
   border-color: #95abc5;
 }
-.catch-card__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 21px;
-  margin-bottom: 15px;
-  color: #748398;
-  font-size: 11px;
-}
 .catch-card__angler {
   margin-bottom: 8px;
   color: var(--muted);
@@ -104,15 +82,21 @@ function measurement(value, unit) {
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
-.trophy {
-  color: #a67c26;
+.catch-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: 10px 0 22px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
 }
 .catch-card__lake {
   display: flex;
   align-items: flex-start;
   gap: 4px;
-  margin-top: 7px;
-  margin-bottom: 22px;
+  margin: 0;
   color: var(--muted);
   font-size: 11px;
   line-height: 1.5;
@@ -152,10 +136,5 @@ function measurement(value, unit) {
   .catch-card {
     transition: none;
   }
-}
-
-.eligible {
-  color: var(--text-accent);
-  display: inline-flex;
 }
 </style>

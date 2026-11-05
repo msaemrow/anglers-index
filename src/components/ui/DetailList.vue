@@ -1,12 +1,17 @@
 <script setup>
-defineProps({ items: { type: Array, required: true } })
+import { RouterLink } from 'vue-router'
+
+defineProps({ items: { type: Array, required: true }, compact: Boolean })
 </script>
 
 <template>
-  <dl class="detail-list">
+  <dl class="detail-list" :class="{ 'detail-list--compact': compact }">
     <div v-for="item in items" :key="item.label">
       <dt>{{ item.label }}</dt>
-      <dd>{{ item.value ?? 'Not recorded' }}</dd>
+      <dd>
+        <RouterLink v-if="item.to" :to="item.to">{{ item.value }}</RouterLink>
+        <template v-else>{{ item.value ?? 'Not recorded' }}</template>
+      </dd>
     </div>
   </dl>
 </template>
@@ -22,6 +27,14 @@ defineProps({ items: { type: Array, required: true } })
 }
 .detail-list > div:last-child {
   border-bottom: 0;
+}
+.detail-list--compact > div {
+  padding: 7px 0;
+}
+dd a {
+  color: var(--text-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 dt {
   color: var(--muted);

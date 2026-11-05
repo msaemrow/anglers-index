@@ -1,5 +1,5 @@
 <script setup>
-import PersonalBestBadge from '@/components/catches/PersonalBestBadge.vue'
+import CatchBadges from '@/components/catches/CatchBadges.vue'
 import PageHeader from '@/components/ui/PageHeader.vue'
 import PageLayout from '@/components/ui/PageLayout.vue'
 import StatusMessage from '@/components/ui/StatusMessage.vue'
@@ -8,7 +8,7 @@ import { STATUS, LABELS, EVENTS } from '@/constants'
 
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { ArrowLeft, Download, MapPin, Trophy, Clock, Pencil } from '@lucide/vue'
+import { ArrowLeft, Download, MapPin, Clock, Pencil } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import ContentPanel from '@/components/ui/ContentPanel.vue'
@@ -151,9 +151,22 @@ const masterAnglerStatus = computed(() => {
     : 'Not eligible'
 })
 const catchDetails = computed(() => [
-  { label: 'Species', value: species.value },
-  { label: 'Date caught', value: date.value },
-  { label: 'Time caught', value: time.value },
+  {
+    label: 'Lake',
+    value: fish.value?.lake?.name || 'Lake not recorded',
+    to:
+      fish.value?.lake?.id || fish.value?.lake_id
+        ? { name: 'lake', params: { id: fish.value.lake?.id || fish.value.lake_id } }
+        : null,
+  },
+  {
+    label: 'Lure',
+    value: fish.value?.lure?.name || 'Lure not recorded',
+    to:
+      fish.value?.lure?.id || fish.value?.lure_id
+        ? { name: 'lure', params: { id: fish.value.lure?.id || fish.value.lure_id } }
+        : null,
+  },
   { label: 'Master Angler', value: masterAnglerStatus.value },
   ...(user.value?.is_admin && fish.value?.master_angler_status === STATUS.PENDING
     ? [
@@ -166,16 +179,6 @@ const catchDetails = computed(() => [
   ...(fish.value?.witness && !['NA', 'N/A'].includes(fish.value.witness)
     ? [{ label: 'Witness', value: fish.value.witness }]
     : []),
-])
-const locationDetails = computed(() => [
-  { label: 'Nearest town', value: recorded(fish.value?.lake?.nearest_town) },
-  { label: 'County', value: recorded(fish.value?.lake?.county) },
-  { label: 'State', value: recorded(fish.value?.lake?.state) },
-])
-const lureDetails = computed(() => [
-  { label: 'Brand', value: recorded(fish.value?.lure?.brand) },
-  { label: 'Color', value: recorded(fish.value?.lure?.color) },
-  { label: 'Size', value: recorded(fish.value?.lure?.size) },
 ])
 const conditions = computed(() => [
   { label: 'Weather', value: recorded(fish.value?.weather_conditions) },
@@ -259,10 +262,16 @@ function handleSignOut() {
         ><template #heading
           ><div class="catch-heading">
             <h1>{{ species }}</h1>
-            <p class="muted">{{ date }} <span aria-hidden="true">·</span> {{ time }}</p>
-            <p class="catch-location">
-              <MapPin :size="15" aria-hidden="true" />{{ fish.lake?.name || 'Lake not recorded' }}
-            </p>
+            <CatchBadges
+              :personal-best="fish.personal_best"
+              :master-angler-status="fish.master_angler_status"
+            />
+            <div class="catch-meta">
+              <p class="catch-location">
+                <MapPin :size="15" aria-hidden="true" />{{ fish.lake?.name || 'Lake not recorded' }}
+              </p>
+              <p>{{ date }} <span aria-hidden="true">·</span> {{ time }}</p>
+            </div>
             <RouterLink
               v-if="fish.trip_id && String(fish.user_id) === String(user.user_id)"
               :to="{ name: 'trip', params: { username: user.username, id: fish.trip_id } }"
@@ -282,14 +291,10 @@ function handleSignOut() {
         <span v-if="fish.master_angler_status === STATUS.DENIED" class="denial-notice" role="status"
           >Denied - {{ fish.master_angler_review.denial_reason }}</span
         >
-        <PersonalBestBadge :active="fish.personal_best" />
         <div
           v-if="fish.master_angler_status === STATUS.APPROVED || canEditPhoto"
           class="certificate-actions"
         >
-          <span v-if="fish.master_angler_status === STATUS.APPROVED" class="eligibility"
-            ><Trophy :size="16" aria-hidden="true" />Master Angler</span
-          >
           <AppButton
             v-if="canDownloadCertificate"
             variant="navy"
@@ -321,7 +326,7 @@ function handleSignOut() {
             :alt="`${species} caught on ${date}`"
           />
         </section>
-        <ContentPanel title="Catch details">
+        <ContentPanel title="Details" class="catch-details-panel">
           <dl class="measurements">
             <div>
               <dt>Length</dt>
@@ -332,54 +337,33 @@ function handleSignOut() {
               <dd>{{ recorded(fish.weight, ' lb') }}</dd>
             </div>
           </dl>
-          <DetailList :items="catchDetails" />
+          <DetailList class="catch-detail-list" :items="[...catchDetails, ...conditions]" compact />
         </ContentPanel>
       </div>
-      <ContentPanel v-if="canEditPhoto" title="Catch photo">
-        <CatchPhotoPicker :key="photoVersion" v-model="photoFile" :disabled="photoBusy" />
-        <p class="muted">
-          A photo is required for Master Angler eligibility. Changing an approved catch’s photo
-          requires another review.
-        </p>
-        <div class="certificate-actions">
-          <AppButton :disabled="photoBusy || !photoFile" @click="updatePhoto()">{{
-            photoBusy ? 'Saving…' : 'Save photo'
-          }}</AppButton>
-          <AppButton
-            v-if="fish.fish_image && !fish.fish_image.includes('stock-fish.jpg')"
-            variant="secondary"
-            :disabled="photoBusy"
-            @click="updatePhoto(true)"
-            >Remove photo</AppButton
-          >
-        </div>
-        <p v-if="photoError" role="alert" class="error-message">{{ photoError }}</p>
-      </ContentPanel>
-      <ContentPanel v-if="String(fish.user_id) === String(user.user_id)" title="Catch Location">
-        <CatchLocationEditor :catch-id="fish.id" :token="token" :lake="fish.lake" />
-      </ContentPanel>
-      <div class="catch-info-grid">
-        <ContentPanel title="Location">
-          <h3>{{ fish.lake?.name || 'Lake not recorded' }}</h3>
-          <DetailList :items="locationDetails" />
-          <RouterLink
-            v-if="fish.lake?.id || fish.lake_id"
-            class="detail-link"
-            :to="{ name: 'lake', params: { id: fish.lake?.id || fish.lake_id } }"
-            >View lake details →</RouterLink
-          >
+      <div v-if="canEditPhoto" class="catch-edit-sections">
+        <ContentPanel v-if="canEditPhoto" title="Catch photo">
+          <CatchPhotoPicker :key="photoVersion" v-model="photoFile" :disabled="photoBusy" />
+          <p class="muted">
+            A photo is required for Master Angler eligibility. Changing an approved catch’s photo
+            requires another review.
+          </p>
+          <div class="certificate-actions">
+            <AppButton :disabled="photoBusy || !photoFile" @click="updatePhoto()">{{
+              photoBusy ? 'Saving…' : 'Save photo'
+            }}</AppButton>
+            <AppButton
+              v-if="fish.fish_image && !fish.fish_image.includes('stock-fish.jpg')"
+              variant="secondary"
+              :disabled="photoBusy"
+              @click="updatePhoto(true)"
+              >Remove photo</AppButton
+            >
+          </div>
+          <p v-if="photoError" role="alert" class="error-message">{{ photoError }}</p>
         </ContentPanel>
-        <ContentPanel title="Lure used">
-          <h3>{{ fish.lure?.name || 'Lure not recorded' }}</h3>
-          <DetailList :items="lureDetails" />
-          <RouterLink
-            v-if="fish.lure?.id || fish.lure_id"
-            class="detail-link"
-            :to="{ name: 'lure', params: { id: fish.lure?.id || fish.lure_id } }"
-            >View lure details →</RouterLink
-          >
+        <ContentPanel v-if="String(fish.user_id) === String(user.user_id)" title="Catch Location">
+          <CatchLocationEditor :catch-id="fish.id" :token="token" :lake="fish.lake" />
         </ContentPanel>
-        <ContentPanel title="Conditions"><DetailList :items="conditions" /></ContentPanel>
       </div>
     </template>
     <FishCatchEditor
@@ -420,6 +404,7 @@ function handleSignOut() {
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
+  margin-top: 8px;
 }
 @media (max-width: 650px) {
   .certificate-actions {
@@ -451,19 +436,29 @@ function handleSignOut() {
   font-weight: 600;
   color: var(--text-accent);
 }
-.back-link:hover,
-.detail-link:hover {
+.back-link:hover {
   text-decoration: underline;
 }
 .catch-header {
   flex-wrap: wrap;
 }
-.catch-header h1,
-.catch-info-grid h3 {
+.catch-header h1 {
   overflow-wrap: anywhere;
 }
 .catch-header .muted span {
   padding: 0 6px;
+}
+.catch-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.catch-meta p {
+  margin: 0;
 }
 .catch-location {
   display: flex;
@@ -491,7 +486,8 @@ function handleSignOut() {
 .catch-overview {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
-  gap: 22px;
+  gap: 12px;
+  align-items: stretch;
 }
 .catch-photo {
   min-width: 0;
@@ -514,12 +510,12 @@ function handleSignOut() {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-bottom: 16px;
+  margin: 0 0 8px;
 }
 .measurements > div {
   background: #f1f5fa;
   border-radius: 9px;
-  padding: 16px;
+  padding: 10px 12px;
   min-width: 0;
 }
 .measurements dt {
@@ -529,34 +525,40 @@ function handleSignOut() {
   letter-spacing: 1px;
 }
 .measurements dd {
-  margin: 8px 0 0;
+  margin: 4px 0 0;
   color: var(--blue);
-  font-size: clamp(19px, 2.5vw, 28px);
+  font-size: 18px;
   font-weight: 650;
   overflow-wrap: anywhere;
 }
-.catch-info-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 22px;
+.catch-details-panel {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
 }
-.catch-info-grid h3 {
+.catch-details-panel :deep(.panel__header) {
   margin-bottom: 12px;
 }
-.detail-link {
-  display: inline-block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-accent);
-  margin-top: 20px;
+.catch-edit-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 12px;
 }
-@media (max-width: 900px) {
-  .catch-info-grid {
-    grid-template-columns: 1fr;
+.catch-edit-sections > :only-child {
+  grid-column: 1 / -1;
+}
+@media (min-width: 651px) {
+  .catch-detail-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 }
 @media (max-width: 650px) {
-  .catch-overview {
+  .catch-overview,
+  .catch-edit-sections {
     grid-template-columns: 1fr;
   }
   .catch-photo {
