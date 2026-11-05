@@ -7,7 +7,7 @@ import StatusMessage from '@/components/ui/StatusMessage.vue'
 import { STATUS, LABELS, EVENTS } from '@/constants'
 
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { useRoute, RouterLink } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, Download, MapPin, Clock, Pencil } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
@@ -24,6 +24,7 @@ import { getFishCatch, saveCatchPhoto, removeCatchPhoto } from '@/api/fishCatch'
 import { getMasterAnglerCertificate } from '@/api/masterAngler'
 
 const route = useRoute()
+const router = useRouter()
 const { token, user, signingIn, signIn, signOut, sessionError: loginError } = useSession()
 const fish = ref(null)
 const editing = ref(false)
@@ -236,11 +237,9 @@ function handleSignOut() {
   <a class="skip-link" href="#main-content">Skip to content</a>
   <AppNavbar :user="user" :session-error="loginError" @[EVENTS.SIGN_OUT]="handleSignOut" />
   <main v-if="user" id="main-content" class="catch-page" :aria-busy="loading">
-    <RouterLink
-      :to="{ name: 'fish-catches', params: { username: route.params.username } }"
-      class="back-link"
-      ><ArrowLeft :size="16" aria-hidden="true" />Back to all catches</RouterLink
-    >
+    <AppButton variant="link" class="back-link" @click="router.back()">
+      <ArrowLeft :size="16" aria-hidden="true" />Back
+    </AppButton>
     <StatusMessage as="div" variant="loading" v-if="loading" class="loading-state" role="status">
       <span class="loading-line" aria-hidden="true" />
       <p>Loading catch details…</p>

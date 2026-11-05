@@ -375,6 +375,9 @@ function handleSignOut() {
   font-size: 13px;
 }
 @media (max-width: 800px) {
+  .catch-link {
+    text-decoration: none;
+  }
   :deep(.data-card.species-caught) {
     border: 2px solid #39805a;
   }

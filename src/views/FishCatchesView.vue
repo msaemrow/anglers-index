@@ -1,5 +1,5 @@
 <script setup>
-import CatchBadges from '@/components/catches/CatchBadges.vue'
+import CatchIcons from '@/components/catches/CatchIcons.vue'
 import CollapsibleFilters from '@/components/ui/CollapsibleFilters.vue'
 import PageLayout from '@/components/ui/PageLayout.vue'
 import StatusMessage from '@/components/ui/StatusMessage.vue'
@@ -10,7 +10,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { Plus, Fish } from '@lucide/vue'
+import { Plus, Fish, Trophy, Medal, Clock } from '@lucide/vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import SignInPanel from '@/components/SignInPanel.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -55,6 +55,7 @@ function catchSaved(item) {
   attempt.value++
 }
 const search = ref('')
+const personalBestOnly = ref(false)
 const awardFilter = ref(
   ['eligible', STATUS.APPROVED].includes(route.query.award) ? route.query.award : 'all',
 )
@@ -65,8 +66,8 @@ watch(
   },
 )
 const columns = [
-  { key: 'date', label: 'Date' },
   { key: 'species', label: 'Species' },
+  { key: 'date', label: 'Date' },
   { key: 'lake', label: 'Lake' },
   { key: 'length', label: 'Length (in)', numeric: true },
   { key: 'weight', label: 'Weight (lb)', numeric: true },
@@ -77,6 +78,7 @@ const rows = computed(() => {
   return catches.value
     .filter(
       (fish) =>
+        (!personalBestOnly.value || fish.personal_best) &&
         (awardFilter.value === 'all' ||
           (awardFilter.value === 'eligible'
             ? fish.master_angler_status === STATUS.PENDING
@@ -115,6 +117,7 @@ function formatDate(value) {
 function clearFilters() {
   search.value = ''
   awardFilter.value = 'all'
+  personalBestOnly.value = false
 }
 
 watch(
@@ -193,6 +196,14 @@ function handleSignOut() {
           <dd>{{ lakeCount.toLocaleString() }}</dd>
         </div>
       </dl>
+      <p class="legend">
+        <span><Trophy :size="16" class="master-icon" aria-hidden="true" />Master Angler</span>
+        <span><Medal :size="16" class="pb-icon" aria-hidden="true" />Personal best (PB)</span>
+        <span
+          ><Clock :size="16" class="pending-icon" aria-hidden="true" />Awaiting Master Angler
+          review</span
+        >
+      </p>
       <ContentPanel
         v-if="!catches.length"
         title="Your catch log starts here"
@@ -202,7 +213,7 @@ function handleSignOut() {
           ><Plus :size="16" aria-hidden="true" />{{ LABELS.LOG_FIRST_CATCH }}</AppButton
         ></ContentPanel
       >
-      <ContentPanel v-else title="Catch log" hide-header>
+      <ContentPanel v-else class="catches-table" title="Catch log" hide-header>
         <DataTable
           :rows="rows"
           :columns="columns"
@@ -211,11 +222,21 @@ function handleSignOut() {
             (row) => ({ name: 'fish-catch', params: { username: user.username, id: row.id } })
           "
           mobile-title-key="species"
+          :mobile-row-class="
+            (row) =>
+              row.master_angler_status === STATUS.APPROVED
+                ? 'catch-master'
+                : row.personal_best
+                  ? 'catch-personal-best'
+                  : ''
+          "
           initial-sort="date"
           initial-direction="desc"
         >
           <template #filters>
-            <CollapsibleFilters :active-count="Number(!!search) + Number(awardFilter !== 'all')">
+            <CollapsibleFilters
+              :active-count="Number(!!search) + Number(awardFilter !== 'all') + Number(personalBestOnly)"
+            >
               <div class="toolbar">
                 <label class="search"
                   >Search catches<input
@@ -231,8 +252,12 @@ function handleSignOut() {
                     <option :value="STATUS.APPROVED">Approved Master Angler</option>
                   </AppSelect>
                 </label>
+                <label class="checkbox">
+                  <input v-model="personalBestOnly" type="checkbox" />
+                  Personal bests only
+                </label>
                 <AppButton
-                  v-if="search || awardFilter !== 'all'"
+                  v-if="search || awardFilter !== 'all' || personalBestOnly"
                   variant="secondary"
                   @click="clearFilters"
                   >Clear filters</AppButton
@@ -241,15 +266,18 @@ function handleSignOut() {
             </CollapsibleFilters>
           </template>
           <template #cell-date="{ value }">{{ formatDate(value) }}</template>
-          <template #cell-species="{ row }"
-            ><RouterLink
+          <template #cell-species="{ row }">
+            <RouterLink
               class="catch-link"
               :to="{ name: 'fish-catch', params: { username: user.username, id: row.id } }"
-              >{{ row.species }}</RouterLink
-            ><CatchBadges
-              :personal-best="row.personal_best"
-              :master-angler-status="row.master_angler_status"
-          /></template>
+            >
+              <CatchIcons
+                :personal-best="row.personal_best"
+                :master-angler-status="row.master_angler_status"
+              />
+              {{ row.species }}
+            </RouterLink>
+          </template>
           <template #cell-actions="{ row }"
             ><AppButton
               class="card-view-action"
@@ -286,6 +314,26 @@ function handleSignOut() {
 </template>
 
 <style scoped>
+@media (min-width: 801px) {
+  .catches-table :deep(td:first-child) {
+    white-space: nowrap;
+  }
+  .catches-table :deep(th:nth-child(4)),
+  .catches-table :deep(td:nth-child(4)),
+  .catches-table :deep(th:nth-child(5)),
+  .catches-table :deep(td:nth-child(5)) {
+    width: 1%;
+    padding-inline: 10px;
+  }
+}
+@media (max-width: 800px) {
+  .catches-table :deep(.data-card.catch-personal-best) {
+    border: 2px solid #39805a;
+  }
+  .catches-table :deep(.data-card.catch-master) {
+    border: 2px solid #b8860b;
+  }
+}
 .award-filter {
   display: grid;
   gap: 8px;
@@ -312,7 +360,7 @@ function handleSignOut() {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 20px 24px;
+  padding: 12px 16px;
 }
 .summary dt {
   font-size: 12px;
@@ -365,19 +413,26 @@ function handleSignOut() {
 }
 .legend {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 0;
+}
+.legend span,
+.catch-link {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
-  color: var(--muted);
-  margin-bottom: 14px;
 }
-.legend svg,
-.trophy-icon {
-  color: #a67c26;
+.master-icon {
+  color: #a77815;
 }
-.trophy-icon {
-  margin-left: 8px;
-  vertical-align: middle;
+.pb-icon {
+  color: #286342;
+}
+.pending-icon {
+  color: var(--text-accent);
 }
 .catch-link {
   font-weight: 600;
@@ -402,7 +457,7 @@ function handleSignOut() {
     gap: 10px;
   }
   .summary > div {
-    padding: 16px 12px;
+    padding: 10px 12px;
   }
   .summary dt {
     font-size: 11px;

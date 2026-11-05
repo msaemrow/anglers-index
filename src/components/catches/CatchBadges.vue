@@ -12,14 +12,14 @@ defineProps({
     v-if="personalBest || [STATUS.APPROVED, STATUS.PENDING].includes(masterAnglerStatus)"
     class="catch-badges"
   >
-    <span v-if="personalBest" class="catch-badge"
-      ><Medal :size="16" aria-hidden="true" />Personal best</span
+    <span v-if="personalBest" class="catch-badge" title="Personal best"
+      ><Medal :size="16" aria-hidden="true" />PB</span
     >
     <span
       v-if="masterAnglerStatus === STATUS.APPROVED"
       class="catch-badge catch-badge--master"
       title="Approved Master Angler catch"
-      ><Trophy :size="16" aria-hidden="true" />Master Angler</span
+      ><Trophy :size="16" aria-hidden="true" />Master</span
     >
     <span
       v-else-if="masterAnglerStatus === STATUS.PENDING"

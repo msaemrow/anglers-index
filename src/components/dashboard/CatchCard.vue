@@ -1,5 +1,5 @@
 <script setup>
-import CatchBadges from '@/components/catches/CatchBadges.vue'
+import CatchIcons from '@/components/catches/CatchIcons.vue'
 
 import { MapPin, ArrowUpRight } from '@lucide/vue'
 import { computed } from 'vue'
@@ -25,11 +25,13 @@ function measurement(value, unit) {
 <template>
   <RouterLink class="catch-card" :to="to">
     <p v-if="angler" class="catch-card__angler">Angler: {{ angler }}</p>
-    <h3>{{ catchData.species?.name || 'Unknown species' }}</h3>
-    <CatchBadges
-      :personal-best="catchData.personal_best"
-      :master-angler-status="catchData.master_angler_status"
-    />
+    <h3>
+      <CatchIcons
+        :personal-best="catchData.personal_best"
+        :master-angler-status="catchData.master_angler_status"
+      />
+      {{ catchData.species?.name || 'Unknown species' }}
+    </h3>
     <div class="catch-card__meta">
       <p class="catch-card__lake">
         <MapPin :size="14" aria-hidden="true" />{{ catchData.lake?.name || 'Unknown lake' }}
@@ -79,6 +81,9 @@ function measurement(value, unit) {
   overflow-wrap: anywhere;
 }
 .catch-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
